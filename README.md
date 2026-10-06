@@ -86,59 +86,91 @@ CSS 里的字体走 `url()`，`file://` 协议下全都会被浏览器拦掉，�
 ```bash
 # 在仓库的上一级目录执行
 cd ..
-python -m http.server 8000
+python AtlanticFleetSite/_serve.py 8000
 
-# 然后访问（把 AtlanticFleetSite 换成你的仓库名）
+# 然后访问
 #   http://localhost:8000/AtlanticFleetSite/
 #   http://localhost:8000/AtlanticFleetSite/mods/
 #   http://localhost:8000/AtlanticFleetSite/docs/
 ```
 
-想访问根路径（`http://localhost:8000/`），把目录复制成上一级的一个子目录即可，
-或者临时把仓库改名为 `站点根的名字`……实际上不行 —— 路径前缀是构建时写死的。
-**要么按上面用 `/仓库名/` 访问，要么重新构建时把前缀改成空字符串。**
+`_serve.py` 是个多线程静态服务，比 `python -m http.server` 稳：
+后者单线程，浏览器并发加载十几个 CSS/JS/字体/图片时会拒绝连接。
+
+想访问根路径（`http://localhost:8000/`），用空前缀重新构建一次：
+
+```bash
+MSYS_NO_PATHCONV=1 ./build_public.sh --prefix=""
+```
+
+构建脚本能识别两种状态并正确切换（剥旧前缀 / 加新前缀），
+所以在「带前缀」和「不带前缀」之间来回切不会把路径改坏。
 
 ## 部署到 GitHub Pages
 
-### 1. 建仓库并推送
+> 当前状态：本地 git 仓库已建好（分支 `main`，首次提交已完成，仓库 3.8 MB），
+> **只差推送到 GitHub 并开 Pages**。下面从建远程仓库开始。
 
-仓库名决定 URL 前缀，**必须和构建时用的前缀一致**。举例：仓库叫 `atlanticfleet.github.io`
-不行（那是用户主页站位），叫 `afmod-site` 则 URL 是
-`https://<你的用户名>.github.io/afmod-site/`。
+### 1. 在 GitHub 网页建仓库
+
+打开 <https://github.com/new>：
+
+- **Repository name** 填 `AtlanticFleetSite`
+  （这个名字决定 URL 前缀，必须和构建时用的前缀一致 —— 现有产物就是按
+  `/AtlanticFleetSite` 适配的。想换名字，见下面第 3 节）
+- 选 **Public**（要公开访问）
+- **不要**勾选 Add a README / .gitignore / license（本仓库已有）
+- 点 **Create repository**
+
+### 2. 推送
 
 ```bash
-git init
-git add .
-git commit -m "站点静态副本：首页 + 文档站 + Mod 仓库"
-git branch -M main
-git remote add origin https://github.com/<你的用户名>/<仓库名>.git
+git remote add origin https://github.com/<你的用户名>/AtlanticFleetSite.git
 git push -u origin main
 ```
 
-### 2. 开 Pages
+> 私有仓库的 Pages 在免费账号上不开放，仓库必须是 **Public**。
 
-仓库 → **Settings** → **Pages** → Source 选 **Deploy from a branch** →
-Branch 选 `main` / `(root)` → Save。等 1~2 分钟，地址就是
-`https://<你的用户名>.github.io/<仓库名>/`。
+### 3. 开 Pages
 
-### 3. 前缀对不上怎么办
+仓库 → **Settings** → **Pages** → Build and deployment →
+Source 选 **Deploy from a branch** → Branch 选 `main` / `(root)` → Save。
 
-如果 URL 里的仓库名和构建时写死的前缀不一致，所有资源都会 404
+等 1~2 分钟，访问：
+
+```
+https://<你的用户名>.github.io/AtlanticFleetSite/
+```
+
+### 4. 想换仓库名怎么办
+
+URL 里的仓库名和构建时写死的前缀**必须一致**，否则所有资源都会 404
 （页面能打开，但字体、样式、图片全丢）。
 
-两种修法：
+改名要**先改前缀、重新构建、再改仓库名**：
 
-- **改前缀重新构建**（推荐）。构建脚本的参数就是干这个的：
-  ```bash
-  MSYS_NO_PATHCONV=1 ./build_public.sh --prefix=/<仓库名>
-  ```
-  改完重新提交推送即可。
-- **或者**仓库名就取 `AtlanticFleetSite`，保持与现有产物一致。
+```bash
+MSYS_NO_PATHCONV=1 ./build_public.sh --prefix=/<新仓库名>
+git add -A && git commit -m "适配新仓库名：/<新仓库名>"
+git push
+```
+
+或者反过来，先用上面的第 1 步把仓库建成 `AtlanticFleetSite`，什么都不用改。
 
 > ⚠️ 在 Git Bash 里跑构建脚本**必须**带 `MSYS_NO_PATHCONV=1`。
 > 否则命令行里的 `--prefix=/afmod-site` 会被自动转成 Windows 绝对路径，
 > 于是全站资源路径变成 `href="/C:/Users/.../media/..."`，部署后 100% 404。
 > 脚本内部对这种污染有检测并会拒绝，但仍建议始终带上这个变量。
+
+### 5. 推送后必查三项
+
+Pages 部署完先看这三个，缺一个就是前缀没对上：
+
+| 看什么 | 正常 | 异常说明 |
+|---|---|---|
+| 浏览器标签页图标 | 有图标 | 空白 = 路径没带仓库名 |
+| 页面正文 | 中文、字体正常 | 字体掉成默认 = CSS 里字体路径 404 |
+| F12 → Network | 全部 200 | 大量 404 = 前缀对不上 |
 
 ## 这个副本和主站的关系
 
@@ -202,19 +234,57 @@ git add . && git commit -m "同步主站更新" && git push
 改动站点后跑一遍真跑验收：
 
 ```bash
-MSYS_NO_PATHCONV=1 ./build_public.sh          # 先构建
-# 起服务（在上一级目录）
-cd .. && python -m http.server 9503 --bind 127.0.0.1 &
+MSYS_NO_PATHCONV=1 ./build_public.sh          # 先构建（含改写器自检）
+# 起服务（务必用 _serve.py，见下）
+cd .. && python AtlanticFleetSite/_serve.py 9503
 # 跑验收
-node AtlanticFleetSite/_verify_subpath.mjs
+cd AtlanticFleetSite && node _verify_subpath.mjs
 ```
 
-判据覆盖三个页面（首页 / Mod 仓库 / 文档站）的 22 项：DOM 结构、资源加载、
+判据覆盖三个页面（首页 / Mod 仓库 / 文档站）的 27 项：DOM 结构、资源加载、
 字体、JS 异常、入场动效降级、Mod 卡片渲染、上传区隐藏、下载链接真实可下、
 部署前缀拼接、文档站骨架与站内链接。
 
 用真实浏览器跑而不是只发 HTTP 请求 —— 这套判据里好几项在源码层面看不出对错
 （字体走 CSS `url()`、Mod 卡片靠 `fetch`、下载链接运行时拼）。
+
+**必须用 `_serve.py`，不要用 `python -m http.server`。**
+后者是单线程的，浏览器并发加载 CSS/JS/字体/图片时会拒绝连接，
+验收里表现为一片 `ERR_CONNECTION_REFUSED` —— 那是服务器的问题，不是站点的问题，
+但会把真问题淹在里面。
+
+判据本身也会被验证：改完判据后要**故意弄坏一次**（删掉一张图、一个字体、
+改错下载前缀），确认验收真的会红。全绿但没做过反证，等于没验。
+
+### 已经踩过的坑（判据层面）
+
+写在这里是因为它们都不是「站点坏了」，而是「判据测的不是被测对象」：
+
+- **图片有没有加载成功，DOM 属性表达不了。**
+  `naturalWidth > 0` 对 SVG 无效；`complete === true` 在 404 时同样为 true
+  （加载流程结束就是 true，不区分成败）。只有网络层状态码是真证据。
+- **字体不能按「全部声明的都 loaded」判。**
+  CSS 字体懒加载，文档站声明 23 个、实际只用 3 个，
+  剩下 20 个永远停在 `loading` —— 按「全 loaded」判会得到 20 个假失败。
+  正确判据是网络层：**凡发出去的字体请求都得是 200，且至少发出去过一个**。
+- **「任意一个字体加载成功」也不算通过。**
+  删掉 14 个字体里的 1 个，其余 13 个照样 loaded，判据照样报绿。
+- **同一个文件里，同类路径的规则可能相反。**
+  VitePress 的 SSR HTML 里的图片路径必须自带前缀（浏览器直接用），
+  而 `__VP_SITE_DATA__` 里的路径必须保持裸路径（运行时 `withBase` 会再拼一次）。
+  按同一套规则统一处理的结果是「这边修好、那边弄坏」。
+
+### 构建脚本顺序为什么是这个顺序
+
+```
+反证测试 → 复制主站 → 放自有素材 → 剔除第三方素材 → 路径改写
+        → 仓库静态化 → 注入降级兜底 → 收尾再跑一轮路径改写
+```
+
+- **剔除必须在路径改写之前**：剔除会新造出一批路径，改写在后才能覆盖到它们。
+- **收尾必须再跑一轮改写**：静态化和降级兜底两个脚本在中间又写了新路径。
+- **反证测试放最前**：改写器自己坏掉时，构建日志和页面源码都看不出问题，
+  只有一组正反用例能抓住。
 
 ## 常见问题
 
