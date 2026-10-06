@@ -916,7 +916,7 @@
   /* 备案完成前的访问方式说明。
      只在「用 IP 访问」时提示一句，本机调试（localhost/default.com）不显示。 */
   /* ★ v2.37：文案改为读 /mods/icp.js 的 AF_VIA_NOTE。
-     同一段话以前在 af-naval.js 和首页内联脚本里各写一遍，措辞已经不��致了
+     同一段话以前在 af-naval.js 和首页内联脚本里各写一遍，措辞已经不一致了
      ——这正是「同一文案多处维护」的典型烂尾。 */
   AF.viaNote = function () {
     var h = location.hostname;
