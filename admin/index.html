@@ -8,7 +8,9 @@
 <meta name="description" content="《大西洋舰队》Mod 框架的审核后台：站长在此审核玩家上传的 Mod，通过即在仓库上架。">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#04080f">
-<link rel="icon" href="/AtlanticFleetSite/media/brand/af-brand.svg">
+<link rel="icon" type="image/png" href="/AtlanticFleetSite/favicon.png">
+<link rel="apple-touch-icon" href="/AtlanticFleetSite/favicon.png">
+<link rel="mask-icon" href="/AtlanticFleetSite/media/brand/af-brand.svg" color="#0d1b26">
 <!-- ★ v2.36：预加载首屏真正要用的两个字体。
      五个字体合计 1.19MB，浏览器要等 CSS 解析完才发现要用哪些字体，
      慢网下首屏会先用系统字体画一遍、字体到位后再重画一遍（内容跳动）。
@@ -234,7 +236,8 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 <div class="af-mask" id="mask"><div class="af-glass af-modal" id="modal"></div></div>
 
 <script src="/AtlanticFleetSite/mods/icp.js?v=1.1"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.20"></script>
+<script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.22"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>

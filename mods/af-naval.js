@@ -928,6 +928,37 @@
     return '';
   };
 
+  /* ★ v2.46：把 window.AF_LINKS 渲染成页脚里的链接组。
+     为什么单独抽成函数：首页（index.html）不引 af-naval.js，那边自己有一份
+     等价渲染；两处读的是**同一个** /mods/links.js，所以地址只有一处可改。
+     ★ 为什么必须转义：链接来自数据文件，虽然现在是自己维护的常量，
+       但它终究是"往 innerHTML 里塞字符串"—— 一旦某天有人把地址
+       配成带引号的值，就会破 HTML，甚至形成注入面。
+       宁可多写两行转义，也不要留一条"配置写错就出事"的路径。 */
+  function AF_LINKS_HTML() {
+    var L = w.AF_LINKS;
+    if (!L || !L.list || !L.list.length) return '';
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    var out = '<div class="af-fsocial-list">';
+    for (var i = 0; i < L.list.length; i++) {
+      var it = L.list[i];
+      var href = esc(it.href);
+      // 只允许 http/https/mailto，其余（javascript: 等）一律丢弃 ——
+      // 数据文件被改坏时也不至于变成可执行的链接。
+      if (!/^(https?:|mailto:)/i.test(it.href || '')) continue;
+      out += '<a class="af-flink af-flink--ext af-flink--' + esc(it.key) + '" href="' + href + '"' +
+        ' title="' + esc(it.title) + '" target="_blank" rel="noopener noreferrer">' +
+        '<span class="af-flink-ic"><img src="' + esc(it.icon) + '" alt="" loading="lazy" decoding="async"></span>' +
+        '<span class="af-flink-t">' + esc(it.text) + '</span></a>';
+    }
+    out += '</div>';
+    return out;
+  }
+
   AF.renderFooter = function (host) {
     if (!host) return;
     var L = AF.link;
@@ -942,7 +973,11 @@
     host.innerHTML =
       '<div class="af-fcol af-fcol--brand">' +
         '<div class="af-brand af-brand--foot">' +
-          '<span class="mark">' + AF.icon.compass + '</span>' +
+          // ★ v2.46：品牌位统一用应用图像（与顶栏、favicon、社区入口同一张）。
+          //   不用内联 SVG —— 内联 SVG 会被 fill:currentColor 染成单色，
+          //   彩色插画必须走 <img src>。下面的 .af-brand .mark img 已有
+          //   object-fit: cover 与圆角，不用额外加样式。
+          '<span class="mark"><img src="/AtlanticFleetSite/media/game/appicon.png" alt="" width="34" height="34" loading="lazy" decoding="async"></span>' +
           '<span class="txt"><span class="nm">大西洋舰队 Mod</span>' +
           '<span class="sb">ATLANTIC FLEET · MOD FRAMEWORK</span></span>' +
         '</div>' +
@@ -977,6 +1012,14 @@
         nav(L.docPaths.repoPublish, '上传我的 Mod') +
         nav(L.docPaths.credits, '作者与致谢') +
         nav(L.repo + '#decoder', '解析分享码') +
+        // ★ v2.46：社区与联系入口恢复。
+        //   这几项曾在v2.42「清除第三方品牌残留」时被一起删掉了 ——
+        //   但 QQ 群和 B 站是作者自己的社区，不是第三方平台，属于误删。
+        //   ★ 地址不再写在这里，统一读 window.AF_LINKS（/mods/links.js）。
+        //     为什么：地址散落在页面里，补一次漏一次；而且"哪些已填、哪些待填"
+        //     只有一个文件能说清。AF_LINKS 里空地址的项不会出现在 list 里，
+        //     下面遍历时自然跳过 —— 不会出现空<a> 或 href="#"。
+        AF_LINKS_HTML() +
       '</div>' +
       // ICP 备案号（工信部要求已备案网站在页面底部展示并链接到备案系统）
       // AF.ICP 为空时不显示；备案通过后把号填进下面这行即可。

@@ -17,10 +17,25 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+// ★★ 这里用 IP 而不是 default.com（2026-10-06 修正）。
+//   原来的写法是 `http://default.com:9503/AtlanticFleetSite` +
+//   `--host-resolver-rules=MAP default.com 127.0.0.1`，
+//   在 **9503 这个非标准端口上 host-resolver 规则没生效** ——
+//   Edge 落到 chrome-error://chromewebdata/，
+//   判据于是报「首页导航卡片存在 — cards=0」「顶栏不存在」
+//   「按钮没有默认态」…共 31 项全红。
+//
+//   ★ 看着像站点全坏了，实际页面完全正常（改 IP 直连后：
+//     首页 .card=3、仓库页 .af-card=6 / .af-topbar=1、
+//     --af-t-base=240ms，全部在位）。
+//   这正是本项目交过学费的那条：**验收脚本失败先怀疑脚本自己**，
+//   尤其是「同一个站点换个访问方式就全绿」的时候。
+//   为什么可以直连 IP：_serve.py 是本机静态服务，不校验 Host；
+//   需要区分 Host 的只有 nginx（走 80 端口那批判据仍然用 default.com）。
 const HOST = 'default.com';
 const PORT = 9503;
 const PFX = '/AtlanticFleetSite';
-const BASE = `http://${HOST}:${PORT}${PFX}`;
+const BASE = `http://127.0.0.1:${PORT}${PFX}`;
 
 const EDGE = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 

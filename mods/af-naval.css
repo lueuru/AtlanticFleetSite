@@ -848,17 +848,35 @@ body.af-light .af-foot--rich {
 }
 /* 页脚「联系」列的小圆角图标块 */
 /* 带图标的链接：图标 + 文字靠左成组，不能继承 space-between 把文字推到最右 */
-.af-flink--ico { justify-content: flex-start; gap: 9px; }
+.af-flink--ext { justify-content: flex-start; gap: 9px; }
 .af-flink-ic {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center; justify-content: center;
   width: 22px; height: 22px;
   border-radius: 6px;
+  overflow: hidden;
   transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s;
 }
+/* 旧的内联 svg 图标（af-brandico 等）走这条 */
 .af-flink-ic .af-ico { width: 13px; height: 13px; }
-.af-flink:hover .af-flink-ic { transform: scale(1.12) rotate(-4deg); }
+/* ★ v2.46：社区入口的图标统一是**应用图像**（<img>），尺寸必须显式给。
+     不写的话img 会按原始 192×192 撑开，把整行文字压到看不见 ——
+     这就是之前 .qq 内联 svg 压住文字的同一个坑，只是换了元素类型。 */
+.af-flink-ic img {
+  width: 22px; height: 22px;
+  display: block;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+.af-flink:hover .af-flink-ic { transform: scale(1.12); }
+/* 社区入口组：与上方站内链接之间留出呼吸，且上下成组时不自成一列 */
+.af-fsocial-list {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-top: 8px; padding-top: 10px;
+  border-top: 1px solid var(--af-line, rgba(255,255,255,.10));
+}
 /* 主按钮里的品牌图标 */
 .af-btn .af-brandico { margin-right: 1px; }
 

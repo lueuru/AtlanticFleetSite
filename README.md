@@ -205,7 +205,7 @@ Pages 部署完先看这三个，缺一个就是前缀没对上：
      > /tmp/x.css && cp /tmp/x.css C:/wwwroot/default/mods/af-naval.css
    ```
    同步前先备份主站对应文件，同步后核对「主站原有内容完好」
-   （例如 `grep -c 'href="/mods/"'` 前后一致，证明 sed 没误伤正文），
+   （例如 `grep -c 'href="/AtlanticFleetSite/mods/"'` 前后一致，证明 sed 没误伤正文），
    最后跑一次 `build_public.sh` 验证闭环：主站带改动 → 副本既保留改动又带前缀。
 
 ## 内容从哪来 / 怎么更新
@@ -294,7 +294,7 @@ node _verify_design.mjs    # 视觉交互判据 42 项：玻璃/层级/字号/�
 `fetch` 走 `127.0.0.1` 并显式带 `Host: default.com`（浏览器那条
 `--host-resolver-rules` 只对浏览器生效，Node 侧会真去做 DNS）。
 
-预检里调`getRetry()` 时**只写相对 PFX 的路径**（`getRetry("/mods/")`）。
+预检里调`getRetry()` 时**只写相对 PFX 的路径**（`getRetry("/AtlanticFleetSite/mods/")`）。
 `url()` 已经拼了 `PFX`，再写一次就成了
 `/AtlanticFleetSite/AtlanticFleetSite/mods/` → 404，
 而预检会把这句 404 解读成「端口上不是当前这份副本」——

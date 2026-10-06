@@ -22,7 +22,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="《大西洋舰队》Mod 仓库：浏览、搜索已收录的 Mod，复制分享码即可在游戏内一键安装；也能上传你的模型、音频、界面、剧本。">
 <meta name="theme-color" content="#0a1018">
-<link rel="icon" type="image/svg+xml" href="/AtlanticFleetSite/media/brand/af-brand.svg">
+<link rel="icon" type="image/png" href="/AtlanticFleetSite/favicon.png">
+<link rel="apple-touch-icon" href="/AtlanticFleetSite/favicon.png">
+<link rel="mask-icon" href="/AtlanticFleetSite/media/brand/af-brand.svg" color="#0d1b26">
 <!-- ★ v2.36：预加载首屏真正要用的两个字体。
      五个字体合计 1.19MB，浏览器要等 CSS 解析完才发现要用哪些字体，
      慢网下首屏会先用系统字体画一遍、字体到位后再重画一遍（内容跳动）。
@@ -315,10 +317,13 @@
 
 <header class="af-topbar af-glass af-glass--edge">
   <a class="af-brand" href="/AtlanticFleetSite/docs/">
-    <!-- ★ v2.42：原先这里放的是**游戏原版应用图标**（从APK 里抽出来的战舰照）。
-         那是《大西洋舰队》的官方美术资产 —— 属于第三方版权，不能当本站的品牌标识。
-         现在换成自有的雷达罗盘标识（/media/brand/af-brand.svg），与 favicon 同一份。 -->
-    <span class="mark"><img src="/AtlanticFleetSite/media/brand/af-brand.svg" alt="" width="34" height="34"></span>
+    <!-- ★ v2.46：按作者要求，品牌位图标统一改回《大西洋舰队》应用图像
+         （/media/game/appicon.png），不再用自有的雷达罗盘标识。
+         ★ 版权提示（v2.42 曾记录，仍然成立）：
+           应用图像是从游戏 APK 里抽出来的官方美术资产，属于第三方版权。
+           v2.42 曾以「不能当本站品牌标识」为由换成自绘罗盘；
+           v2.46 是作者明确要求统一视觉而改回。**对外正式发布前请自行确认使用边界。** -->
+    <span class="mark"><img src="/AtlanticFleetSite/media/game/appicon.png" alt="" width="34" height="34"></span>
     <span class="txt">
       <span class="nm">大西洋舰队 Mod 仓库</span>
       <span class="sb">ATLANTIC FLEET · MOD DEPOT</span>
@@ -504,7 +509,8 @@
 </div>
 
 <script src="/AtlanticFleetSite/mods/icp.js?v=1.1"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.20"></script>
+<script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.22"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>

@@ -6,7 +6,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>大西洋舰队 Mod 框架</title>
 <meta name="description" content="在手机上直接改《大西洋舰队》：调数值、加自己的舰船、装别人做的模型与贴图，不用连电脑、不写代码。含使用文档与 Mod 仓库。">
-<link rel="icon" type="image/svg+xml" href="/AtlanticFleetSite/media/brand/af-brand.svg">
+<link rel="icon" type="image/png" href="/AtlanticFleetSite/favicon.png">
+<link rel="apple-touch-icon" href="/AtlanticFleetSite/favicon.png">
+<link rel="mask-icon" href="/AtlanticFleetSite/media/brand/af-brand.svg" color="#0d1b26">
 <meta name="theme-color" content="#0a1018">
 <style>
 @font-face {
@@ -126,6 +128,9 @@
   .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
   .brand img {
     width: 52px; height: 52px; border-radius: 10px;
+    /* ★ 必须 object-fit: cover —— 源图是正方形，但换过不同尺寸的图时
+       不加它会按原比例拉伸变形。（与页脚图标同一个坑） */
+    object-fit: cover; flex: 0 0 52px;
     border: 1px solid var(--line);
     box-shadow: 0 8px 24px -10px var(--card-sh), inset 0 1px 0 var(--card-hi);
   }
@@ -217,18 +222,56 @@
   .foot a:hover { color: var(--brass); border-bottom-color: currentColor; }
   .foot .sep { opacity: .4; }
 
-  .qq {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 6px 13px; border-radius: 999px;
-    background: linear-gradient(150deg, #2f6ea8, #1d4a75);
-    color: #fff; text-decoration: none; font-weight: 600; font-size: 12.5px;
-    white-space: nowrap;
+  /* ---------- 社区与联系入口 ----------
+     图标统一用大西洋舰队的应用图像（media/game/appicon.png），
+     所有入口共用同一张，靠"标签文字"区分而不是靠各自的平台 logo ——
+     这样整站只有一个图标来源，风格/尺寸/间距天然一致，
+     也不会再出现"某个入口忘了换图标"的漏项。
+     ★ 尺寸锁死的原因：img 只写 width:100% 时父高不确定，
+       会按原始比例撑开压住后面的文字（旧的 .qq 内联 svg 就踩过这个）。 */
+  .foot-social {
+    display: inline-flex; flex-wrap: wrap;
+    align-items: center; gap: 8px 18px;
   }
-  /* ★ 必须锁死尺寸并禁止收缩：
-     内联 <svg> 只写 width:100% 时父高不确定，它会按 viewBox 撑开压住后面的文字
-     （之前这条规则只写在 max-width:560px 里，桌面端完全没生效）。
-     用 flex:0 0 + 固定尺寸，svg 用绝对定位填满，两个断点都不会再压字。 */
-  .qq { position: relative; }
+  .flink {
+    display: inline-flex; align-items: center; gap: 7px;
+    white-space: nowrap;
+    /* 24px 图标 + 7px 间距，与正文 13px 字号配比舒适 */
+  }
+  /* 分隔符由链接自己生成（非独立元素），换行时不会落单成孤点。
+     配色跟 .foot .sep 保持一致（用 opacity，不用固定色，两种主题都适配）。 */
+  .foot-social .flink + .flink::before {
+    content: "·";
+    opacity: .4;
+    margin-right: 11px;      /* 与 .foot-social 的 gap 18px 一起构成总间距 */
+    font-size: 13px;
+  }
+  .flink-ic {
+    flex: 0 0 24px;      /* 容器也锁死：否则 img 收缩时圆角会溢出容器 */
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+  }
+  .flink img {
+    width: 24px; height: 24px;
+    flex: 0 0 24px;      /* 禁止收缩，否则长文字会把图标挤扁 */
+    display: block;
+    border-radius: 6px;   /* 与应用图标本身的圆角呼应 */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .28);
+  }
+  .flink:hover img, .flink:focus-visible img {
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .34);
+  }
+  .flink img { transition: transform .18s cubic-bezier(.16, 1, .3, 1),
+                        box-shadow .18s cubic-bezier(.16, 1, .3, 1); }
+  /* 键盘焦点必须有可见环，否则纯键盘用户看不出焦点在哪 */
+  .flink:focus-visible {
+    outline: 2px solid var(--brass);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
   /* 备案号与访问方式提示 */
   .af-legal, .af-via {
     margin-top: 12px;
@@ -241,13 +284,6 @@
     font-family: ui-monospace, "AF Mono", Consolas, monospace;
     color: var(--ink-dim);
   }
-  .qq svg {
-    position: relative;
-    width: 15px; height: 15px;
-    flex: 0 0 15px;
-    display: block;
-  }
-  .qq span, .qq { min-width: 0; }
 
   @media (max-width: 560px) {
     .card { padding: 18px; }
@@ -262,7 +298,12 @@
       display: inline-flex; align-items: center;
       min-height: 40px; padding: 6px 4px;
     }
-    .foot .qq { min-height: 40px; padding: 6px 15px; }
+    /* 社区入口的图标在触摸端放大到 26px：24px 在高密度屏上偏小，
+       手指点不准是实测过的（对应触控目标 ≥44px 的要求，
+       纵向 40px 由 padding 补足，图标本身只是视觉放大）。
+       ★ 容器 .flink-ic 必须同步放大 —— 只改 img 会让容器还是 24px，
+       图标从容器里溢出来，圆角和间距都会错位。 */
+    .flink-ic, .flink img { width: 26px; height: 26px; flex-basis: 26px; }
   }
 </style>
 </head>
@@ -271,7 +312,10 @@
 
 <div class="wrap">
   <div class="brand">
-    <img src="/AtlanticFleetSite/media/brand/af-brand.svg" alt="">
+    <!-- ★ v2.46：品牌位图标也统一用大西洋舰队应用图像。
+         原先是自有的「雷达罗盘」SVG（/media/brand/af-brand.svg），
+         按作者要求全站统一为战舰应用图像，不再保留两套标识。 -->
+    <img src="/AtlanticFleetSite/media/game/appicon.png" alt="" width="52" height="52">
     <span>
       <span class="nm">大西洋舰队 Mod 框架</span>
       <span class="sb">ATLANTIC FLEET · MOD FRAMEWORK</span>
@@ -308,8 +352,16 @@
   </div>
 
   <div class="foot">
-    <!-- ★ v2.42：原先这里是两个第三方平台入口，
-         其中还内联了一整段第三方品牌路径。全部移除，改为站内去向。 -->
+    <!-- 社区与联系入口：全部由 /mods/links.js 的 AF_LINKS 渲染。
+         ★ 为什么要改成 JS 渲染：
+           这些入口曾被当作「第三方品牌残留」整段删掉过（v2.42），
+           但 QQ 群和 B 站是作者自己的社区，不是第三方 —— 该恢复。
+           而地址若散落在三个页面里，补一次漏一次。
+           现在**唯一数据源是 mods/links.js**，页面只负责渲染。
+           没填地址的入口会自动不出现，不会渲染成坏链接。 -->
+    <nav class="foot-social" id="af-social" aria-label="社区与联系"></nav>
+
+    <span class="sep">·</span>
     <a href="/AtlanticFleetSite/docs/credits/">作者与致谢</a>
     <span class="sep">·</span>
     <a href="/AtlanticFleetSite/docs/faq/">常见问题</a>
@@ -329,6 +381,65 @@
        这时 IP 访问是正常路径。给访客一句说明，避免以为是网站坏了。 -->
   <div class="af-via" id="af-via" hidden></div>
 </div>
+  <script>
+    // 社区与联系入口：唯一数据源是 /mods/links.js（AF_LINKS）。
+    // ★ 与上面的备案号同理，首页不引 af-naval.js（那会连带引入主题、
+    //   粒子、自定义光标等副作用），所以单独引 links.js。
+    // ★ 为什么要动态渲染而不是直接写 <a>：
+    //   地址还没填的那几项（GitHub / 邮箱 / Discord / 微博）不能露出坏链接。
+    //   JS 里「空则不渲染」是唯一诚实的做法 —— 写死<a href="#"> 会让人
+    //   点进空页，SEO 也当成站内链接。填好地址刷新就自动出现。
+    (function () {
+      var s = document.createElement('script');
+      s.src = '/AtlanticFleetSite/mods/links.js?v=1.0';
+      s.onload = function () {
+        var L = window.AF_LINKS;
+        var box = document.getElementById('af-social');
+        if (!L || !L.list || !L.list.length || !box) return;
+        var frag = document.createDocumentFragment();
+        L.list.forEach(function (it, i) {
+          // ★ 分隔符不能作为独立元素插在两个 <a> 中间 ——
+          //   flex 换行时它可能被甩到下一行行首，页面就出现一个孤零零的「·」。
+          //   （移动端实测：第 3 行行首、第 4 行行尾各挂一个点。）
+          //   改成用 .flink + .flink::before 生成，分隔符跟着链接走，永远不会落单。
+          var a = document.createElement('a');
+          a.className = 'flink flink--' + it.key;
+          a.href = it.href;
+          a.title = it.title;
+          // ★ 图标 + 文字要分两个节点，不能用 a.textContent = it.text ——
+          //   那会把整个 <a> 的内容整个替换成纯文字，图标一点都进不去。
+          //   （v2.46 实测踩过：链接全对、target/rel 全对，唯独 6 个入口零图标。）
+          if (it.icon) {
+            var ic = document.createElement('span');
+            ic.className = 'flink-ic';
+            var img = document.createElement('img');
+            img.src = it.icon;
+            img.alt = '';
+            img.width = 24;                 // 属性兜底，CSS 再约束一次
+            img.height = 24;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            ic.appendChild(img);
+            a.appendChild(ic);
+          }
+          var tx = document.createElement('span');
+          tx.className = 'flink-t';
+          tx.textContent = it.text;
+          a.appendChild(tx);
+          // 外链一律新标签打开并切断 opener —— target="_blank" 不带
+          // rel="noopener" 时，新页面能用 window.opener 反向操纵本页。
+          if (it.external) {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+          }
+          frag.appendChild(a);
+        });
+        box.appendChild(frag);
+      };
+      document.head.appendChild(s);
+    })();
+  </script>
+
   <script>
     // 备案号：全站唯一数据源在 /mods/icp.js?v=1.1（首页刻意不加载 af-naval.js，
     // 那会连带引入主题、粒子、自定义光标等副作用，所以单独引这一个极小的文件）。
