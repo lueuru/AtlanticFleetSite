@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420" role="img" aria-label="大西洋舰队 Mod 框架">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2ee6c8" stop-opacity=".30"/>
+      <stop offset="55%" stop-color="#1a7a6c" stop-opacity=".12"/>
+      <stop offset="100%" stop-color="#2ee6c8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="scope" cx="50%" cy="45%" r="62%">
+      <stop offset="0%" stop-color="#0d2a3d"/>
+      <stop offset="70%" stop-color="#061420"/>
+      <stop offset="100%" stop-color="#03080f"/>
+    </radialGradient>
+    <linearGradient id="ship" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a8f5e5"/>
+      <stop offset="60%" stop-color="#5cf0d8"/>
+      <stop offset="100%" stop-color="#2ee6c8"/>
+    </linearGradient>
+    <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#58f0d8" stop-opacity=".38"/>
+      <stop offset="100%" stop-color="#58f0d8" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="scopeClip">
+      <circle cx="210" cy="210" r="176"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="210" cy="210" r="200" fill="url(#glow)"/>
+
+  <!-- 雷达屏底 -->
+  <circle cx="210" cy="210" r="176" fill="url(#scope)"/>
+  <circle cx="210" cy="210" r="176" fill="none" stroke="#2ee6c8" stroke-opacity=".55" stroke-width="1.6"/>
+  <circle cx="210" cy="210" r="166" fill="none" stroke="#2ee6c8" stroke-opacity=".18" stroke-width="1"/>
+
+  <g clip-path="url(#scopeClip)">
+    <!-- 海图网格 -->
+    <g stroke="#2ee6c8" stroke-opacity=".12" stroke-width="1">
+      <line x1="34" y1="122" x2="386" y2="122"/><line x1="34" y1="210" x2="386" y2="210"/>
+      <line x1="34" y1="298" x2="386" y2="298"/>
+      <line x1="122" y1="34" x2="122" y2="386"/><line x1="210" y1="34" x2="210" y2="386"/>
+      <line x1="298" y1="34" x2="298" y2="386"/>
+    </g>
+    <!-- 距离环 -->
+    <g fill="none" stroke="#2ee6c8" stroke-opacity=".22" stroke-width="1">
+      <circle cx="210" cy="210" r="54"/><circle cx="210" cy="210" r="108"/><circle cx="210" cy="210" r="158"/>
+    </g>
+    <!-- 扫描扇形 -->
+    <path d="M210 210 L210 34 A176 176 0 0 1 334 86 Z" fill="url(#sweep)"/>
+    <line x1="210" y1="210" x2="334" y2="86" stroke="#58f0d8" stroke-width="2" stroke-opacity=".85"/>
+
+    <!-- 舰船（雷达回波） -->
+    <g transform="translate(210 214) translate(-104 0) scale(1.05)" opacity=".96">
+      <path d="M0 46 L13 14 L20 32 L84 32 L92 8 L100 32 L164 32 L171 14 L184 46 Z" fill="url(#ship)"/>
+      <rect x="76" y="0" width="30" height="16" rx="2" fill="#c9fbf0"/>
+      <rect x="88" y="-14" width="4.5" height="16" fill="#c9fbf0"/>
+      <path d="M0 46 L184 46" stroke="#061420" stroke-width="2.4" opacity=".5"/>
+    </g>
+
+    <!-- 目标光点 -->
+    <g>
+      <circle cx="292" cy="150" r="4.6" fill="#ffb547"/>
+      <circle cx="292" cy="150" r="10" fill="none" stroke="#ffb547" stroke-opacity=".5" stroke-width="1.4"/>
+      <circle cx="132" cy="272" r="4" fill="#2ee6c8"/>
+      <circle cx="132" cy="272" r="9" fill="none" stroke="#2ee6c8" stroke-opacity=".45" stroke-width="1.4"/>
+    </g>
+  </g>
+
+  <!-- 罗盘刻度 -->
+  <g stroke="#2ee6c8" stroke-opacity=".5" stroke-width="1.6">
+    <line x1="210" y1="26" x2="210" y2="40"/>
+    <line x1="210" y1="380" x2="210" y2="394"/>
+    <line x1="26" y1="210" x2="40" y2="210"/>
+    <line x1="380" y1="210" x2="394" y2="210"/>
+  </g>
+
+  <!-- 四角准星 -->
+  <g stroke="#2ee6c8" stroke-opacity=".6" stroke-width="2.4" stroke-linecap="round" fill="none">
+    <path d="M52 52h18M52 52v18"/>
+    <path d="M368 52h-18M368 52v18"/>
+    <path d="M52 368h18M52 368v-18"/>
+    <path d="M368 368h-18M368 368v-18"/>
+  </g>
+
+  <!-- 中心十字 -->
+  <g stroke="#58f0d8" stroke-opacity=".8" stroke-width="1.4">
+    <line x1="198" y1="210" x2="222" y2="210"/>
+    <line x1="210" y1="198" x2="210" y2="222"/>
+  </g>
+</svg>

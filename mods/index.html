@@ -329,7 +329,7 @@
           <a class="af-navlink" href="#upload" id="navUpload">上传 Mod</a>
           <a class="af-navlink" href="#decoder">解析分享码</a>
           <a class="af-navlink" href="/AtlanticFleetSite/admin/">管理后台</a>
-          <a class="af-navlink af-navlink--bili" href="/AtlanticFleetSite/docs/credits/" rel="noopener"><span class="af-navico af-navico--bili" data-ico="author"></span>作者</a>
+          <a class="af-navlink af-navlink--author" href="/AtlanticFleetSite/docs/credits/" rel="noopener"><span class="af-navico af-navico--author" data-ico="author"></span>作者</a>
   </nav>
   <!-- ★ v2.19 手机端汉堡：实测 390px 屏上 .af-nav 宽 540px，
        「管理后台」被截断、后两项链接整条跑到屏外点不到。
@@ -1221,7 +1221,7 @@
     if (idx < 0) return { err: '这不是分享码（应以 AFMOD1: 开头）' };
     text = text.slice(idx);
     // ★ v2.24：先把整段里的空白全去掉再解析。
-    //   从 QQ / 微信 / 钉钉复制长文本时，对话气泡宽度不够就会带上换行和空格，
+    //   从聊天软件复制长文本时，对话气泡宽度不够就会带上换行和空格，
     //   atob 遇到 \n \r 会抛 InvalidCharacterError，玩家看到的是
     //   「解析失败：InvalidCharacterError」这种完全看不懂的报错。
     text = text.replace(/\s+/g, '');

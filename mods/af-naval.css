@@ -671,10 +671,10 @@ footer.af-foot--rich::before {
   color: var(--af-text-mute); font-size: 12px;
   font-family: var(--af-font-mono); letter-spacing: .04em;
 }
-/* ★ v2.42：原先是 .af-navlink--qq（顶栏群链接的常驻高亮）。
+/* ★ v2.42：原先是顶栏某个第三方入口的常驻高亮。
    该入口移除后，此高亮样式改挂到「作者」链接上 ——
    它是顶栏里唯一的"站外/关于"类入口，值得一点视觉权重。 */
-.af-navlink--bili {
+.af-navlink--author {
   color: var(--af-radar-ink) !important;
   border-color: rgba(224, 177, 92, .28) !important;
   background: rgba(224, 177, 92, .06);
@@ -854,16 +854,6 @@ body.af-light .af-foot--rich {
   transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s;
 }
 .af-flink-ic .af-ico { width: 13px; height: 13px; }
-.af-flink-ic--qq {
-  background: linear-gradient(150deg, #f0cd8a, #a87c1c);
-  color: #1a1408;
-  box-shadow: 0 0 12px -3px rgba(224, 177, 92, .5);
-}
-.af-flink-ic--bili {
-  background: linear-gradient(150deg, #ff9bc4, #ff5fa2);
-  color: #fff;
-  box-shadow: 0 0 12px -3px rgba(255, 110, 175, .8);
-}
 .af-flink:hover .af-flink-ic { transform: scale(1.12) rotate(-4deg); }
 /* 主按钮里的品牌图标 */
 .af-btn .af-brandico { margin-right: 1px; }
@@ -1101,12 +1091,12 @@ body.af-cursor-on .af-cursor-ring { opacity: 1; }
   vertical-align: -2px;
 }
 .af-navico .af-ico { width: 100%; height: 100%; }
-/* ★ v2.42：原先这里有四个品牌色类（.af-navico--qq 青蓝 #7fe6ff、
-   .af-navico--bili 粉 #ff9bc4 —— 那是两个平台的官方色）。
+/* ★ v2.42：原先这里有四个第三方平台品牌色类（青蓝 /
+   粉 —— 那是两个平台的官方色）。
    第三方入口移除后这些类只用在「作者」这一项上，
    统一到站点自己的黄铜强调色，视觉语言才与全站一致。 */
-.af-navico--bili { color: var(--af-radar); }
-.af-navlink--bili:hover {
+.af-navico--author { color: var(--af-radar); }
+.af-navlink--author:hover {
   color: var(--af-radar-ink) !important;
   border-color: rgba(224, 177, 92, .30) !important;
   background: rgba(224, 177, 92, .10) !important;
@@ -1680,7 +1670,7 @@ div[id="grid"] {
 /* ============================================================
    ★ 手机端顶栏：改成横向可滚动
    实测（390px）：导航项被 min-height 撑高后，顶栏是 nowrap 不换行，
-   于是「解析分享码」挤成 35x119 的竖排，「B 站 / QQ 群」被推到
+   于是「解析分享码」挤成 35x119 的竖排，右侧两项入口被推到
    x=334/397 —— **超出 390px 屏宽，屏幕外点不到**。
    这里让导航自己横向滚动，并把品牌名在窄屏收起来腾地方。
    ============================================================ */
@@ -1821,7 +1811,7 @@ body.af-dark {
   --af-text-dim: #a8b2bd;
   --af-text-mute: #848e9a;
   /* ★ 漏了这条：--af-radar 在浅色主题下是暗金 #8a6412（米底 4.15 勉强达标），
-     但顶栏是**深墨绿底**，暗金压深底只有 3.47:1，「QQ 群」几乎读不出来。
+     但顶栏是**深墨绿底**，暗金压深底只有 3.47:1，那个入口几乎读不出来。
      顶栏既然恒为深色，--af-radar-ink 也该在这里被钉回深色主题那一档。
      注意 admin/index.html 是硬编码顶栏（不经过本文件的变量作用域），
      那边已在页面内单独补了同样的覆盖。 */
@@ -1914,7 +1904,7 @@ body.af-dark {
 /* =========================================================
    手机端抽屉导航（v2.19）
    为什么必须做：390px 屏上 .af-nav 实际宽 540px，
-   「管理后台」被截断、「B 站」「QQ 群」整条落在屏外点不到，
+   「管理后台」被截断、右侧两项入口整条落在屏外点不到，
    而页头 overflow 又是 hidden，用户连"横向滑一下"都没辙。
    ========================================================= */
 .af-burger { display: none; }

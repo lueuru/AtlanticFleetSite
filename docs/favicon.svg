@@ -1,61 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="大西洋舰队 Mod 仓库">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="大西洋舰队 Mod 框架">
   <!--
-    ★ v2.42 自有品牌标识（雷达罗盘 · RADAR COMPASS）
-    ------------------------------------------------------------------
-    为什么换掉原来那个：它用的是**游戏原版应用图标**（从 APK 里抽出来的战舰照），
-    那是《大西洋舰队》的官方美术资产 —— 属于第三方版权，不能当作本站的品牌标识使用。
-    现在换成完全自绘的几何标识：罗盘环 + 十字刻度 + 指针 + 扫描扇形。
-
-    为什么选罗盘：
-      与站点已有的视觉语言一致（页面里到处是 .af-radar-scope 雷达扫描动效、
-      --af-radar 黄铜色强调色），标识与主题同源而不是外挂一个新图形。
-    为什么是几何而不是拟物：
-      纯几何 + 渐变没有任何第三方素材成分，法务上干净；
-      尺寸压到 16px（favicon 在标签页的实际大小）时仍能认出来。
+    站点主图标：雷达罗盘 + 舰影
+    ★ 为什么重画：原版用的是荧光青（#2ee6c8 / #58f0d8）+ 蓝色刻度，
+      与全站的黄铜配色（#e0b15c）完全打架 —— 这是「配色冲突」和
+      「左上角图标没改」两件事的同一个根因。改成黄铜单色系。
+    ★ 尺寸：导航条里的 logo 渲染成 24×24（暗色底），
+      所以所有描边都 >= 2（在 64 网格里，缩到 24px 仍有 0.75px，不糊）。
   -->
   <defs>
-    <linearGradient id="afdFace" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#12293a"/>
-      <stop offset="100%" stop-color="#050d16"/>
-    </linearGradient>
-    <linearGradient id="afdBrass" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#f0d08a"/>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#16303f"/>
+      <stop offset="100%" stop-color="#08131c"/>
+    </radialGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f2d79a"/>
       <stop offset="52%" stop-color="#e0b15c"/>
-      <stop offset="100%" stop-color="#8a6d33"/>
-    </linearGradient>
-    <!-- 扫描扇形：站内已有同名动效（af-radar-sweep），这里做静态版 -->
-    <linearGradient id="afdSweep" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#e0b15c" stop-opacity=".38"/>
-      <stop offset="100%" stop-color="#e0b15c" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#a87c1c"/>
     </linearGradient>
   </defs>
 
-  <!-- 底盘 -->
-  <rect width="64" height="64" rx="12" fill="url(#afdFace)"/>
-  <rect x="1.1" y="1.1" width="61.8" height="61.8" rx="11" fill="none"
-        stroke="url(#afdBrass)" stroke-opacity=".42" stroke-width="1.2"/>
+  <rect width="64" height="64" rx="12" fill="url(#bg)"/>
+  <rect x="1.4" y="1.4" width="61.2" height="61.2" rx="10.6"
+        fill="none" stroke="url(#brass)" stroke-opacity=".42" stroke-width="1.6"/>
 
-  <!-- 十字刻度：四向短线，指向"航海方位" -->
-  <g stroke="#e0b15c" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round">
-    <path d="M32 8.5v5.2"/><path d="M32 50.3v5.2"/>
-    <path d="M8.5 32h5.2"/><path d="M50.3 32h5.2"/>
+  <!-- 罗盘环 -->
+  <g fill="none" stroke="url(#brass)" stroke-width="2.2">
+    <circle cx="32" cy="32" r="19.5" stroke-opacity=".85"/>
+    <circle cx="32" cy="32" r="12.5" stroke-opacity=".38" stroke-width="1.5"/>
   </g>
 
-  <!-- 扫描扇形：从 12 点顺时针铺开 90°，模拟雷达扫过 -->
-  <path d="M32 32 L32 8.5 A23.5 23.5 0 0 1 55.5 32 Z" fill="url(#afdSweep)"/>
+  <!-- 扫描扇形（黄铜半透明，不刺眼） -->
+  <path d="M32 32 L32 12.5 A19.5 19.5 0 0 1 48.1 22 Z"
+        fill="url(#brass)" fill-opacity=".20"/>
 
-  <!-- 外环 + 内环 -->
-  <g fill="none" stroke="url(#afdBrass)">
-    <circle cx="32" cy="32" r="23.5" stroke-width="2.4"/>
-    <circle cx="32" cy="32" r="14.5" stroke-width="1.2" stroke-opacity=".4"/>
+  <!-- 指针 -->
+  <line x1="32" y1="32" x2="32" y2="12.5" stroke="url(#brass)" stroke-width="2.8" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="3" fill="url(#brass)"/>
+
+  <!-- 四方位刻度：只留上下左右，短而实 -->
+  <g stroke="url(#brass)" stroke-width="2" stroke-opacity=".72" stroke-linecap="round">
+    <line x1="32" y1="4.6" x2="32" y2="9.4"/>
+    <line x1="32" y1="54.6" x2="32" y2="59.4"/>
+    <line x1="4.6" y1="32" x2="9.4" y2="32"/>
+    <line x1="54.6" y1="32" x2="59.4" y2="32"/>
   </g>
 
-  <!-- 指针：指向 045°（右上），是罗盘的经典朝向 -->
-  <path d="M32 32 L48.5 15.5 L36.6 27.4 Z" fill="url(#afdBrass)"/>
-  <!-- 针尾配重：与针尖对称的小三角，让指针在 16px 下也能读出方向 -->
-  <path d="M32 32 L26.2 37.8 L24.1 34.5 Z" fill="#e0b15c" fill-opacity=".55"/>
-
-  <!-- 中心轴 -->
-  <circle cx="32" cy="32" r="3.1" fill="#0b1a26" stroke="url(#afdBrass)" stroke-width="1.5"/>
-  <circle cx="32" cy="32" r="1.05" fill="#f0d08a"/>
+  <!-- 舰影：右下方一艘侧影小船，点出「大西洋舰队」主题 -->
+  <g fill="url(#brass)" fill-opacity=".92">
+    <path d="M40 40.5h12.5l-2 4.2H42.2z"/>
+    <path d="M43.4 36.4h6.2l1.5 3.6H41.9z"/>
+    <rect x="45.4" y="31.6" width="2.1" height="4.6" rx=".7"/>
+  </g>
+  <!-- 尾迹 -->
+  <path d="M37.2 44.6c1.6 0 2.6.7 2.6 1.6s-1 1.6-2.6 1.6"
+        fill="none" stroke="url(#brass)" stroke-width="1.7" stroke-opacity=".55" stroke-linecap="round"/>
 </svg>
