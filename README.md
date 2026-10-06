@@ -200,7 +200,9 @@ Pages 部署完先看这三个，缺一个就是前缀没对上：
 # 2. 同步到本仓库（会清空并重新复制站点内容，跑完整套子路径适配）
 MSYS_NO_PATHCONV=1 ./build_public.sh
 
-# 3. 浏览器真跑验收（30 项判据：服务身份、字体、Mod 卡片、下载直链、文档站骨架…）
+# 3. 浏览器真跑验收（服务保持运行，两个脚本都要跑）
+#    node _verify_subpath.mjs   部署判据 30 项
+#    node _verify_design.mjs    视觉交互判据 42 项
 #    见「验收」一节
 
 # 4. 提交推送
@@ -237,19 +239,31 @@ git add . && git commit -m "同步主站更新" && git push
 
 ## 验收
 
-改动站点后跑一遍真跑验收：
+改动站点后跑一遍真跑验收（**两个脚本都要跑**）：
 
 ```bash
 MSYS_NO_PATHCONV=1 ./build_public.sh          # 先构建（含改写器自检）
 # 起服务（务必用 _serve.py，见下）
 cd .. && python AtlanticFleetSite/_serve.py 9503
-# 跑验收
-cd AtlanticFleetSite && node _verify_subpath.mjs
+# 跑验收（服务需保持运行）
+cd AtlanticFleetSite
+node _verify_subpath.mjs   # 部署判据 30 项：三个页面的结构/资源/链接
+node _verify_design.mjs    # 视觉交互判据 42 项：玻璃/层级/字号/两端适配/降级
 ```
 
-判据覆盖三个页面（首页 / Mod 仓库 / 文档站）的 30 项：DOM 结构、资源加载、
-字体、JS 异常、入场动效降级、Mod 卡片渲染、上传区隐藏、下载链接真实可下、
-部署前缀拼接、文档站骨架与站内链接。
+两个脚本职责分离，改动范围不同就跑对应那个：
+
+| 脚本 | 项数 | 验什么 |
+|---|---|---|
+| `_verify_subpath.mjs` | 30 | 部署正确性：DOM 结构、资源加载、字体、JS 异常、Mod 卡片、下载直链、部署前缀、文档站骨架 |
+| `_verify_design.mjs` | 42 | 视觉与交互：液态玻璃真模糊、折射描边、层级令牌、六种组件状态、两端适配、reduced-motion 降级 |
+
+`_verify_design.mjs` 全部用**计算样式**判定，不看源码 —— 源码里写了
+`backdrop-filter` 不等于浏览器真的在模糊。悬停反馈用 CDP 真实鼠标事件
+（合成 MouseEvent 不触发 CSS `:hover`），手机端要同时开
+`setDeviceMetricsOverride` + `setTouchEmulationEnabled` +
+`setEmulatedMedia({hover:'none', pointer:'coarse'})` —— 只调窄视口不算触屏，
+因为 `(hover:none)` 匹配的是「设备没有精确指针」，不是「屏幕窄」。
 
 其中前 3 项是**服务身份预检** —— 起跑前先确认 9503 端口上跑的是本副本、
 不是主站根路径、也不是删改前的旧实例。这一条是踩出来的：验收一度报 27/27 全绿，
@@ -283,9 +297,40 @@ cd AtlanticFleetSite && node _verify_subpath.mjs
 - **「任意一个字体加载成功」也不算通过。**
   删掉 14 个字体里的 1 个，其余 13 个照样 loaded，判据照样报绿。
 - **同一个文件里，同类路径的规则可能相反。**
-  VitePress 的 SSR HTML 里的图片路径必须自带前缀（浏览器直接用），
+  VitePress 的 SSR HTML里的图片路径必须自带前缀（浏览器直接用），
   而 `__VP_SITE_DATA__` 里的路径必须保持裸路径（运行时 `withBase` 会再拼一次）。
   按同一套规则统一处理的结果是「这边修好、那边弄坏」。
+
+以下四条是写 `_verify_design.mjs` 时踩的，都属于「判据测的不是被测对象」：
+
+- **CSSOM 的 `rule.type` 常量不能凭记忆写。**
+  `1 = STYLE_RULE`、`4 = MEDIA_RULE`、`12 = SUPPORTS`。
+  我把「@media 的 type」写成 1，结果 39 个 `@media` 块一个都没被递归进去 ——
+  而要验的隐藏规则只写在 `@media` 里，于是判据报「样式表里找不到」，
+  看起来像产品没做适配。**先实测一次类型分布再写判断。**
+- **递归的返回值必须显式接住。**
+  `walk(r.cssRules); continue;` 把内层结果扔了，顶层永远拿不到 `@media` 里的规则。
+  症状极隐蔽：同一段逻辑「统计一遍能数到 4 条、再跑一遍找规则却得到 null」——
+  **两个症状互相矛盾就是判据自己坏掉的信号**，别急着改产品。
+- **「含关键词」不等于「命中目标」。**
+  判据原本只要「选择器含 `.af-peek`」且「声明含 `display`」就算命中，
+  结果 `:where(...,.af-peek)::after { display:none }`（关亮带伪元素的）
+  和 `@media print` 里的 `.af-peek { display:none }`（打印时隐藏的）
+  都能冒充「触屏适配已做」。**把两处真规则全删光，判据照样报绿。**
+  正解：按逗号切选择器段，要求 `.af-peek` 是独立主体，并向上检查
+  所在 `@media` 的 `conditionText` 真的含 `hover`/`pointer`/`coarse`。
+- **`c.eval(模板字符串)` 里的注释不能出现反引号或 `${`。**
+  反引号提前关闭外层模板、`${` 被当插值，报错却是
+  `missing ) after argument list` 指向几行之外的文件开头，极难定位。
+  在这类注释里描述代码一律用普通引号。
+
+### 反证测试怎么做才有效
+
+「删掉一处 → 变红」不够。如果同一条规则在两个文件里各写了一遍，
+删一处仍绿，会让你误判「判据没抓能力」或「规则本来就冗余」。
+**要删到判据真的红为止，再逐处恢复确认转绿** —— 顺便还能发现
+「同一效果在多处重复定义」这个事实本身（本站 `.af-peek{display:none}`
+就在 `af-naval.css` 和 `af-system.css` 各有一处）。
 
 ### 构建脚本顺序为什么是这个顺序
 
