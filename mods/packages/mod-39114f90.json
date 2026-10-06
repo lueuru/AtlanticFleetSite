@@ -1,0 +1,115 @@
+{
+  "modName": "铁底湾·1939 重炮纪元",
+  "author": "海狼",
+  "version": "2.1",
+  "description": "还原 1939 年大口径炮战的手感：主炮弹道更沉、散布更集中，命中后伤害更致命；代价是装填变慢、鱼雷可靠性下降。适合喜欢慢节奏对轰的老派舰长。",
+  "tags": [
+    "火力",
+    "写实",
+    "炮战"
+  ],
+  "combat": {
+    "gun": {
+      "damageMul": 1.35,
+      "spreadMul": 0.78,
+      "accuracyMul": 1.12
+    },
+    "torpedo": {
+      "damageMul": 0.85,
+      "accuracyMul": 0.9
+    },
+    "wind": {
+      "shellsMul": 1.6
+    },
+    "dc": {
+      "damageMul": 1.1
+    }
+  },
+  "repair.timeMul": 1.25,
+  "torpedo.turnMul": 0.9,
+  "ships": [
+    {
+      "class": "Ironbottom Dreadnought",
+      "type": "BB",
+      "nation": 0,
+      "tons": 42000,
+      "length": 198,
+      "beam": 28,
+      "speed": 27,
+      "range": 7200,
+      "belt": 13,
+      "turret": 15,
+      "deck": 5.5,
+      "guns": 8,
+      "caliber": 15.0,
+      "secGuns": 12,
+      "secCaliber": 5.9,
+      "torpedoes": 0,
+      "torpedoCalibre": 0,
+      "aircraft": 0,
+      "renown": 340,
+      "primaryAmmo": 320,
+      "secondaryAmmo": 480,
+      "torpedoAmmo": 0,
+      "instances": [
+        "Ironbottom",
+        "Cape Matapan"
+      ]
+    },
+    {
+      "class": "Ironbottom Battlecruiser",
+      "type": "BC",
+      "nation": 0,
+      "tons": 32000,
+      "length": 186,
+      "beam": 26,
+      "speed": 31,
+      "range": 6800,
+      "belt": 9,
+      "turret": 11,
+      "deck": 4,
+      "guns": 6,
+      "caliber": 13.5,
+      "secGuns": 10,
+      "secCaliber": 5.25,
+      "torpedoes": 0,
+      "torpedoCalibre": 0,
+      "aircraft": 1,
+      "renown": 265,
+      "primaryAmmo": 260,
+      "secondaryAmmo": 400,
+      "torpedoAmmo": 0,
+      "instances": [
+        "Ironbottom BC",
+        "Renown Line"
+      ]
+    }
+  ],
+  "fleets": [
+    {
+      "fleetName": "Battle Line Alpha",
+      "nation": 0,
+      "ships": [
+        "Ironbottom Dreadnought",
+        "Ironbottom Dreadnought",
+        "Ironbottom Battlecruiser"
+      ],
+      "date": "1 September 1939",
+      "timeofday": "Noon",
+      "distance": 120,
+      "environment": 0
+    },
+    {
+      "fleetName": "Battle Line Bravo",
+      "nation": 0,
+      "ships": [
+        "Ironbottom Battlecruiser",
+        "Ironbottom Dreadnought"
+      ],
+      "date": "1 September 1939",
+      "timeofday": "Afternoon",
+      "distance": 96,
+      "environment": 1
+    }
+  ]
+}

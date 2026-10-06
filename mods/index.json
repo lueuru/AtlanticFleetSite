@@ -1,0 +1,376 @@
+{
+  "updated": "2026-10-05T16:26:38",
+  "note": "欢迎来到大西洋舰队 Mod 仓库！复制分享码即可在游戏内「Mod 管理中心」导入。",
+  "count": 6,
+  "mods": [
+    {
+      "id": "狼群·大西洋反潜战",
+      "aid": "mod-13355d70",
+      "name": "狼群·大西洋反潜战",
+      "kind": "ship",
+      "kindLabel": "自定义舰船",
+      "assets": [],
+      "assetCount": 0,
+      "author": "海狼",
+      "version": "1.8",
+      "desc": "把战场重心交给水下：声呐与雷达探测距离大幅提升，深水炸弹、刺猬弹威力加强，鱼雷更耐用。潜艇与护航舰都对彼此更致命，狼群与猎手的博弈更紧张。",
+      "tags": [
+        "反潜",
+        "潜艇",
+        "写实"
+      ],
+      "ships": 2,
+      "fleets": 2,
+      "params": [
+        {
+          "k": "sensor.sonarRangeMul",
+          "v": 1.75,
+          "desc": ""
+        },
+        {
+          "k": "sensor.radarRangeMul",
+          "v": 1.45,
+          "desc": ""
+        },
+        {
+          "k": "dc.damageMul",
+          "v": 1.55,
+          "desc": ""
+        },
+        {
+          "k": "hedgehog.damageMul",
+          "v": 1.5,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.damageMul",
+          "v": 1.2,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.accuracyMul",
+          "v": 1.1,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.turnMul",
+          "v": 1.25,
+          "desc": ""
+        },
+        {
+          "k": "air.wingSizeMul",
+          "v": 1.3,
+          "desc": ""
+        }
+      ],
+      "size": 2754,
+      "time": "2026-10-02 12:55:03",
+      "hash": "3a6ebe6f44379572f0d0293a728fda03"
+    },
+    {
+      "id": "铁底湾·1939 重炮纪元",
+      "aid": "mod-39114f90",
+      "name": "铁底湾·1939 重炮纪元",
+      "kind": "ship",
+      "kindLabel": "自定义舰船",
+      "assets": [],
+      "assetCount": 0,
+      "author": "海狼",
+      "version": "2.1",
+      "desc": "还原 1939 年大口径炮战的手感：主炮弹道更沉、散布更集中，命中后伤害更致命；代价是装填变慢、鱼雷可靠性下降。适合喜欢慢节奏对轰的老派舰长。",
+      "tags": [
+        "火力",
+        "写实",
+        "炮战"
+      ],
+      "ships": 2,
+      "fleets": 2,
+      "params": [
+        {
+          "k": "gun.damageMul",
+          "v": 1.35,
+          "desc": ""
+        },
+        {
+          "k": "gun.spreadMul",
+          "v": 0.78,
+          "desc": ""
+        },
+        {
+          "k": "gun.accuracyMul",
+          "v": 1.12,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.damageMul",
+          "v": 0.85,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.accuracyMul",
+          "v": 0.9,
+          "desc": ""
+        },
+        {
+          "k": "wind.shellsMul",
+          "v": 1.6,
+          "desc": ""
+        },
+        {
+          "k": "dc.damageMul",
+          "v": 1.1,
+          "desc": ""
+        },
+        {
+          "k": "repair.timeMul",
+          "v": 1.25,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.turnMul",
+          "v": 0.9,
+          "desc": ""
+        }
+      ],
+      "size": 2590,
+      "time": "2026-10-02 12:55:03",
+      "hash": "91819cf167776716ee4e009338294341"
+    },
+    {
+      "id": "沙盒·舰队司令",
+      "aid": "mod-59100b9f",
+      "name": "沙盒·舰队司令",
+      "kind": "ship",
+      "kindLabel": "自定义舰船",
+      "assets": [],
+      "assetCount": 0,
+      "author": "小u",
+      "version": "3.0",
+      "desc": "为折腾而生的创意沙盒：所有内置舰级直接解锁、新战役自带起始威望、受伤立即修好、时间可自由快进慢放。想先造一支梦幻舰队再开打，这个最省事。",
+      "tags": [
+        "沙盒",
+        "创作",
+        "便利"
+      ],
+      "ships": 1,
+      "fleets": 1,
+      "params": [
+        {
+          "k": "economy.renownGainMul",
+          "v": 3.5,
+          "desc": ""
+        },
+        {
+          "k": "repair.timeMul",
+          "v": 0.0,
+          "desc": ""
+        },
+        {
+          "k": "ai.reactionMul",
+          "v": 0.85,
+          "desc": ""
+        },
+        {
+          "k": "unlock.allShips",
+          "v": 1,
+          "desc": ""
+        },
+        {
+          "k": "sandbox.startRenown",
+          "v": 120,
+          "desc": ""
+        },
+        {
+          "k": "sandbox.instantRepair",
+          "v": 1,
+          "desc": ""
+        },
+        {
+          "k": "sandbox.timeScale",
+          "v": 1.0,
+          "desc": ""
+        }
+      ],
+      "size": 1539,
+      "time": "2026-10-02 12:55:03",
+      "hash": "415b3b128e043d7012fd1896d7976b11"
+    },
+    {
+      "id": "雷雨·鱼雷快艇群",
+      "aid": "mod-67907b1f",
+      "name": "雷雨·鱼雷快艇群",
+      "kind": "ship",
+      "kindLabel": "自定义舰船",
+      "assets": [],
+      "assetCount": 0,
+      "author": "海狼",
+      "version": "1.3",
+      "desc": "大量小型快速单位贴身缠斗：鱼雷装载量足、转向灵活、命中率提升，主炮则被削弱。用密集雷网把大舰逼出航线，一场仗打得飞快。",
+      "tags": [
+        "鱼雷",
+        "快节奏",
+        "小船"
+      ],
+      "ships": 1,
+      "fleets": 1,
+      "params": [
+        {
+          "k": "torpedo.damageMul",
+          "v": 1.4,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.accuracyMul",
+          "v": 1.3,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.turnMul",
+          "v": 1.6,
+          "desc": ""
+        },
+        {
+          "k": "gun.damageMul",
+          "v": 0.65,
+          "desc": ""
+        },
+        {
+          "k": "gun.spreadMul",
+          "v": 1.2,
+          "desc": ""
+        },
+        {
+          "k": "sensor.sonarRangeMul",
+          "v": 1.2,
+          "desc": ""
+        }
+      ],
+      "size": 1739,
+      "time": "2026-10-02 12:55:03",
+      "hash": "58940b78cfc26cd2bb3ac4bc8fb49b31"
+    },
+    {
+      "id": "夜雾·雷达与风偏",
+      "aid": "mod-a9aaeb6b",
+      "name": "夜雾·雷达与风偏",
+      "kind": "ship",
+      "kindLabel": "自定义舰船",
+      "assets": [],
+      "assetCount": 0,
+      "author": "雾岛",
+      "version": "1.5",
+      "desc": "把夜战与天气推到极致：雷达决定先见谁，风偏让炮弹不断漂移。视力与科技压过吨位，弱者也能靠一次精准的首轮齐射翻盘。",
+      "tags": [
+        "夜战",
+        "科技",
+        "战术"
+      ],
+      "ships": 1,
+      "fleets": 1,
+      "params": [
+        {
+          "k": "sensor.radarRangeMul",
+          "v": 2.1,
+          "desc": ""
+        },
+        {
+          "k": "sensor.sonarRangeMul",
+          "v": 1.4,
+          "desc": ""
+        },
+        {
+          "k": "gun.accuracyMul",
+          "v": 1.25,
+          "desc": ""
+        },
+        {
+          "k": "gun.spreadMul",
+          "v": 1.3,
+          "desc": ""
+        },
+        {
+          "k": "gun.damageMul",
+          "v": 1.05,
+          "desc": ""
+        },
+        {
+          "k": "wind.shellsMul",
+          "v": 2.3,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.accuracyMul",
+          "v": 1.15,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.turnMul",
+          "v": 1.15,
+          "desc": ""
+        }
+      ],
+      "size": 1631,
+      "time": "2026-10-02 12:55:03",
+      "hash": "2713e69bce6dc58d5100b9e511ed337e"
+    },
+    {
+      "id": "决斗·航母打击群",
+      "aid": "mod-b8bcff15",
+      "name": "决斗·航母打击群",
+      "kind": "ship",
+      "kindLabel": "自定义舰船",
+      "assets": [],
+      "assetCount": 0,
+      "author": "老王",
+      "version": "2.4",
+      "desc": "航弹与舰载机是唯一主角：联队规模翻倍、航弹精度与破坏力显著提升，同时压低水面舰炮的战果。一次成功的甲板命中就能决定整场战役，考验放飞机与护航的时机。",
+      "tags": [
+        "航母",
+        "航空",
+        "快节奏"
+      ],
+      "ships": 2,
+      "fleets": 1,
+      "params": [
+        {
+          "k": "bomb.accuracyMul",
+          "v": 1.45,
+          "desc": ""
+        },
+        {
+          "k": "bomb.damageMul",
+          "v": 1.7,
+          "desc": ""
+        },
+        {
+          "k": "air.wingSizeMul",
+          "v": 1.9,
+          "desc": ""
+        },
+        {
+          "k": "gun.damageMul",
+          "v": 0.72,
+          "desc": ""
+        },
+        {
+          "k": "gun.spreadMul",
+          "v": 1.15,
+          "desc": ""
+        },
+        {
+          "k": "torpedo.damageMul",
+          "v": 0.9,
+          "desc": ""
+        },
+        {
+          "k": "sensor.radarRangeMul",
+          "v": 1.6,
+          "desc": ""
+        }
+      ],
+      "size": 2388,
+      "time": "2026-10-02 12:55:03",
+      "hash": "f6ec77b15e31f29d572c22e360bd30dc"
+    }
+  ]
+}

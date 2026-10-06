@@ -1,0 +1,77 @@
+{
+  "modName": "雷雨·鱼雷快艇群",
+  "author": "海狼",
+  "version": "1.3",
+  "description": "大量小型快速单位贴身缠斗：鱼雷装载量足、转向灵活、命中率提升，主炮则被削弱。用密集雷网把大舰逼出航线，一场仗打得飞快。",
+  "tags": [
+    "鱼雷",
+    "快节奏",
+    "小船"
+  ],
+  "combat": {
+    "torpedo": {
+      "damageMul": 1.4,
+      "accuracyMul": 1.3,
+      "turnMul": 1.6
+    },
+    "gun": {
+      "damageMul": 0.65,
+      "spreadMul": 1.2
+    },
+    "sensor": {
+      "sonarRangeMul": 1.2
+    }
+  },
+  "ships": [
+    {
+      "class": "Rain Motor Torpedo Boat",
+      "type": "TB",
+      "nation": 0,
+      "tons": 60,
+      "length": 24,
+      "beam": 6,
+      "speed": 42,
+      "range": 900,
+      "belt": 0.5,
+      "turret": 0.5,
+      "deck": 0.5,
+      "guns": 1,
+      "caliber": 1.6,
+      "secGuns": 2,
+      "secCaliber": 0.8,
+      "torpedoes": 4,
+      "torpedoCalibre": 21,
+      "aircraft": 0,
+      "renown": 55,
+      "primaryAmmo": 160,
+      "secondaryAmmo": 320,
+      "torpedoAmmo": 8,
+      "hasSonar": true,
+      "instances": [
+        "Rain",
+        "Squall",
+        "Tempest",
+        "Gust",
+        "Monsoon"
+      ]
+    }
+  ],
+  "fleets": [
+    {
+      "fleetName": "Torpedo Squadron Rain",
+      "nation": 0,
+      "ships": [
+        "Rain Motor Torpedo Boat",
+        "Rain Motor Torpedo Boat",
+        "Rain Motor Torpedo Boat",
+        "Rain Motor Torpedo Boat",
+        "Rain Motor Torpedo Boat",
+        "Rain Motor Torpedo Boat"
+      ],
+      "date": "2 August 1943",
+      "timeofday": "Dusk",
+      "distance": 45,
+      "environment": 2
+    }
+  ]
+}

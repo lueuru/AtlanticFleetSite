@@ -1,0 +1,65 @@
+{
+  "modName": "沙盒·舰队司令",
+  "author": "小u",
+  "version": "3.0",
+  "description": "为折腾而生的创意沙盒：所有内置舰级直接解锁、新战役自带起始威望、受伤立即修好、时间可自由快进慢放。想先造一支梦幻舰队再开打，这个最省事。",
+  "tags": [
+    "沙盒",
+    "创作",
+    "便利"
+  ],
+  "combat": {
+    "economy.renownGainMul": 3.5,
+    "repair.timeMul": 0.0,
+    "ai.reactionMul": 0.85
+  },
+  "unlock.allShips": 1,
+  "sandbox.startRenown": 120,
+  "sandbox.instantRepair": 1,
+  "sandbox.timeScale": 1.0,
+  "ships": [
+    {
+      "class": "Sandbox Leviathan",
+      "type": "BB",
+      "nation": 0,
+      "tons": 72000,
+      "length": 256,
+      "beam": 36,
+      "speed": 30,
+      "range": 12000,
+      "belt": 18,
+      "turret": 21,
+      "deck": 9,
+      "guns": 9,
+      "caliber": 18.1,
+      "secGuns": 12,
+      "secCaliber": 6.1,
+      "torpedoes": 0,
+      "torpedoCalibre": 0,
+      "aircraft": 4,
+      "renown": 620,
+      "primaryAmmo": 480,
+      "secondaryAmmo": 560,
+      "torpedoAmmo": 0,
+      "instances": [
+        "Leviathan",
+        "Behemoth"
+      ]
+    }
+  ],
+  "fleets": [
+    {
+      "fleetName": "Sandbox Grand Fleet",
+      "nation": 0,
+      "ships": [
+        "Sandbox Leviathan",
+        "Sandbox Leviathan",
+        "Sandbox Leviathan"
+      ],
+      "date": "1 January 1944",
+      "timeofday": "Noon",
+      "distance": 140,
+      "environment": 0
+    }
+  ]
+}

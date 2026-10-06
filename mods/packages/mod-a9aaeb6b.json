@@ -1,0 +1,76 @@
+{
+  "modName": "夜雾·雷达与风偏",
+  "author": "雾岛",
+  "version": "1.5",
+  "description": "把夜战与天气推到极致：雷达决定先见谁，风偏让炮弹不断漂移。视力与科技压过吨位，弱者也能靠一次精准的首轮齐射翻盘。",
+  "tags": [
+    "夜战",
+    "科技",
+    "战术"
+  ],
+  "combat": {
+    "sensor": {
+      "radarRangeMul": 2.1,
+      "sonarRangeMul": 1.4
+    },
+    "gun": {
+      "accuracyMul": 1.25,
+      "spreadMul": 1.3,
+      "damageMul": 1.05
+    },
+    "wind": {
+      "shellsMul": 2.3
+    },
+    "torpedo": {
+      "accuracyMul": 1.15,
+      "turnMul": 1.15
+    }
+  },
+  "ships": [
+    {
+      "class": "Night Cruiser",
+      "type": "CA",
+      "nation": 0,
+      "tons": 11500,
+      "length": 180,
+      "beam": 19,
+      "speed": 32,
+      "range": 9000,
+      "belt": 5.5,
+      "turret": 6,
+      "deck": 3,
+      "guns": 9,
+      "caliber": 8.0,
+      "secGuns": 8,
+      "secCaliber": 4.7,
+      "torpedoes": 8,
+      "torpedoCalibre": 24,
+      "aircraft": 3,
+      "renown": 235,
+      "primaryAmmo": 380,
+      "secondaryAmmo": 320,
+      "torpedoAmmo": 12,
+      "hasSonar": true,
+      "instances": [
+        "Nightfall",
+        "Ember",
+        "Sable"
+      ]
+    }
+  ],
+  "fleets": [
+    {
+      "fleetName": "Night Action Screen",
+      "nation": 0,
+      "ships": [
+        "Night Cruiser",
+        "Night Cruiser",
+        "Night Cruiser"
+      ],
+      "date": "13 November 1942",
+      "timeofday": "Night",
+      "distance": 70,
+      "environment": 3
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# 大西洋舰队 Mod 框架 · 文档站
+# 允许搜索引擎正常收录文档内容
+
+User-agent: *
+Allow: /docs/
+
+# 不希望被收录的（避免索引派生数据与内部路径）
+Disallow: /docs/.vitepress/
+Disallow: /docs/assets/chunks/
+
+# 站点地图
+Sitemap: http://160.202.241.220/docs/sitemap.xml
+
+# 礼貌爬取间隔（秒）
+Crawl-delay: 1

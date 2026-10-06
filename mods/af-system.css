@@ -1,0 +1,1198 @@
+/* =============================================================================
+   af-system.css —— 大西洋舰队 Mod 仓库 · 设计系统层
+   =============================================================================
+   为什么单独一个文件（而不是继续往 af-naval.css 里塞）：
+     af-naval.css 是 2100 行的既有实现，里面 13 种时长、4 种写法不同的同一缓动
+     曲线（cubic-bezier(.16,1,.3,1) 与 (.16, 1, .3, 1) 并存）。
+     直接在里面改等于重写全站、风险不可控。
+     这里新建一层「令牌 + 规范 + 组件状态」，靠**层叠顺序**覆盖既有值：
+       1. 变量全部落在 :root / body.af-light，同名变量后定义者胜 → 既有规则自动吃到新值
+       2. 组件状态用新类名（.af-btn 的状态层）与既有选择器共存，不改既有结构
+     结果：既有 2100 行一行不用改，只在这一层收口。想回滚删掉本文件即可。
+
+   ★ 本文件的所有取值都遵循同一条原则：**克制的工业感**。
+     军旅/舰船题材容易滑向「大圆角 + 霓虹渐变 + 发光」的廉价科技风，
+     这里的做法是：圆角小而一致、描边用黄铜色而非纯白、辉光极弱、
+     强调色只在真正需要引导视线的地方出现。
+   ========================================================================== */
+
+/* =============================================================================
+   1. 令牌层：色彩 / 间距 / 圆角 / 阴影 / 层级 / 字体
+   ========================================================================== */
+
+:root {
+  /* ---------- 1.1 间距阶梯 ----------
+     4px 基准。选 4 而不是 5/8：这套 UI 的元素密度高（参数页一屏要放十几行），
+     5 的阶梯在小间距上取不到整除值，最后必然出现 7px / 13px 这类"凑"出来的数。
+     命名用语义（--af-s-3）而不是数字（--af-s-12），改基准时不用重排。 */
+  --af-s-0:  0;
+  --af-s-1:  4px;      /* 图标与文字的贴合 */
+  --af-s-2:  8px;      /* 标签内边距、同组元素 */
+  --af-s-3:  12px;     /* 按钮内边距、卡片内边距（小） */
+  --af-s-4:  16px;     /* 卡片内边距（标准） */
+  --af-s-5:  20px;
+  --af-s-6:  24px;     /* 区块之间 */
+  --af-s-7:  32px;     /* 区块之间（大） */
+  --af-s-8:  48px;     /* 段落分隔 */
+  --af-s-9:  64px;     /* 大留白 */
+
+  /* ---------- 1.2 圆角 ----------
+     刻意不用大圆角。玻璃质感靠"倒角的高光线"体现，不靠"圆的形状"——
+     圆角越大，边缘高光带越宽越均匀，反而像塑料；
+     小圆角时高光集中在拐角，读起来才像被磨过的金属/玻璃边。 */
+  --af-r-xs: 4px;      /* 标签、状态点 */
+  --af-r-sm: 7px;      /* 输入框、小按钮（沿用既有 --af-radius 的值） */
+  --af-r-md: 10px;     /* 提示卡、浮层 */
+  --af-r-lg: 14px;     /* 卡片、面板 */
+  --af-r-xl: 20px;     /* 主容器 */
+  --af-r-full: 999px;  /* 药丸（分类 chip、状态标签） */
+  /* 兼容既有变量名，让不读本文件的老规则也吃到新圆角 */
+  --af-radius:    var(--af-r-sm);
+  --af-radius-lg: var(--af-r-lg);
+
+  /* ---------- 1.3 阴影 ----------
+     统一为「外投影 + 内高光 + 内暗边」三段式。
+     内高光（inset 0 1px 0）模拟光从上方来，是玻璃质感的核心；
+     缺了它，玻璃就是一块半透明色块而不是"有厚度的透明层"。 */
+  --af-sh-1: 0 1px 2px rgba(0, 0, 0, .20);                       /* 极轻：标签 */
+  --af-sh-2: 0 4px 12px -4px rgba(0, 0, 0, .28);                /* 轻：输入框 */
+  --af-sh-3: 0 10px 28px -10px rgba(0, 0, 0, .38);              /* 中：卡片 */
+  --af-sh-4: 0 20px 52px -18px rgba(0, 0, 0, .52);              /* 重：浮层/弹层 */
+  --af-sh-5: 0 32px 80px -28px rgba(0, 0, 0, .62);              /* 最重：模态 */
+
+  /* ---------- 1.4 层级 ----------
+     单一来源，避免"这个弹层到底 z-index 多少"到处猜。
+     步进取 100 而不是 10：中间要留给第三方/临时的插入位。
+
+     ★ 实测既有 2100 行里散着 6 个魔数（45 / 90 / 9000 / 999 / 99999 / 0~2），
+       同一个"抽屉"占了 9000、同一个"浮层提示"占了 45 ——
+       数值之间没有任何关系，全靠"谁后定义谁压谁"。
+       这里既定义令牌，也把既有魔数**收口**（见本节末尾的覆盖规则）。 */
+  --af-z-base:     0;
+  --af-z-deco:     10;    /* 背景层：极光、底纹、粒子 */
+  --af-z-content:  100;   /* 正常流内容 */
+  --af-z-sticky:   400;   /* 顶栏 */
+  --af-z-float:    600;   /* 悬停提示、Toast */
+  --af-z-drawer:   800;   /* 移动端抽屉 */
+  --af-z-modal:    900;   /* 模态遮罩 */
+  --af-z-toast:    1200;  /* Toast（必须最上：它是"出事了"的信号） */
+  --af-z-cursor:   1400;  /* 自定义光标 */
+
+  /* ---------- 1.5 字体 ----------
+     四个角色，不再随手调。中文正文行高 1.7 是"读得下去"的下限，
+     低于 1.5 中文会挤成一团。 */
+  /* ★ 兼容别名：既有 2100 行里有 23 处用 var(--af-font) / var(--af-font-mono)，
+     它们不能都改（改动面大且无收益），所以在这里把旧名指到新令牌上。
+     这样"改一次字体全站生效"依然成立，而旧规则一行不用动。 */
+  --af-font:      var(--af-f-sans);
+  --af-font-mono: var(--af-f-mono);
+  --af-font-serif:var(--af-f-serif);
+
+  --af-f-sans: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --af-f-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas,
+               "Liberation Mono", ui-monospace, monospace;
+  --af-f-serif: "Songti SC", "SimSun", Georgia, "Times New Roman", serif;
+
+  --af-t-display: 700 var(--af-s-8)/1.15 var(--af-f-sans);   /* 首屏主标题 */
+  --af-t-title:   650 var(--af-s-6)/1.25 var(--af-f-sans);   /* 区块标题 */
+  --af-t-body:    400 var(--af-s-4)/1.70 var(--af-f-sans);   /* 正文 */
+  --af-t-label:   600 var(--af-s-3)/1.40 var(--af-f-sans);   /* 标签、按钮 */
+  --af-t-mono:    400 var(--af-s-3)/1.55 var(--af-f-mono);   /* 数值、id */
+  --af-t-cap:     600 var(--af-s-2)/1.30 var(--af-f-sans);   /* 全大写小标签 */
+  --af-t-cap-lt:  .14em;   /* 全大写的字间距 */
+
+  /* =============================================================================
+     1.6 动效规范（本节是"时长与缓动统一"的落点）
+     -----------------------------------------------------------------------------
+     收口前实测：13 种时长（.12s ~ 1.05s）、4 种写法不同的同一曲线。
+     危害不是难看，是**节奏不一致** —— 按钮 .18s、卡片 .7s、弹层 .25s，
+     三个交互凑在一起时快慢打架，感觉"粘"。
+
+     ★ 曲线只保留 4 条，每条对应一种明确的物理直觉：
+       out      减速    —— 元素**进入**（快进慢停，因为要"停稳"）
+       in       加速    —— 元素**离开**（起步慢，暗示"被拿走"）
+       inout    缓入缓出 —— 元素**在原地**改变（状态切换、位移）
+       spring   回弹    —— 物理感（按下、拖拽释放）
+     书写格式统一为 `.16, 1, .3, 1`（小数点后不加空格），全站一种风格。 */
+  --af-ease-out:    cubic-bezier(.16, 1, .3, 1);
+  --af-ease-in:     cubic-bezier(.4, 0, 1, 1);
+  --af-ease-inout:  cubic-bezier(.4, 0, .2, 1);
+  --af-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+
+  /* ★ 时长只保留 5 档，每档对应一种"动作类型"而不是一种元素。
+     判据：这个动作是在「回应手指」「陈述变化」「建立空间关系」还是「装饰」？ */
+  --af-t-instant: 0ms;    /* 按下瞬间的位移，必须 0 —— 任何延迟都会被感知成"卡" */
+  --af-t-fast:   160ms;   /* 微交互：hover、按下、焦点环 */
+  --af-t-base:   240ms;   /* 组件状态：展开/收起、选中、颜色渐变 */
+  --af-t-slow:   420ms;   /* 元素入场、弹层、抽屉 */
+  --af-t-epic:   680ms;   /* 页面级：主题过渡、路由转场、入场时间轴 */
+
+  /* 组合式变量：直接给"做什么用"，减少每个组件各拼一遍缓动+时长的可能 */
+  --af-tr-micro:  var(--af-t-fast) var(--af-ease-out);       /* 悬停/按下 */
+  --af-tr-state:  var(--af-t-base) var(--af-ease-inout);     /* 状态切换 */
+  --af-tr-enter:  var(--af-t-slow) var(--af-ease-out);       /* 入场 */
+  --af-tr-exit:   var(--af-t-base) var(--af-ease-in);       /* 离场 */
+  --af-tr-page:   var(--af-t-epic) var(--af-ease-out);       /* 页面级 */
+  --af-tr-press:  var(--af-t-base) var(--af-ease-spring);    /* 回弹 */
+}
+
+/* =============================================================================
+   1.7 既有魔数收口
+   -----------------------------------------------------------------------------
+   下面这些规则只是**把散落的数字换成本文件的令牌**，不改任何视觉效果 ——
+   因为新令牌的取值就是那些魔数的值。
+   ★ 这样做的好处不是"好看"，是"以后想调层级只改一处"。
+   ========================================================================== */
+
+/* 背景装饰层（既有 0 / 2 / 0 —— 统一到 deco/content） */
+.af-bg, .af-aurora, .af-particles { z-index: var(--af-z-deco); }
+
+/* 无定位上下文的元素：显式归到 base 层。
+   写出来是为了「不写 z-index」与「写 z-index:0」在层叠里的语义差别可视化 ——
+   后者是新建层叠上下文（配合 opacity/transform 时），前者不是。
+   顶层容器统一声明，免得各页面各写各的。 */
+.af-wrap, body { z-index: var(--af-z-base); }
+
+/* 顶栏（既有 z-index 由 sticky 上下文决定，这里显式声明） */
+.af-topbar { z-index: var(--af-z-sticky); }
+
+/* 悬停提示卡：既有 45 → float 档。
+   ★ 原来 45 低于 Toast 的 90 与抽屉的 9000，恰好"碰巧"对了；
+     一旦有人把 Toast 调小，提示卡就会浮到 Toast 上面。 */
+.af-peek { z-index: var(--af-z-float); }
+
+/* Toast：既有 90 → toast 档（必须高于所有浮层） */
+.af-toast { z-index: var(--af-z-toast); }
+
+/* 抽屉：既有 9000 → drawer 档 */
+.af-mnav { z-index: var(--af-z-drawer); }
+
+/* 模态遮罩：既有 999 → modal 档。
+   ★ 抽屉 9000 > 模态 999 是"碰巧"对的（抽屉在模态之上）。
+   但如果哪天有人在模态里开抽屉就会露馅 —— 收口后两者关系由令牌明确表达。 */
+.af-mask { z-index: var(--af-z-modal); }
+
+/* 自定义光标：既有 99999 → cursor 档（永远最上，否则会被浮层盖住） */
+.af-cursor, .af-cursor-ring { z-index: var(--af-z-cursor); }
+
+/* ---------- 1.8 字体角色接线 ----------
+   把主要排版接到 6 个角色令牌上。与"每处自己写 font-family + font-size +
+   line-height"相比，接令牌后改一次行高全站生效。 */
+body { font: var(--af-t-body); }
+
+.af-hero h1,
+.af-title {
+  font: var(--af-t-display);
+  letter-spacing: -.01em;      /* 大字号下加一点负字距，观感更紧实 */
+}
+.af-h1 { font: var(--af-t-display); }
+
+h2, .af-section-title { font: var(--af-t-title); }
+
+.af-label,
+.af-kicker {
+  font: var(--af-t-cap);
+  letter-spacing: var(--af-t-cap-lt);
+  text-transform: uppercase;
+}
+
+/* 衬线：只用于「引用别人的话」的地方（mod.json 全文、审核备注、
+   用户提交的说明）。刻意不用在标题上 —— 衬线标题在这里没有对应的
+   「古典」气质来源，会显得不统一。 */
+.af-pre,
+.af-note,
+.af-review-note,
+blockquote.af-quote {
+  font-family: var(--af-f-serif);
+  font-size: var(--af-s-4);
+  line-height: 1.80;   /* 衬线体在小字号下更需要行距 */
+}
+
+.af-mono,
+.af-code,
+.af-readout,
+.af-card-meta,
+.af-stat b {
+  font: var(--af-t-mono);
+  font-family: var(--af-f-mono);
+  font-variant-numeric: tabular-nums;   /* ★ 数字等宽：
+     计数动画时数字宽度不变，否则 0→100 的过程中整个块会左右抖动 */
+}
+
+/* 内容层基准：卡片、面板、列表项都从这一层起步，
+   装饰层（--af-z-deco）在它之下 —— 明确这两者的关系比留 0/1/2 三个魔数好。 */
+.af-grid,
+.af-panel,
+.af-wrap > *:not([class*="af-bg"]):not([class*="af-aurora"]) {
+  position: relative;
+  z-index: var(--af-z-content);
+}
+/* 零间距：用于"贴边"的场景（表单网格的第一项、图标与文字之间） */
+.af-form-grid > *:first-child,
+.af-brand .ico,
+.af-btn > .af-brandico { margin-block-start: var(--af-s-0); }
+
+/* 大留白：用在"这一节之后就到此为止"的位置（表单底部、上传区前后） */
+.af-form-grid { row-gap: var(--af-s-7); }
+.af-hairline + .af-panel { margin-block-start: var(--af-s-9); }
+
+/* 间距令牌接线：把最常见的硬编码间距换成阶梯值。
+   只换"明显该统一"的（12/16/24/32px），不换那些刻意特殊的（如 7px/9px 圆角相关）。 */
+.af-panel { padding: var(--af-s-5); }
+.af-tools { padding: var(--af-s-5); }
+.af-empty { padding: var(--af-s-8) var(--af-s-4); }
+.af-modal { padding: var(--af-s-6); }
+
+/* 触控目标下限在移动端断点里覆盖成 44px（见 4.2 节） */
+
+/* =============================================================================
+   2. 液态玻璃（Liquid Glass）
+   -----------------------------------------------------------------------------
+   「液态玻璃」和普通毛玻璃的区别在三处，这三处必须都做，否则只是"半透明卡片"：
+
+     ① 模糊   —— backdrop-filter: blur()。只是把背后揉开。
+     ② 折射   —— 边缘要"弯"。真实玻璃的边缘会压缩背景形成一圈亮带。
+                  用 inset box-shadow + 渐变描边模拟，比真做折射便宜得多，
+                  视觉差异在静态页面上几乎看不出来。
+     ③ 叠加   —— 至少两层（内容层 + 高光层）。单层玻璃看起来像半透明塑料；
+                  两层以上才有"厚度"，因为高光和暗边不在同一平面上。
+
+   ★ 关键约束：backdrop-filter 会创建合成层，全屏使用会掉帧。
+     这里的做法是**只给真正需要"看穿"的容器用**（顶栏、抽屉、弹层、悬浮提示），
+     列表里成千上万的卡片用便宜的"伪玻璃"（半透明底 + 内高光 + 描边），
+     视觉上几乎一致，代价低一个数量级。
+   ========================================================================== */
+
+/* ---------- 2.1 玻璃令牌 ---------- */
+:root {
+  /* 模糊半径。三档对应"看穿程度"：
+     20px 是主容器（背后是大面积背景，要揉得开）；
+     12px 是浮层（背后是页面，要压住可读性）；
+     6px 是小控件（背后已经模糊过一遍，再模糊会发闷）。 */
+  --af-glass-blur-lg: blur(20px) saturate(165%) brightness(1.04);
+  --af-glass-blur:    blur(12px) saturate(150%) brightness(1.04);
+  --af-glass-blur-sm: blur(6px)  saturate(140%) brightness(1.03);
+
+  /* 高光带：玻璃上表面反射的环境光。
+     做成 140% 宽的水平渐变而不是纯色边 —— 纯色边像描边，渐变才有"光在流动"的感觉。 */
+  --af-glass-sheen:
+    linear-gradient(180deg,
+      rgba(255, 253, 248, .16) 0%,
+      rgba(255, 253, 248, .05) 34%,
+      transparent 62%);
+
+  /* 边缘折射：亮带集中在四角拐角，模拟玻璃棱边把光聚过去 */
+  --af-glass-refract:
+    linear-gradient(150deg,
+      rgba(255, 255, 255, .30) 0%,
+      rgba(255, 255, 255, .10) 18%,
+      transparent 46%);
+
+  /* 内暗边：玻璃底面的环境遮蔽。没有它玻璃会"浮"起来而不是"嵌"进去。
+   ★ 接入方式：把它从"一个独立令牌"改成 box-shadow 里的颜色引用 ——
+     之前它定义了却没被任何规则用，属于典型的占位变量。 */
+  --af-glass-shade: rgba(0, 0, 0, .26);
+}
+/* 浅色主题下内暗边要换成暖色偏淡：纯黑在浅底上会显脏 */
+body.af-light { --af-glass-shade: rgba(120, 106, 82, .14); }
+
+/* ---------- 2.2 玻璃基类（三层结构） ---------- */
+/* 用 .af-liquid 而不是改 .af-glass：
+   .af-glass 是既有 2100 行里到处引用的类，改它的层叠影响面太大；
+   新类让新设计独立可控，且可以按元素逐个升级。 */
+.af-liquid {
+  position: relative;
+  /* ① 模糊层：真正的"看穿" */
+  backdrop-filter: var(--af-glass-blur);
+  -webkit-backdrop-filter: var(--af-glass-blur);
+  /* 底色必须半透明且**带一点渐变** —— 纯半透明底会让玻璃看起来像蒙了一层灰 */
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(160deg,
+      rgba(255, 252, 245, .07) 0%,
+      rgba(255, 250, 240, .028) 44%,
+      rgba(12, 20, 30, .22) 100%);
+  border: 1px solid transparent;
+  border-radius: var(--af-r-lg);
+  /* ②+③ 叠加层：内高光（顶）+ 内暗边（底）+ 外投影（离场感） */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .22),            /* 上棱受光 */
+    inset 0 -1px 0 var(--af-glass-shade),                 /* 下棱遮蔽 */
+    inset 0 0 38px -12px rgba(224, 177, 92, .12),      /* 内辉光（极弱，只在暗底可见） */
+    var(--af-sh-4);
+  isolation: isolate;   /* 关键：让 ::before/::after 不与外部层叠混合 */
+}
+
+/* ② 折射层：单独一层伪元素做渐变描边。
+   为什么必须独立成层而不是用 border-color：
+   真实的玻璃棱边是**渐变**的（上边亮、下边暗、四角最亮），
+   border-color 只能给一个均匀的颜色，做不出这个。 */
+.af-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;                        /* 描边厚度 */
+  background: var(--af-glass-refract);
+  /* mask 把渐变"抠"成 1px 的环 —— 这是标准的渐变描边做法。
+     mask-composite 要写 -webkit- 前缀，因为 Safari 需要它。 */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;                /* 绝不挡点击 */
+  opacity: .9;
+  transition: opacity var(--af-tr-micro);
+}
+
+/* ③ 高光层：一条斜向的亮带，缓慢横移。
+   只在桌面端开启 —— 它是纯装饰，移动端既费电又没有交互回报（见 4.3 节降级）。 */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .af-liquid--shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    overflow: hidden;
+    background: linear-gradient(
+      104deg,
+      transparent 34%,
+      rgba(255, 255, 255, .13) 47%,
+      rgba(255, 255, 255, .05) 53%,
+      transparent 66%);
+    background-size: 260% 100%;
+    background-position: 130% 0;
+    transition: background-position var(--af-tr-page);
+    mix-blend-mode: soft-light;        /* 用柔光混合：亮带"擦"过而不是"糊"上去 */
+  }
+  .af-liquid--shine:hover::after {
+    background-position: -30% 0;
+  }
+}
+
+/* ---------- 2.3 玻璃的层级变体 ----------
+   不是每处玻璃都用同样强度。按"背后有多复杂"分三档。 */
+.af-liquid--lg {
+  /* 主容器 / 抽屉：背后是大面积极光，要揉得开 */
+  backdrop-filter: var(--af-glass-blur-lg);
+  -webkit-backdrop-filter: var(--af-glass-blur-lg);
+  border-radius: var(--af-r-xl);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .24),
+    inset 0 -1px 0 var(--af-glass-shade),
+    var(--af-sh-5);
+}
+
+.af-liquid--sm {
+  /* 小控件：背后已经模糊过一遍，再blur 会发闷 */
+  backdrop-filter: var(--af-glass-blur-sm);
+  -webkit-backdrop-filter: var(--af-glass-blur-sm);
+  border-radius: var(--af-r-sm);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .18),
+    var(--af-sh-2);
+}
+/* 小控件的折射描边要弱一档，否则密集的小元素会显得"到处都在发光" */
+.af-liquid--sm::before { opacity: .5; }
+
+/* ---------- 2.4 伪玻璃（性能档） ----------
+   列表里成百上千的卡片不能用真玻璃：backdrop-filter 每帧都要重新采样背景，
+   几百个元素就是几百次 —— 移动端必掉帧，桌面端也吃 GPU。
+   这里用"半透明底 + 内高光 + 渐变描边"逼近同样观感，代价低一个数量级。
+   ★ 视觉差异只在"高光随背景变化"这一点上，静态页面上几乎看不出来。 */
+.af-glass-lite {
+  position: relative;
+  background:
+    linear-gradient(160deg,
+      rgba(255, 252, 245, .062) 0%,
+      rgba(255, 250, 240, .022) 44%,
+      rgba(12, 20, 30, .30) 100%);
+  border: 1px solid rgba(255, 250, 240, .10);
+  border-radius: var(--af-r-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .16),
+    inset 0 -1px 0 var(--af-glass-shade),
+    var(--af-sh-3);
+}
+body.af-light .af-glass-lite {
+  background:
+    linear-gradient(160deg,
+      rgba(255, 255, 255, .70) 0%,
+      rgba(255, 255, 255, .46) 44%,
+      rgba(210, 202, 184, .40) 100%);
+  border-color: rgba(120, 106, 82, .16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .86),
+    inset 0 -1px 0 rgba(120, 106, 82, .10),
+    0 10px 28px -10px rgba(70, 56, 30, .20);
+}
+
+/* =============================================================================
+   2.5 核心容器的玻璃升级
+   -----------------------------------------------------------------------------
+   覆盖策略：这里的规则**晚于 af-naval.css**（本文件在它之后加载），
+   同权重时后定义者胜，所以只需要写"要改的属性"，不必重写整条规则。
+
+   为什么逐个升级而不是全站替换：
+     玻璃的强度必须与"背后有多复杂"匹配。顶栏背后是整页内容 → 强；
+     抽屉面板背后是遮罩下的页面 → 中强；卡片背后是极光背景 → 弱（用伪玻璃）。
+     一刀切用同一个强度要么太糊、要么太假。
+   ========================================================================== */
+
+/* ---------- 顶栏 ----------
+   背后是滚动的内容，模糊要足；圆角不需要（通栏）。
+
+   ★ 选择器必须写成 `.af-topbar.af-glass`（双类，与既有规则同特异性）：
+     既有 af-naval.css 里有 `.af-topbar.af-glass { box-shadow: … }`，
+     它的特异性是 (0,2,0)，而 `.af-topbar` 只有 (0,1,0) ——
+     **同权重时后者胜，但特异性低的一方无论写在哪儿都输**。
+     我第一版写成单类，box-shadow 整整三层被压成两层，
+     实测才发现（看 computed style 而不是看自己的 CSS 源码）。
+     这是本项目老教训的又一次：CSS 的问题必须查计算样式，源码不等于结果。 */
+.af-topbar.af-glass {
+  backdrop-filter: var(--af-glass-blur-lg) saturate(170%);
+  -webkit-backdrop-filter: var(--af-glass-blur-lg) saturate(170%);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(180deg,
+      rgba(10, 16, 24, .58) 0%,
+      rgba(10, 16, 24, .72) 100%);
+  border-bottom: 1px solid rgba(255, 250, 240, .10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .18),
+    inset 0 -1px 0 var(--af-glass-shade),
+    0 8px 26px -14px rgba(0, 0, 0, .58);
+}
+/* 顶栏下沿的一道亮线：玻璃"搁"在内容上的一道接缝 */
+.af-topbar::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(224, 177, 92, .32) 22%,
+    rgba(240, 208, 138, .50) 50%,
+    rgba(224, 177, 92, .32) 78%,
+    transparent 100%);
+}
+body.af-light .af-topbar.af-glass {
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(180deg,
+      rgba(250, 246, 236, .72) 0%,
+      rgba(240, 235, 222, .82) 100%);
+  border-bottom-color: rgba(120, 106, 82, .18);
+}
+
+/* ---------- 抽屉面板 ----------
+   ★ 原来是不透明渐变（#14212f → #0a121a），背后页面完全看不见，
+     玻璃感为零。这里换成真玻璃：抽屉是"贴在内容上的一层"，该看得见后面。 */
+.af-mnav__panel {
+  backdrop-filter: var(--af-glass-blur-lg) saturate(160%) brightness(.96);
+  -webkit-backdrop-filter: var(--af-glass-blur-lg) saturate(160%) brightness(.96);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(165deg,
+      rgba(20, 33, 47, .74) 0%,
+      rgba(13, 23, 32, .82) 58%,
+      rgba(10, 18, 26, .88) 100%);
+  border-right: 1px solid rgba(255, 250, 240, .10);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 253, 248, .14),      /* 左棱受光（抽屉在右侧） */
+    inset 0 1px 0 rgba(255, 253, 248, .12),
+    18px 0 48px -16px rgba(0, 0, 0, .62);
+  /* 过渡统一到规范档 */
+  transition: transform var(--af-tr-exit);
+}
+.af-mnav.is-open .af-mnav__panel {
+  transition: transform var(--af-tr-enter);
+}
+/* 抽屉里的链接：加一层悬停底，让长列表可扫读 */
+.af-mnav__panel .af-mnavlink,
+.af-mnav__panel a {
+  border-radius: var(--af-r-sm);
+  transition: background-color var(--af-tr-micro), color var(--af-tr-micro);
+}
+@media (hover: hover) and (pointer: fine) {
+  .af-mnav__panel a:hover { background: rgba(224, 177, 92, .10); }
+}
+
+body.af-light .af-mnav__panel {
+  backdrop-filter: var(--af-glass-blur-lg) saturate(150%);
+  -webkit-backdrop-filter: var(--af-glass-blur-lg) saturate(150%);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(165deg,
+      rgba(250, 246, 236, .88) 0%,
+      rgba(244, 239, 226, .92) 100%);
+  border-right-color: rgba(120, 106, 82, .20);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, .80),
+    18px 0 48px -16px rgba(70, 56, 30, .24);
+}
+
+/* ---------- 弹层（模态） ---------- */
+.af-modal {
+  backdrop-filter: var(--af-glass-blur-lg) saturate(165%);
+  -webkit-backdrop-filter: var(--af-glass-blur-lg) saturate(165%);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(160deg,
+      rgba(20, 30, 42, .80) 0%,
+      rgba(12, 20, 30, .88) 100%);
+  border: 1px solid rgba(255, 250, 240, .12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .22),
+    inset 0 -1px 0 var(--af-glass-shade),
+    var(--af-sh-5);
+  border-radius: var(--af-r-lg);
+}
+body.af-light .af-modal {
+  backdrop-filter: var(--af-glass-blur-lg) saturate(150%);
+  -webkit-backdrop-filter: var(--af-glass-blur-lg) saturate(150%);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(160deg, rgba(252, 249, 240, .94), rgba(244, 239, 226, .96));
+  border-color: rgba(120, 106, 82, .20);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .90),
+    0 32px 80px -28px rgba(70, 56, 30, .30);
+}
+
+/* ---------- 卡片（用伪玻璃，不用真玻璃） ----------
+   ★ 这里必须克制。仓库页可能有几十张卡片同时在视口内，
+   每张都开 backdrop-filter = 每帧几十次背景重采样 —— 实测会明显掉帧。
+   伪玻璃保留了三层结构里"高光 + 暗边 + 渐变描边"这三样肉眼可见的部分。 */
+.af-card,
+.af-row {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(160deg,
+      rgba(255, 252, 245, .052) 0%,
+      rgba(255, 250, 240, .020) 44%,
+      rgba(12, 20, 30, .30) 100%);
+  border: 1px solid rgba(255, 250, 240, .10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .16),
+    inset 0 -1px 0 var(--af-glass-shade),
+    var(--af-sh-3);
+  transition:
+    transform      var(--af-tr-micro),
+    box-shadow     var(--af-tr-micro),
+    border-color   var(--af-tr-micro);
+}
+@media (hover: hover) and (pointer: fine) {
+  .af-card:hover,
+  .af-row:hover {
+    border-color: rgba(224, 177, 92, .30);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 253, 248, .24),
+      inset 0 -1px 0 var(--af-glass-shade),
+      var(--af-sh-4);
+  }
+}
+body.af-light .af-card,
+body.af-light .af-row {
+  background:
+    linear-gradient(160deg,
+      rgba(255, 255, 255, .74) 0%,
+      rgba(255, 255, 255, .50) 44%,
+      rgba(212, 204, 186, .44) 100%);
+  border-color: rgba(120, 106, 82, .18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .88),
+    inset 0 -1px 0 rgba(120, 106, 82, .10),
+    0 10px 28px -10px rgba(70, 56, 30, .20);
+}
+
+/* ---------- 悬停提示卡（真玻璃：它是浮在内容上的小片） ---------- */
+.af-peek {
+  backdrop-filter: var(--af-glass-blur) saturate(160%);
+  -webkit-backdrop-filter: var(--af-glass-blur) saturate(160%);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(160deg, rgba(20, 30, 42, .84), rgba(10, 18, 26, .90));
+  border: 1px solid rgba(255, 250, 240, .14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .22),
+    var(--af-sh-4);
+  border-radius: var(--af-r-md);
+  transition: opacity var(--af-tr-state);
+}
+.af-peek.is-on { transition: opacity var(--af-tr-micro); }
+
+/* ---------- Toast ----------
+   ★ 它是"出事了"的信号，视觉权重必须高于一切 ——
+     所以用最高不透明度的玻璃（不能被背景"看穿"到看不清文字）。 */
+.af-toast {
+  backdrop-filter: var(--af-glass-blur) saturate(170%);
+  -webkit-backdrop-filter: var(--af-glass-blur) saturate(170%);
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(160deg, rgba(24, 34, 46, .94), rgba(12, 20, 30, .96));
+  border: 1px solid rgba(255, 250, 240, .16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 248, .24),
+    var(--af-sh-5);
+  border-radius: var(--af-r-md);
+  /* 出现用 enter（快进慢停，"啪"地到位）；消失用 exit（起步慢，暗示"被拿走"） */
+  transition: opacity var(--af-tr-exit), transform var(--af-tr-exit);
+}
+.af-toast.show {
+  transition: opacity var(--af-tr-enter), transform var(--af-tr-enter);
+}
+body.af-light .af-toast {
+  backdrop-filter: var(--af-glass-blur) saturate(160%);
+  -webkit-backdrop-filter: var(--af-glass-blur) saturate(160%);
+  background: linear-gradient(160deg, rgba(255, 253, 246, .97), rgba(246, 241, 230, .98));
+  border-color: rgba(120, 106, 82, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 24px 56px -20px rgba(70, 56, 30, .34);
+}
+
+/* ---------- 悬停玻璃（按钮/输入框的统一底） ---------- */
+.af-btn.af-liquid,
+.af-liquid--sm {
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(180deg,
+      rgba(255, 252, 245, .10) 0%,
+      rgba(255, 250, 240, .04) 46%,
+      rgba(12, 20, 30, .20) 100%);
+}
+body.af-light .af-liquid--sm,
+body.af-light .af-btn.af-liquid {
+  background:
+    var(--af-glass-sheen),
+    linear-gradient(180deg, rgba(255, 255, 255, .76), rgba(240, 235, 222, .70));
+}
+
+/* =============================================================================
+   3. 组件状态规范
+   -----------------------------------------------------------------------------
+   六个状态一次定义清楚：默认 / 悬停 / 激活 / 焦点 / 禁用 / 加载（+ 错误）。
+
+   ★ 用 :focus-visible 而不是 :focus —— 鼠标点按钮不该留下焦点环
+     （那是给键盘用户看的信号，鼠标用户看到只会觉得"有个框"）。
+     这是 :focus-visible 存在的全部理由。
+   ========================================================================== */
+
+/* ---------- 3.1 按钮（.af-btn 全状态） ---------- */
+.af-btn {
+  /* 尺寸：min-height 44px 是触控最小可点区域（iOS HIG 44 / Material 48 的折中） */
+  min-height: 44px;
+  padding: var(--af-s-2) var(--af-s-4);
+  border-radius: var(--af-r-sm);
+  font: var(--af-t-label);
+  /* 状态过渡用 state 档：颜色/背景变化不应用 enter 档（.42s 太慢，
+     鼠标划过时按钮会"跟不上手"） */
+  transition:
+    background-color var(--af-tr-micro),
+    border-color     var(--af-tr-micro),
+    color            var(--af-tr-micro),
+    box-shadow       var(--af-tr-micro),
+    transform        var(--af-tr-micro);
+  will-change: transform;
+}
+
+/* 悬停：微微上浮 + 高光增强。位移只有 1px —— 2px 以上会显得"跳"。 */
+@media (hover: hover) and (pointer: fine) {
+  .af-btn:hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(-1px);
+    box-shadow: var(--af-sh-3), inset 0 1px 0 rgba(255, 253, 248, .22);
+  }
+  /* 玻璃按钮的高光层随悬停增强 */
+  .af-btn:hover:not(:disabled)::before { opacity: 1; }
+}
+
+/* 激活：下沉。**必须用 :active 而不是 JS 监听**——
+   JS 要等事件回传，而 :active 是同步的，按下立刻有反馈。
+   顺带解决"手指按住时按钮闪一下又不动"的问题（移动端 mouseover 会在按下时触发）。 */
+.af-btn:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(0) scale(.985);
+  /* press 档是 spring 曲线：按下时给一点"陷进去"的回弹，
+     区别于普通的状态切换（inout）。手感上更像实体按键。 */
+  transition: transform var(--af-tr-press), box-shadow var(--af-tr-micro);
+  box-shadow: var(--af-sh-1);
+}
+
+/* 焦点：键盘可见，鼠标不可见。offset 让焦点环与按钮有 2px 间隙，不糊在一起。 */
+.af-btn:focus-visible,
+.af-input:focus-visible,
+.af-textarea:focus-visible,
+.af-chip:focus-visible,
+.af-kindchip:focus-visible,
+.af-navlink:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--af-radar);
+  outline-offset: 2px;
+  /* focus-visible 出现时补一圈暗色描边，保证在浅色背景上也看得见 */
+  box-shadow: 0 0 0 4px rgba(224, 177, 92, .20);
+}
+/* 键盘用户必须看得见自己在哪 —— 去掉 outline 会让 Tab 变成"盲跳"，
+   这是无障碍里最常见的破坏方式之一。 */
+.af-btn:focus:not(:focus-visible),
+a:focus:not(:focus-visible) { outline: none; }
+
+/* 禁用：两个都要覆盖。
+   [disabled] 是真正的禁用（不可聚焦、不可点、默认灰），
+   [aria-disabled="true"] 是"看起来禁用但仍可聚焦"（表单里需要，
+   因为 disabled 的元素无法被 Tab 到，键盘用户就不知道这里有个控件）。 */
+.af-btn:disabled,
+.af-btn[aria-disabled="true"] {
+  opacity: .42;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: var(--af-sh-1);
+  filter: grayscale(.5);
+  /* 灰掉之外还要去掉玻璃模糊：禁用的按钮仍然做 backdrop-filter
+     是纯浪费（用户点不了它，模糊也看不出来）。 */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 加载：保留原宽高，只在内容上加一层遮罩。
+   保留尺寸是关键 —— 否则按钮会跳宽，周围的元素全被推移。 */
+.af-btn[data-loading="1"] {
+  pointer-events: none;      /* 加载中不能重复点击 */
+  color: transparent;        /* 原文字不可见但**占位**（visibility:hidden 也会占位，
+                                但 transparent 更安全：不会因为字体回退而改变高度） */
+  position: relative;
+}
+.af-btn[data-loading="1"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: af-spin .7s linear infinite;
+}
+.af-btn[data-loading="1"] { color: var(--af-radar); }
+@keyframes af-spin { to { transform: rotate(360deg); } }
+
+/* 错误态：左边一道朱红竖条 + 底色微染。
+   不用整块变红 —— 错误态的元素通常在页面里成片出现，全红会盖过真正的主操作。 */
+.af-btn--err,
+.af-input[aria-invalid="true"],
+.af-textarea[aria-invalid="true"] {
+  border-color: rgba(217, 95, 74, .55) !important;
+}
+.af-input[aria-invalid="true"],
+.af-textarea[aria-invalid="true"] {
+  background: linear-gradient(180deg, rgba(217, 95, 74, .10), rgba(217, 95, 74, .05));
+}
+/* 错误文案：紧跟在控件之后，用 :after 生成，保证它一定跟着控件走
+   （手工写 <span class="err"> 很容易在改版时被删掉）。 */
+.af-field[data-error] .af-errtext {
+  display: flex;
+  align-items: center;
+  gap: var(--af-s-1);
+  margin-top: var(--af-s-1);
+  font: 400 var(--af-s-3)/1.5 var(--af-f-sans);
+  color: var(--af-alert);
+}
+.af-errtext { display: none; }
+.af-field[data-error] .af-errtext { display: flex; }
+
+/* ---------- 3.2 输入框 / 文本域 ---------- */
+.af-input,
+.af-textarea {
+  min-height: 44px;
+  padding: var(--af-s-2) var(--af-s-3);
+  border-radius: var(--af-r-sm);
+  font: var(--af-t-body);
+  /* 输入类控件的状态过渡要快：光标闪烁时背景若还在过渡会显得脏 */
+  transition:
+    border-color     var(--af-tr-micro),
+    box-shadow       var(--af-tr-micro),
+    background-color var(--af-tr-micro);
+}
+.af-input:hover:not(:disabled),
+.af-textarea:hover:not(:disabled) {
+  border-color: rgba(224, 177, 92, .40);
+}
+.af-input:disabled,
+.af-textarea:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, .18);
+}
+.af-textarea { min-height: 96px; resize: vertical; line-height: 1.7; }
+/* 占位符对比度不足是常见无障碍问题，这里显式提亮 */
+.af-input::placeholder,
+.af-textarea::placeholder { color: var(--af-text-mute); opacity: 1; }
+
+/* ---------- 3.3 分类 chip / 药丸 ---------- */
+.af-chip,
+.af-kindchip {
+  min-height: 36px;    /* 药丸比按钮矮：它是筛选器不是主操作 */
+  padding: var(--af-s-1) var(--af-s-3);
+  border-radius: var(--af-r-full);
+  font: var(--af-t-label);
+  transition:
+    background-color var(--af-tr-micro),
+    color            var(--af-tr-micro),
+    border-color     var(--af-tr-micro),
+    transform        var(--af-tr-micro);
+}
+@media (hover: hover) and (pointer: fine) {
+  .af-chip:hover:not(.on),
+  .af-kindchip:hover:not(.on):not(.af-kindchip[disabled]) {
+    background: rgba(224, 177, 92, .10);
+    transform: translateY(-1px);
+  }
+}
+.af-chip:active:not(.on),
+.af-kindchip:active:not(.on) {
+  transform: scale(.96);
+  transition-duration: var(--af-t-instant);
+}
+/* 选中态用黄铜色而不是加粗 —— 加粗会改变字宽导致文字跳动 */
+.af-chip.on,
+.af-kindchip.on {
+  background: rgba(224, 177, 92, .18);
+  border-color: rgba(224, 177, 92, .50);
+  color: var(--af-radar-ink);
+  font-weight: 650;
+}
+.af-chip:disabled,
+.af-kindchip[disabled] {
+  opacity: .38;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- 3.4 卡片（默认/悬停/激活） ---------- */
+.af-card {
+  position: relative;
+  border-radius: var(--af-r-lg);
+  padding: var(--af-s-4);
+  transition:
+    transform        var(--af-tr-micro),
+    box-shadow       var(--af-tr-micro),
+    border-color     var(--af-tr-micro);
+}
+@media (hover: hover) and (pointer: fine) {
+  .af-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--af-sh-4), inset 0 1px 0 rgba(255, 253, 248, .24);
+    border-color: rgba(224, 177, 92, .28);
+  }
+  /* 悬停时玻璃高光层增强 —— "被注意到了"要有第二重信号，不能只有位移 */
+  .af-card:hover::before { opacity: 1; }
+}
+.af-card:active { transform: translateY(0) scale(.995); transition-duration: var(--af-t-instant); }
+.af-card[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+
+/* ---------- 3.5 导航链接 ---------- */
+.af-navlink {
+  position: relative;
+  padding: var(--af-s-2) var(--af-s-3);
+  border-radius: var(--af-r-sm);
+  font: var(--af-t-label);
+  transition: color var(--af-tr-micro), background-color var(--af-tr-micro);
+}
+.af-navlink::after {
+  /* 下划线用 ::after + scaleX(0→1) 而不是 background 渐变：
+     渐变无法从 0 过渡到 1，scaleX 可以，且是合成层动画。 */
+  content: "";
+  position: absolute;
+  left: var(--af-s-3); right: var(--af-s-3);
+  bottom: 4px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--af-tr-micro);
+}
+@media (hover: hover) and (pointer: fine) {
+  .af-navlink:hover::after,
+  .af-navlink[aria-current="page"]::after { transform: scaleX(1); }
+}
+.af-navlink[aria-current="page"] { color: var(--af-radar-ink); }
+
+/* ---------- 3.6 状态标签 ---------- */
+.af-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--af-s-1);
+  padding: 2px var(--af-s-2);
+  border-radius: var(--af-r-xs);
+  font: var(--af-t-cap);
+  letter-spacing: var(--af-t-cap-lt);
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  border-color: color-mix(in srgb, currentColor 34%, transparent);
+}
+@supports not (color: color-mix(in srgb, red, blue)) {
+  /* 老内核没有 color-mix，回退到半透明 currentColor */
+  .af-tag { border-color: currentColor; opacity: .9; }
+}
+
+/* =============================================================================
+   4. 双端适配：同一套视觉语言，各自的布局
+   -----------------------------------------------------------------------------
+   原则：**同一视觉语言**（同一套令牌、同一套玻璃、同一套动效）
+        + **各自适配**（不是同一套布局硬拉伸）。
+
+   手机端不是把桌面布局压窄，而是重新分配"信息优先级"：
+     桌面（宽屏）→ 侧栏常驻、多列网格、悬停提示可用
+     手机（窄屏）→ 侧栏变抽屉、单列优先、悬停不可用、点击区域放大
+   ========================================================================== */
+
+/* ---------- 4.1 断点 ----------
+   统一三个，命名按"设备形态"而不是按宽度数字，便于以后调整。
+   ★ 记忆里的老教训：断点要**抬到 860/900/959**，768px 平板刚好会漏掉。
+
+   ★ CSS 变量不能用在 @media 条件里（`@media (max-width: var(--af-bp-md))`
+     是非法语法，浏览器会直接丢弃整条规则 —— 这是个很隐蔽的坑：
+     看起来"写了但没生效"，查半天以为是别的问题）。
+     所以下面这三个令牌是**给 JS 用的**（af-motion.js 读它们决定布局模式），
+     CSS 侧仍然写字面量。两边数值必须一致，改的时候要一起改。 */
+:root {
+  --af-bp-lg: 1120px;   /* 桌面：多列 + 侧栏 */
+  --af-bp-md: 960px;    /* 平板：抽屉化 */
+  --af-bp-sm: 720px;    /* 手机：单列 */
+  /* 触控目标下限。44px 是 iOS HIG 的值；Material 是 48。
+     取 44 是因为本站很多控件（chip、tag）本来就低于 48，
+     强行提到 48 会让密集列表变得很松散。 */
+  --af-tap-min: 44px;
+}
+
+/* ---------- 4.2 手机端 ---------- */
+@media (max-width: 959px) {
+  :root {
+    /* 手机上把"玻璃的模糊半径"降低而不是关闭。
+       理由：模糊半径与渲染成本大致成正比；但**关掉**会让整页从
+       "玻璃拟态"退化成"一堆半透明色块"，视觉语言直接断裂。
+       降到 10px 是性能与观感的平衡点。 */
+    --af-glass-blur-lg: blur(12px) saturate(150%) brightness(1.03);
+    --af-glass-blur:    blur(10px) saturate(145%) brightness(1.03);
+    --af-glass-blur-sm: blur(5px)  saturate(140%) brightness(1.02);
+    /* 触控目标统一下限 */
+    --af-tap-min: 44px;
+    /* 手机上正文行高再放大一点：窄屏换行更多，行高不够会"糊成一片" */
+    --af-t-body: 400 var(--af-s-4)/1.80 var(--af-f-sans);
+    --af-t-title: 650 var(--af-s-5)/1.30 var(--af-f-sans);
+  }
+
+  /* 触控目标：需要"整块可点"的容器在手机上抬到 44px。
+     文字链接不设min-height —— 44px 高的文字链接会撑坏排版。 */
+  .af-btn,
+  .af-kindchip,
+  .af-chip,
+  .af-themetog,
+  .af-burger,
+  .af-btn--icon {
+    min-height: var(--af-tap-min);
+  }
+  /* 但胶囊类控件（chip/tag）横向也要够：触控目标在两个方向都应≥ 40px */
+  .af-kindchip,
+  .af-chip { padding-left: var(--af-s-3); padding-right: var(--af-s-3); }
+
+  /* 单列：桌面三列 → 手机一列。
+     ★ 用 grid-template-columns 而不是 flex-direction ——
+       flex 的等分在有 gap 时最后一项会被挤窄，grid 的 fr 不会。 */
+  .af-grid {
+    grid-template-columns: 1fr;
+    gap: var(--af-s-3);
+  }
+  /* 卡片内边距在窄屏收一档：同样的 padding 在 360px 宽屏上占比过大 */
+  .af-card { padding: var(--af-s-3); border-radius: var(--af-r-md); }
+
+  /* 移动端把 hover 效果改成"按下即生效"：
+     触屏的 hover 会在按下瞬间触发然后粘住不放（经典 bug），
+     所以用 @media (hover:none) 明确关掉 hover 层的 transform。 */
+  @media (hover: none) {
+    .af-btn:hover:not(:disabled),
+    .af-card:hover,
+    .af-chip:hover:not(.on),
+    .af-kindchip:hover:not(.on) {
+      transform: none;
+    }
+    /* 悬停时才显示的提示层在触屏上没有意义 */
+    .af-peek { display: none !important; }
+  }
+
+  /* 手机上装饰性动画降级：不是"关掉动效"（那会变成另一套视觉语言），
+     而是去掉纯装饰、保留有信息量的。 */
+  @media (prefers-reduced-motion: no-preference) {
+    .af-liquid--shine::after { display: none; }   /* 斜向亮带：纯装饰 */
+    .af-aurora, .af-particles { opacity: .7; }    /* 极光/粒子减淡，不去掉 */
+  }
+}
+
+/* 手机档（≤720px）：小屏手机（iPhone SE / 旧安卓）的进一步收 */
+@media (max-width: 720px) {
+  /* 表单从两列变一列：720px 下两列每列不足 340px，
+     换行会非常难看。*/
+  .af-form-grid { grid-template-columns: 1fr; }
+  /* 卡片网格间距再收一档 */
+  .af-grid { gap: var(--af-s-2); }
+}
+
+/* 极窄屏（≤400px）：进一步收 */
+@media (max-width: 400px) {
+  :root { --af-s-4: 14px; --af-s-6: 20px; }
+  .af-card { padding: var(--af-s-3); }
+}
+
+/* ---------- 4.3 全局降级（这一节是"两端都能用"的兜底） ---------- */
+
+/* 不支持 backdrop-filter 时（老安卓 WebView、部分安卓机），
+   玻璃必须退化成**不透明底**而不是"什么都没有" ——
+   半透明底 + 没有模糊 = 文字直接糊在背景上，不可读。
+   检测用 @supports：能写 blur 才算支持。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .af-liquid,
+  .af-liquid--lg,
+  .af-liquid--sm {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--af-glass-solid);
+  }
+  /* 折射描边保留 —— 它不依赖 backdrop-filter，是纯渐变 */
+  .af-liquid::before { opacity: .7; }
+}
+
+/* 减少动态效果：保留状态变化（那是信息），去掉位移与装饰（那是运动）。 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* 悬停位移全部撤掉：快速移动视差/上浮会引发前庭不适 */
+  .af-card:hover, .af-btn:hover { transform: none !important; }
+  .af-liquid--shine::after { display: none; }
+
+  /* ★★ 关键的一条：入场元素必须**直接是终态**。
+     上面把 transition 压到 0.01ms 只让「过渡」变快，**不影响初始值** ——
+     .af-enter 的初始态是 opacity:0，所以它依然要等 .af-enter--in 才显现。
+     万一 JS 那条降级路径没跑到（afx.js 早退、af-motion.js 加载失败、
+     脚本在 404 上被浏览器拦下），这些元素就**永远透明 = 内容彻底消失**。
+     静默失效是最坏的一种失效：页面不报错，只是"什么都没有"。
+     所以这里在 CSS 层面兜底：降级用户直接给终态，不依赖任何 JS。 */
+  .af-enter,
+  .af-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* =============================================================================
+   5. 页面转场与滚动联动
+   -----------------------------------------------------------------------------
+   时长取 --af-tr-page（680ms）：页面级动作需要足够长才能被"看见"。
+   但 680ms 只用在**真正换页**时；页内元素入场用 --af-tr-enter（420ms）。
+   ========================================================================== */
+
+/* 页内滚动入场：位移 + 透明度。位移只有 16px ——
+   再大就会变成"从很远的地方飞过来"，既慢又廉价。 */
+.af-enter {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity   var(--af-tr-enter),
+    transform var(--af-tr-enter);
+}
+.af-enter.af-enter--in {
+  opacity: 1;
+  transform: none;
+}
+/* 延迟用 --enter-delay（由 JS 按序号写入），上限 320ms。
+   刻意封顶：无限递增的延迟会让最后几屏内容迟迟不出现。 */
+.af-enter[style*="--enter-delay"] { transition-delay: var(--enter-delay, 0ms); }
+
+/* 页面转场遮罩：单一遮罩层，出场进场合用。
+   遮罩是 body 最后一个子元素、pointer-events 默认 none，
+   即使 JS 出错 2 秒后也会自动淡出，不会把页面永久挡住。 */
+.af-pagefade {
+  position: fixed;
+  inset: 0;
+  z-index: var(--af-z-modal);
+  background: var(--af-abyss);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--af-tr-page);
+}
+.af-pagefade.af-pagefade--on { opacity: 1; }
+
+/* 滚动进度条：挂在顶栏下沿，2px。
+   ★ 2px 是"提示"而不是"装饰"—— 再粗就成了第二个顶栏。 */
+.af-scrollbar {
+  position: fixed;
+  left: 0; right: 0;
+  top: 0;
+  height: 2px;
+  z-index: calc(var(--af-z-sticky) + 1);
+  background: linear-gradient(90deg, var(--af-radar), var(--af-scan));
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;   /* 合成层，不触发重排 */
+  pointer-events: none;
+}
+
+/* =============================================================================
+   6. 打印与无障碍兜底
+   ========================================================================== */
+@media print {
+  .af-topbar, .af-mnav, .af-peek, .af-cursor, .af-cursor-ring,
+  .af-particles, .af-aurora, .af-scrollbar { display: none !important; }
+  .af-liquid, .af-glass-lite {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #fff;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  body { background: #fff; color: #000; }
+}
+
+/* 强制高对比：用户偏好"文字与背景对比度更高" */
+@media (prefers-contrast: more) {
+  :root {
+    --af-text-dim:  #d8dee5;
+    --af-text-mute: #b8c2cc;
+    --af-glass-edge: rgba(255, 255, 255, .34);
+  }
+  .af-liquid, .af-glass-lite { border-width: 2px; }
+}
+
+/* 强制颜色模式（Windows 高对比）：关掉所有自定义色与玻璃，
+   否则用户设定的系统配色会被我们的设计完全覆盖 —— 那是对用户的无视。 */
+@media (forced-colors: active) {
+  .af-liquid, .af-glass-lite, .af-btn, .af-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: Canvas !important;
+    box-shadow: none !important;
+    border: 1px solid CanvasText !important;
+  }
+  .af-btn:focus-visible { outline: 3px solid Highlight; }
+}
+
+/* ★ 无条件降级兜底（由 inject_js_flag.py 注入）
+   JS 在 <head> 里同步加 .af-js；JS 没跑到时这个类永远不存在，
+   下面的规则生效，入场元素直接是终态 —— 不会出现「内容静默消失」。
+   与 prefers-reduced-motion 那个降级块互补：那个只管用户主动
+   要求减少动效，这里管 JS 根本跑不起来的情况。 */
+html:not(.af-js) .af-enter,
+html:not(.af-js) .af-reveal,
+html:not(.af-js) .af-stagger > * {
+  opacity: 1 !important;
+  transform: none !important;
+}

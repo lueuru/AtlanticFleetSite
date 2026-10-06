@@ -1,0 +1,124 @@
+{
+  "modName": "狼群·大西洋反潜战",
+  "author": "海狼",
+  "version": "1.8",
+  "description": "把战场重心交给水下：声呐与雷达探测距离大幅提升，深水炸弹、刺猬弹威力加强，鱼雷更耐用。潜艇与护航舰都对彼此更致命，狼群与猎手的博弈更紧张。",
+  "tags": [
+    "反潜",
+    "潜艇",
+    "写实"
+  ],
+  "combat": {
+    "sensor": {
+      "sonarRangeMul": 1.75,
+      "radarRangeMul": 1.45
+    },
+    "dc": {
+      "damageMul": 1.55
+    },
+    "hedgehog.damageMul": 1.5,
+    "torpedo": {
+      "damageMul": 1.2,
+      "accuracyMul": 1.1,
+      "turnMul": 1.25
+    },
+    "air.wingSizeMul": 1.3
+  },
+  "ships": [
+    {
+      "class": "Wolf Escort",
+      "type": "DE",
+      "nation": 0,
+      "tons": 1500,
+      "length": 93,
+      "beam": 11,
+      "speed": 21,
+      "range": 5600,
+      "belt": 1,
+      "turret": 1,
+      "deck": 1,
+      "guns": 3,
+      "caliber": 4.0,
+      "secGuns": 4,
+      "secCaliber": 1.6,
+      "torpedoes": 3,
+      "torpedoCalibre": 21,
+      "aircraft": 0,
+      "renown": 120,
+      "primaryAmmo": 260,
+      "secondaryAmmo": 800,
+      "torpedoAmmo": 6,
+      "hasSonar": true,
+      "hasDepthCharges": true,
+      "hasHedgeHog": true,
+      "isEscort": true,
+      "instances": [
+        "Wolf",
+        "Falcon",
+        "Bittern",
+        "Egret"
+      ]
+    },
+    {
+      "class": "Wolf Type-VII U-boat",
+      "type": "SS",
+      "nation": 1,
+      "tons": 871,
+      "length": 67,
+      "beam": 6.2,
+      "speed": 17,
+      "range": 8500,
+      "belt": 1,
+      "turret": 0.8,
+      "deck": 1,
+      "guns": 1,
+      "caliber": 3.5,
+      "secGuns": 1,
+      "secCaliber": 0.8,
+      "torpedoes": 5,
+      "torpedoCalibre": 21,
+      "aircraft": 0,
+      "renown": 145,
+      "primaryAmmo": 220,
+      "secondaryAmmo": 260,
+      "torpedoAmmo": 14,
+      "isSubmarine": true,
+      "hasSonar": true,
+      "instances": [
+        "U-47",
+        "U-96",
+        "U-99",
+        "U-123"
+      ]
+    }
+  ],
+  "fleets": [
+    {
+      "fleetName": "Convoy Escort Group 2",
+      "nation": 0,
+      "ships": [
+        "Wolf Escort",
+        "Wolf Escort",
+        "Wolf Escort",
+        "Wolf Escort"
+      ],
+      "date": "15 March 1941",
+      "timeofday": "Dawn",
+      "distance": 80,
+      "environment": 2
+    },
+    {
+      "fleetName": "Wolf Pack Gruppe",
+      "nation": 1,
+      "ships": [
+        "Wolf Type-VII U-boat",
+        "Wolf Type-VII U-boat",
+        "Wolf Type-VII U-boat"
+      ],
+      "date": "15 March 1941",
+      "timeofday": "Night",
+      "distance": 110,
+      "environment": 3
+    }
+  ]
+}

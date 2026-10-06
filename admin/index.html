@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-afx="lite">
+<head>
+<script>document.documentElement.className+=" af-js";</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mod 审核后台 · 大西洋舰队 Mod 框架</title>
+<meta name="description" content="《大西洋舰队》Mod 框架的审核后台：站长在此审核玩家上传的 Mod，通过即在仓库上架。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#04080f">
+<link rel="icon" href="/AtlanticFleetSite/media/brand/af-brand.svg">
+<!-- ★ v2.36：预加载首屏真正要用的两个字体。
+     五个字体合计 1.19MB，浏览器要等 CSS 解析完才发现要用哪些字体，
+     慢网下首屏会先用系统字体画一遍、字体到位后再重画一遍（内容跳动）。
+     preload 让这两个字体的下载与 CSS 解析并行，从根上减少那次重排。
+     crossorigin 是必须的：字体一律是 CORS 请求，不加会被丢弃、等于没加。 -->
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/af-naval.css?v=5.14">
+<!-- ★ 设计系统层：令牌 / 液态玻璃 / 组件状态 / 双端适配。
+     必须排在 af-naval.css 之后 —— 同权重时后定义的规则胜，
+     它要覆盖的是 af-naval.css 里的组件底色与过渡时长。 -->
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/af-system.css?v=1.1">
+<!-- ★ v2.35：原来这个样式表放在 body 末尾，
+     会触发额外一次样式重算；样式表本来就该在 head。 -->
+<link rel="stylesheet" href="/AtlanticFleetSite/vendor/lenis.css">
+<style>
+.af-topbar {
+  position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 14px;
+  padding: 11px 20px;
+  background: linear-gradient(180deg, rgba(8,20,34,.76), rgba(5,13,22,.66));
+  backdrop-filter: blur(20px) saturate(185%); -webkit-backdrop-filter: blur(20px) saturate(185%);
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 10px 30px -18px rgba(0,0,0,.8);
+}
+.af-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.af-brand .mark {
+  width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center;
+  border: 1px solid var(--af-edge-hi); border-radius: var(--af-radius);
+  background: radial-gradient(circle at 50% 120%, rgba(255,181,71,.25), rgba(8,20,32,.9));
+  color: var(--af-signal); font-family: var(--af-font-mono); font-size: 15px; font-weight: 700;
+  box-shadow: 0 0 18px -4px rgba(255,181,71,.5);
+}
+.af-brand .nm { color: var(--af-title); font-size: 14.5px; font-weight: 600; }
+.af-brand .sb { color: var(--af-text-mute); font-size: 10.5px; font-family: var(--af-font-mono); letter-spacing: .16em; }
+/* ★ 顶栏横向链接：桌面显示，窄屏由 /mods/af-naval.css 的
+     `@media (max-width:860px){ .af-nav{display:none} }` 折叠成汉堡。
+     下面这条内联写在 af-naval.css **之后**，同权重会盖掉那条隐藏规则 ——
+     所以 display 必须交给 af-naval.css 管，这里不要写死。 */
+.af-nav { margin-left: auto; gap: 8px; align-items: center; }
+.af-navlink { color: var(--af-text-dim); text-decoration: none; font-size: 13px; padding: 7px 13px;
+  border: 1px solid transparent; border-radius: var(--af-radius); transition: all .18s; }
+.af-navlink:hover { color: var(--af-radar); border-color: var(--af-edge); background: rgba(224,177,92,.06); }
+
+/* 登录门 */
+.af-gate { max-width: 420px; margin: 12vh auto; padding: 34px 30px; }
+.af-gate .seal {
+  width: 58px; height: 58px; margin: 0 auto 18px; display: grid; place-items: center;
+  border: 1px solid var(--af-edge-hi); border-radius: 50%;
+  color: var(--af-signal); font-size: 24px; font-family: var(--af-font-mono);
+  box-shadow: 0 0 26px -8px rgba(255,181,71,.6), inset 0 0 20px -12px rgba(255,181,71,.8);
+}
+
+/* 仪表盘 */
+.af-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 22px; }
+.af-metric { padding: 18px 18px 16px; position: relative; overflow: hidden; }
+.af-metric::before {
+  content: ""; position: absolute; right: -20px; top: -20px; width: 90px; height: 90px;
+  border-radius: 50%; border: 1px solid var(--af-edge); opacity: .5;
+}
+.af-metric .v { font-family: var(--af-font-mono); font-size: 30px; font-weight: 600; line-height: 1; color: var(--af-radar); }
+.af-metric.warn .v { color: var(--af-signal); }
+.af-metric.ok .v { color: var(--af-ok); }
+.af-metric.bad .v { color: var(--af-alert); }
+
+/* 列表 */
+.af-tabs { display: flex; gap: 6px; margin: 24px 0 14px; flex-wrap: wrap; }
+.af-list { display: flex; flex-direction: column; gap: 12px; }
+.af-row { padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.af-row .who { flex: 1 1 320px; min-width: 0; }
+.af-row .nm { color: var(--af-title); font-size: 15px; font-weight: 600; }
+.af-row .meta { color: var(--af-text-mute); font-size: 11.5px; font-family: var(--af-font-mono); margin-top: 3px; }
+.af-row .ds { color: var(--af-text-dim); font-size: 13px; margin: 8px 0 0; }
+.af-row .acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.af-row .acts .af-btn { padding: 7px 14px; font-size: 12.5px; }
+.af-note { margin-top: 9px; font-size: 12px; color: var(--af-signal); }
+
+/* 详情抽屉内的日志 */
+.af-log { font-family: var(--af-font-mono); font-size: 11.5px; }
+.af-log div { padding: 5px 0; border-bottom: 1px solid var(--af-hair); color: var(--af-text-dim); }
+.af-log .t { color: var(--af-text-mute); }
+.af-log .a { color: var(--af-radar); }
+
+.af-mask { position: fixed; inset: 0; z-index: 60; background: rgba(2,6,12,.74);
+  backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+  display: none; align-items: center; justify-content: center; padding: 20px; }
+.af-mask.show { display: flex; animation: af-fade .25s ease; }
+@keyframes af-fade { from { opacity: 0; } to { opacity: 1; } }
+.af-modal { width: min(720px, 100%); max-height: 86vh; overflow: auto; padding: 26px;
+  animation: af-rise .3s cubic-bezier(.2,.7,.2,1); }
+@keyframes af-rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+.af-modal h3 { color: var(--af-title); font-size: 20px; margin: 0 0 6px; }
+.af-kv { display: grid; grid-template-columns: 100px 1fr; gap: 8px 14px; margin: 16px 0; font-size: 13px; }
+.af-kv dt { color: var(--af-text-mute); font-family: var(--af-font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.af-kv dd { margin: 0; color: var(--af-text); word-break: break-word; }
+pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: rgba(4,10,18,.75);
+  border: 1px solid var(--af-edge); border-radius: var(--af-radius); padding: 13px; overflow: auto;
+  max-height: 260px; color: var(--af-radar); margin: 10px 0 0; white-space: pre-wrap; word-break: break-all; }
+.af-foot { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--af-hair);
+  color: var(--af-text-mute); font-size: 12px; }
+/* ★ 顶栏是**深色硬编码**（rgba(8,20,34,.76)），但页面正文跟随主题切换。
+     切到浅色主题时 --af-radar 变成暗金 #8a6412，深底上只有 3.47:1，
+     最后两项链接几乎看不清（实测 elementFromPoint 能点到，但读不出来）。
+     顶栏既然固定是深色，文字色就该固定用深色主题那一档。 */
+.af-topbar .af-navlink { color: #a8b2bd; }
+.af-topbar .af-navlink:hover { color: #e0b15c; }
+.af-topbar .af-navlink--qq { color: #e0b15c !important; }
+.af-topbar .af-brand .nm { color: #e6e2d8; }
+.af-topbar .af-brand .sb { color: #a8b0ba; }
+@media (max-width: 640px) { .af-wrap { padding: 0 14px 60px; } }
+</style>
+</head>
+<body class="af-naval">
+
+<header class="af-topbar af-glass af-glass--edge">
+  <a class="af-brand" href="/AtlanticFleetSite/mods/">
+    <span class="mark">◆</span>
+    <span>
+      <span class="nm">Mod 审核后台</span><br>
+      <span class="sb">MOD REVIEW</span>
+    </span>
+  </a>
+  <nav class="af-nav">
+          <a class="af-navlink" href="/AtlanticFleetSite/mods/">← 返回仓库</a>
+          <a class="af-navlink" href="/AtlanticFleetSite/docs/">文档</a>
+          <a class="af-navlink af-navlink--bili" href="/AtlanticFleetSite/docs/credits/" rel="noopener"><span class="af-navico af-navico--bili" data-ico="author"></span>作者</a>
+    <a class="af-navlink" href="#" id="navOut" style="display:none">退出</a>
+  </nav>
+  <!-- ★ 手机端汉堡（360px 实测：.af-nav 宽 491px，「QQ 群」整条落在屏外点不到） -->
+  <button class="af-burger" id="afBurger" type="button" aria-label="菜单" aria-expanded="false" aria-controls="afMnav">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- 手机端抽屉：样式在 /mods/af-naval.css，逻辑在 af-naval.js 的 AF.mountMnav() -->
+<div class="af-mnav" id="afMnav" hidden>
+  <div class="af-mnav__scrim" data-close></div>
+  <aside class="af-mnav__panel" role="dialog" aria-modal="true" aria-label="菜单">
+    <div class="af-mnav__head">
+      <span class="af-mnav__brand">Mod 审核后台</span>
+      <button class="af-mnav__x" type="button" data-close aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <nav class="af-mnav__body">
+      <a class="af-mnav__a" href="/AtlanticFleetSite/mods/">← 返回仓库</a>
+      <a class="af-mnav__a" href="/AtlanticFleetSite/docs/">文档</a>
+      <a class="af-mnav__a" href="/AtlanticFleetSite/docs/credits/">作者与致谢</a>
+      <a class="af-mnav__a" href="#" id="mnavOut" style="display:none">退出登录</a>
+    </nav>
+  </aside>
+</div>
+
+<main class="af-wrap">
+
+  <!-- 登录 -->
+  <section id="gate" style="display:none">
+    <div class="af-glass af-glass--edge af-glint af-gate af-reveal">
+      <div class="seal" data-ico="lock"></div>
+      <span class="af-kicker" style="display:block;text-align:center">Admin / 管理后台</span>
+      <h1 class="af-title" style="font-size:24px;text-align:center">管理员 <strong>登录</strong></h1>
+      <p class="af-sub" style="text-align:center;margin:0 auto 20px">这是 Mod 审核后台，只有站长能进。</p>
+
+      <details class="af-howto">
+        <summary>我没有密钥，怎么拿？</summary>
+        <ol>
+          <li><b>你就是这个站的站长</b>：密钥在服务器上，文件路径
+            <code>AtlanticFleetMod/p1/server/admin_key.txt</code>，
+            里面是一串 40 位十六进制字符。直接复制粘贴进下面的输入框即可。</li>
+          <li><b>想换个新密钥</b>：删掉那个文件再重启服务，程序会自动生成一个新的。</li>
+          <li><b>你不是站长</b>：这个后台只给审核用，请去
+            <a href="/AtlanticFleetSite/mods/">Mod 仓库</a> 逛逛，或进
+            <a href="/AtlanticFleetSite/docs/faq/">常见问题</a>，或在<a href="/AtlanticFleetSite/docs/credits/">作者与致谢</a>页留言。</li>
+        </ol>
+        <p class="af-tip">第一次输对之后会记在这台设备的浏览器里，下次就不用再输了。</p>
+      </details>
+
+      <label class="af-label" for="inKey">管理员密钥</label>
+      <input class="af-input" id="inKey" maxlength="64" type="password" placeholder="粘贴 40 位密钥" autocomplete="current-password">
+      <button class="af-btn af-btn--primary" id="btnLogin" style="width:100%;margin-top:16px">登录</button>
+    </div>
+  </section>
+
+  <!-- 面板 -->
+  <section id="panel" style="display:none">
+    <div class="af-reveal">
+      <span class="af-kicker">Dashboard / 概况</span>
+      <h1 class="af-title">Mod <strong>审核</strong></h1>
+      <p class="af-sub">处理玩家上传的 Mod。通过就放进仓库，不通过就退回。</p>
+    </div>
+
+    <div class="af-metrics af-reveal" data-delay="60">
+      <div class="af-glass af-glass--edge af-cut af-metric af-tilt warn"><div class="v" id="mPending">0</div><span class="lbl">待审核</span></div>
+      <div class="af-glass af-glass--edge af-cut af-metric af-tilt ok"><div class="v" id="mApproved">0</div><span class="lbl">已上架</span></div>
+      <div class="af-glass af-glass--edge af-cut af-metric af-tilt"><div class="v" id="mRepo">0</div><span class="lbl">仓库总数</span></div>
+      <div class="af-glass af-glass--edge af-cut af-metric af-tilt bad"><div class="v" id="mRejected">0</div><span class="lbl">已驳回</span></div>
+    </div>
+
+    <div class="af-syncline">
+      <button class="af-btn af-btn--ghost" id="btnRefresh" type="button">刷新数据</button>
+      <span id="lastSync"></span>
+    </div>
+
+    <div class="af-tabs">
+      <button type="button" class="af-chip" data-tab="pending">待审核</button>
+      <button type="button" class="af-chip" data-tab="approved">已上架</button>
+      <button type="button" class="af-chip" data-tab="rejected">已驳回</button>
+      <button type="button" class="af-chip" data-tab="all">全部</button>
+      <button type="button" class="af-chip" data-tab="log">操作日志</button>
+      <button class="af-btn af-btn--ghost" id="btnRebuild" style="margin-left:auto">重建索引</button>
+    </div>
+
+    <div class="af-list" id="list"></div>
+    <div class="af-empty" id="empty" style="display:none">
+      <div class="ico" data-ico="pass"></div><div>这里没有待处理的条目</div>
+    </div>
+  </section>
+</main>
+
+<main class="af-wrap" style="padding-top:0">
+  <footer class="af-foot" data-af-foot></footer>
+</main>
+
+<div class="af-mask" id="mask"><div class="af-glass af-modal" id="modal"></div></div>
+
+<script src="/AtlanticFleetSite/mods/icp.js?v=1.1"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.20"></script>
+<!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
+     时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
+<script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>
+<!-- v2.27：后台是工具页，只启用按压反馈与弹层动效（data-afx="lite"），
+     不接管滚动、不做入场编排 —— 信息密集页面堆动效会干扰读取。
+     跳转过渡仍然生效，它不属于"动效"而属于"反馈"。 -->
+<script defer src="/AtlanticFleetSite/vendor/lenis.min.js"></script>
+<script defer src="/AtlanticFleetSite/mods/afx.js?v=1.2"></script>
+<script>
+(function () {
+  // 默认标签：待审核优先（有待办时先看它），没有待办就落到「已上架」，
+  // 否则一进来是空白页，看起来像坏了。
+  var KEY = '', tab = '', cache = [];
+  var $ = function (s) { return document.querySelector(s); };
+  function esc(s) { return afNaval.esc(s); }
+  function sizeText(n) {
+    // ★ v2.38：与 mods/index.html 的同名函数对齐。
+    //   原来只 `n = n || 0`，若 size 是字符串（上传时手填、或从别的库导出），
+    //   `"1.2 MB" < 1024` 为 false，两次比较都落到最后一行 → (n/1048576) 是 NaN
+    //   → 列表里直接显示「NaN MB」。仓库页那份早就修过，这里一直没同步。
+    n = Number(n);
+    if (!isFinite(n) || n <= 0) return '—';
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    if (n < 1073741824) return (n / 1048576).toFixed(2) + ' MB';
+    return (n / 1073741824).toFixed(2) + ' GB';
+  }
+  var STATUS = { pending: ['待审核', 'signal'], approved: ['已上架', 'ok'], rejected: ['已驳回', 'alert'] };
+
+  // ---------- 登录 ----------
+  function saveKey(k) { KEY = k; afNaval.store.set('adminkey', k); }
+  /* 顶栏与抽屉里各有一个「退出」，必须一起显隐，否则登录后抽屉里那个
+     永远停在 display:none（等于没有），未登录时又冒出来。 */
+  function setLogoutVisible(on) {
+    var v = on ? 'inline-block' : 'none';
+    var a = document.getElementById('navOut');   if (a) a.style.display = v;
+    var b = document.getElementById('mnavOut');  if (b) b.style.display = v;
+  }
+  function logout() { KEY = ''; afNaval.store.del('adminkey'); $('#panel').style.display='none'; $('#gate').style.display='block'; setLogoutVisible(false); }
+
+  $('#btnLogin').onclick = function () {
+    var k = $('#inKey').value.trim();
+    if (!k) { afNaval.toast('请输入密钥', 'err'); return; }
+    api('/AtlanticFleetSite/admin/login', { method:'POST', body:{} }, k).then(function (r) {
+      if (r.ok) { saveKey(k); enter(); afNaval.toast('欢迎回来，值班官', 'ok'); }
+      else afNaval.toast(r.error || '密钥错误', 'err');
+    }).catch(function () {
+      // ★ v2.38：原先没有 catch。后端进程被杀 / nginx 502 / 断网时，
+      //   fetch 会 reject → unhandled promise rejection → **界面上一点反馈都没有**，
+      //   用户只会以为「点了没反应」。这里必须给出可见反馈。
+      afNaval.toast('连不上服务器，请检查后端是否在运行', 'err');
+    });
+  };
+  $('#inKey').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#btnLogin').click(); });
+  $('#navOut').onclick = function (e) { e.preventDefault(); logout(); };
+  /* 抽屉里的同一个动作（手机上顶栏链接被折叠，用户只能从这里退） */
+  var _mnavOut = document.getElementById('mnavOut');
+  if (_mnavOut) _mnavOut.onclick = function (e) { e.preventDefault(); logout(); };
+
+  function api(path, opts, keyOverride) {
+    opts = opts || {};
+    var init = { method: opts.method || 'GET', headers: {} };
+    var k = keyOverride || KEY;
+    if (k) init.headers['X-Admin-Key'] = k;
+    if (opts.body !== undefined) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.body); }
+    return fetch('/api' + path, init).then(function (r) { return r.json().catch(function(){ return { ok:false, error:'HTTP '+r.status }; }); });
+  }
+
+  function enter() {
+    $('#gate').style.display = 'none';
+    $('#panel').style.display = 'block';
+    setLogoutVisible(true);
+    afNaval.mountReveal($('#panel'));
+    refresh();
+  }
+
+  // ---------- 数据 ----------
+  // ★ v2.24：原来三个请求都没有 catch，而且「最后同步」的时间是在请求返回**之前**就写好的。
+  //   后果是：后端进程挂了 / 断网 / nginx 502 时，点「刷新数据」照样弹绿色「已刷新」、
+  //   时间照常更新、四个指标数字一个都不变 —— 管理员会据此认为数据是最新的。
+  //   现在统一收集成败，只有全成功才写「最后同步」，否则写「同步失败」并弹错误。
+  function refresh() {
+    var failed = 0;
+    function onFail() { failed++; }
+
+    var p1 = api('/AtlanticFleetSite/admin/stats').then(function (r) {
+      if (r.ok) {
+        var s = r.stats;
+        animNum($('#mPending'), s.pending); animNum($('#mApproved'), s.approved);
+        animNum($('#mRejected'), s.rejected);
+        return;
+      }
+      if (r.error && r.error.indexOf('密钥') >= 0) { logout(); afNaval.toast('密钥已失效，请重新登录', 'err'); return; }
+      // ★ v2.38：走到这里说明「请求成功回来了，但业务失败」。
+      //   原来没有 else 分支 → failed 仍是 0 → 底部照样显示绿色「最后同步」，
+      //   管理员会据此认为数据是新的，实际一条都没拿到。必须计入失败。
+      onFail();
+    }).catch(onFail);
+
+    // 仓库总量：直接读仓库索引，这才是管理员最关心的数字
+    var p2 = afNaval.api('/list').then(function (r) {
+      if (r.ok) { animNum($('#mRepo'), r.count); return; }
+      onFail();
+    }).catch(onFail);
+
+    var p3 = api('/AtlanticFleetSite/admin/mods').then(function (r) {
+      if (r.ok) { cache = r.mods || []; render(); return; }
+      if (r.error && r.error.indexOf('密钥') >= 0) { logout(); return; }
+      onFail();
+    }).catch(onFail);
+
+    return Promise.all([p1, p2, p3]).then(function () {
+      if (failed) {
+        $('#lastSync').textContent = '同步失败 · ' + new Date().toLocaleTimeString('zh-CN');
+        afNaval.toast('数据没拉下来，请确认后端服务是否在运行', 'err');
+        return false;
+      }
+      $('#lastSync').textContent = '最后同步 ' + new Date().toLocaleTimeString('zh-CN');
+      return true;
+    });
+  }
+  function animNum(el, to) { if (el) afNaval.countUp(el, to || 0, 700); }
+
+  function render() {
+    // 首次进来自动选一个有内容的标签，别停在空的那页
+    if (!tab) {
+      var hasPending = cache.some(function (m) { return m.status === 'pending'; });
+      tab = hasPending ? 'pending' : (cache.length ? 'approved' : 'all');
+      [].forEach.call(document.querySelectorAll('.af-chip'), function (c) {
+        c.classList.toggle('on', c.getAttribute('data-tab') === tab);
+      });
+    }
+    var list = cache.filter(function (m) { return tab === 'all' ? true : m.status === tab; });
+
+    // ★ v2.25：这两行原来在下面这行 return 之前执行。
+    //   切到「操作日志」页时 list 恒为空 → #empty 被置为显示，
+    //   凭空多出「这里没有待处理的条目」压在日志列表上，而且 showLogs() 不会把它收回去。
+    if (tab === 'log') {
+      $('#empty').style.display = 'none';
+      // ★ v2.38：原来只藏了 #empty 就 return，#list 保留着**上一个页签**的内容，
+      //   要等 showLogs() 的请求返回才被覆盖。网络慢的那一两秒里，
+      //   「操作日志」页签上显示的其实是上一页的 Mod 卡片，很容易被误当成日志读。
+      //   先清空，让"还没加载"诚实地表现为"空的"。
+      $('#list').innerHTML = '';
+      return;
+    }
+
+    $('#empty').style.display = list.length ? 'none' : 'block';
+
+    $('#list').innerHTML = list.map(function (m) {
+      var st = STATUS[m.status] || ['未知', ''];
+      // 已上架但仓库里找不到对应的包（被手工删掉了）→ 单独提示，避免管理员困惑
+      var orphan = (m.status === 'approved' && m.live === false);
+      if (orphan) st = ['已移除', 'alert'];
+      var acts = '';
+      // ★ v2.32：每颗按钮都带上 data-aid。手工拷进 packages/ 的「孤儿包」在数据库里
+      //   没有记录（它的 id 是编造的哈希值），后端按 id 查不到时会用 aid 走包体路径，
+      //   管理员才能下架/删除它们 —— 否则这些条目在后台完全处理不掉。
+      var afAid = esc(String(m.aid || ''));
+      if (m.status === 'pending') {
+        acts = '<button class="af-btn af-btn--primary" data-act="approve" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">通过并上架</button>' +
+               '<button class="af-btn af-btn--danger" data-act="reject" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">驳回</button>';
+      } else if (m.status === 'approved') {
+        if (orphan) {
+          // ★ v2.32：孤儿包（手工拷进来的）在数据库里没有记录，
+          //   「上架 / 下架 / 审核」全都无从记录状态；而 unpublish_package 实际是
+          //   **物理删除文件**（不是移到待上架目录），所以对它来说「下架」等同于「删除」。
+          //   再摆一个「重新上架」按钮只会让人点了才发现没反应 —— 直接说清只剩删除可选。
+          acts = '<span class="af-tag af-tag--alert" style="margin-right:6px">' +
+                 '<span class="dot"></span>无库记录</span>';
+        } else {
+          acts = '<button class="af-btn" data-act="unpublish" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">下架</button>';
+        }
+        acts += '<button class="af-btn af-btn--danger" data-act="delete" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">删除</button>';
+      } else {
+        acts = '<button class="af-btn af-btn--primary" data-act="approve" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">重新上架</button>' +
+               '<button class="af-btn af-btn--danger" data-act="delete" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">删除</button>';
+      }
+      acts += '<button class="af-btn af-btn--ghost" data-act="detail" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">详情</button>';
+
+      return '<article class="af-glass af-glass--edge af-row af-tilt af-reveal">' +
+        '<div class="who">' +
+          '<div class="nm">' + esc(m.name) + ' <span class="af-tag af-tag--' + st[1] + '"><span class="dot"></span>' + st[0] + '</span></div>' +
+          '<div class="meta">#' + m.id + ' · by ' + esc(m.author || '匿名') + ' · v' + esc(m.version || '1.0') + ' · ' + sizeText(m.size != null ? m.size : m.pkg_size) + ' · ' + esc(m.created_at || '') + '</div>' +
+          (m.desc ? '<p class="ds">' + esc(m.desc) + '</p>' : '') +
+          (m.review_note ? '<div class="af-note">审核备注：' + esc(m.review_note) + '</div>' : '') +
+          (m.uploader_ip ? '<div class="meta" style="margin-top:6px">来源 IP ' + esc(m.uploader_ip) + '</div>' : '') +
+        '</div>' +
+        '<div class="acts">' + acts + '</div>' +
+      '</article>';
+    }).join('');
+    afNaval.mountReveal($('#list'));
+  }
+
+  // ---------- 动作 ----------
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]'); if (!t) return;
+    var act = t.getAttribute('data-act'), id = t.getAttribute('data-id');
+    if (act === 'detail') return showDetail(id);
+    if (act === 'delete') {
+      if (!confirm('确定删除这条 Mod？删除后不可恢复，仓库里也会一并移除。')) return;
+    }
+    if (act === 'unpublish') {
+      if (!confirm('确定下架？下架后仓库里将看不到它。')) return;
+    }
+    var note = '';
+    if (act === 'reject' || act === 'approve') {
+      note = prompt(act === 'approve' ? '审核备注（可选，玩家能看到）' : '驳回理由（建议填写）', '') ;
+      if (note === null) return;
+    }
+    t.disabled = true;
+    // ★ v2.32：一并传 aid。手工拷进仓库的包没有库记录，
+//   后端按 id 查不到时会用 aid 走包体路径，管理员才能下架/删除它们。
+    api('/AtlanticFleetSite/admin/' + act, { method:'POST', body: { id: +id, aid: t.getAttribute('data-aid') || '', note: note, by: 'uruban' } })
+      .then(function (r) {
+        if (r.ok) {
+          afNaval.toast(r.msg || '完成', 'ok');
+          // ★ v2.25：refresh() 现在返回 Promise（失败时 resolve(false)）。
+          //   以前成功分支不复位 disabled，而 refresh 内部请求失败时列表不会重建 →
+          //   这一行的「下架/删除/详情」按钮就永久灰掉，只能刷新整个页面。
+          refresh().then(function (ok) { if (!ok) t.disabled = false; });
+        }
+        else { afNaval.toast(r.error || '操作失败', 'err'); t.disabled = false; }
+      }).catch(function () { afNaval.toast('网络异常', 'err'); t.disabled = false; });
+  });
+
+  // ---------- 详情 ----------
+  function showDetail(id) {
+    api('/AtlanticFleetSite/admin/detail?id=' + id).then(function (r) {
+      if (!r.ok) { afNaval.toast(r.error || '读取失败', 'err'); return; }
+      var m = r.mod;
+      var logs = (r.logs || []).map(function (l) {
+        return '<div><span class="t">' + esc(l.created_at) + '</span> <span class="a">[' + esc(l.action) + ']</span> ' + esc(l.detail) + '</div>';
+      }).join('') || '<div style="color:var(--af-text-mute)">暂无记录</div>';
+      $('#modal').innerHTML = '' +
+        '<span class="af-kicker">Mod Record</span>' +
+        '<h3>' + esc(m.name) + '</h3>' +
+        '<div class="meta" style="color:var(--af-text-mute);font-family:var(--af-font-mono);font-size:12px">#' + m.id + ' · ' + esc(m.aid) + '</div>' +
+        '<dl class="af-kv">' +
+          '<dt>作者</dt><dd>' + esc(m.author) + '</dd>' +
+          '<dt>版本</dt><dd>' + esc(m.version) + '</dd>' +
+          '<dt>状态</dt><dd>' + esc(m.status) + '</dd>' +
+          '<dt>包体</dt><dd>' + sizeText(m.size != null ? m.size : m.pkg_size) + ' · ' + esc(m.pkg_name) + '</dd>' +
+          '<dt>舰船/编队</dt><dd>' + (m.ships||0) + ' / ' + (m.fleets||0) + '</dd>' +
+          '<dt>提交时间</dt><dd>' + esc(m.created_at||'') + '</dd>' +
+          '<dt>审核时间</dt><dd>' + esc(m.reviewed_at||'—') + '</dd>' +
+          '<dt>来源 IP</dt><dd>' + esc(m.uploader_ip||'—') + '</dd>' +
+          '<dt>内容指纹</dt><dd style="font-family:var(--af-font-mono);font-size:11px">' + esc(m.hash||'') + '</dd>' +
+        '</dl>' +
+        '<div class="af-label">mod.json 全文</div>' +
+        '<pre class="af-code">' + esc(m.mod_json) + '</pre>' +
+        '<div class="af-label" style="margin-top:18px">操作留痕</div>' +
+        '<div class="af-log">' + logs + '</div>' +
+        '<div style="display:flex;gap:9px;margin-top:18px">' +
+          '<button class="af-btn af-btn--ghost" id="mClose">关闭</button>' +
+        '</div>';
+      $('#mask').classList.add('show');
+      $('#mClose').onclick = function () { $('#mask').classList.remove('show'); };
+    }).catch(function () {
+      afNaval.toast('连不上服务器，详情打不开', 'err');
+    });
+  }
+  $('#mask').addEventListener('click', function (e) { if (e.target.id === 'mask') this.classList.remove('show'); });
+
+  // ---------- Tab 切换 ----------
+  document.querySelector('.af-tabs').addEventListener('click', function (e) {
+    var c = e.target.closest('.af-chip'); if (!c) return;
+    tab = c.getAttribute('data-tab');
+    [].forEach.call(this.querySelectorAll('.af-chip'), function (x) { x.classList.toggle('on', x === c); });
+    if (tab === 'log') return showLogs();
+    $('#list').style.display = 'flex';
+    render();
+  });
+  function showLogs() {
+    api('/AtlanticFleetSite/admin/logs').then(function (r) {
+      if (!r.ok) return afNaval.toast(r.error || '读取失败', 'err');
+      $('#empty').style.display = 'none';
+      $('#list').innerHTML = '<div class="af-glass af-row"><div class="af-log" style="width:100%">' +
+        ((r.logs||[]).map(function (l) {
+          return '<div><span class="t">' + esc(l.created_at) + '</span> <span class="a">[' + esc(l.action) + ']</span> ' +
+                 esc(l.detail) + ' <span class="t">(' + esc(l.who) + ' @ ' + esc(l.ip) + ')</span></div>';
+        }).join('') || '<div style="color:var(--af-text-mute)">暂无日志</div>') + '</div></div>';
+    }).catch(function () {
+      afNaval.toast('连不上服务器，操作日志打不开', 'err');
+    });
+  }
+
+  $('#btnRefresh').onclick = function () {
+    // ★ v2.24：原来不管请求成没成功都立刻弹「已刷新」。
+    //   现在等 refresh() 真的跑完再给反馈，并在等待期间禁用按钮，避免连点。
+    var b = this;
+    b.disabled = true;
+    refresh().then(function (ok) {
+      b.disabled = false;
+      if (ok) afNaval.toast('已刷新', 'ok');
+    });
+  };
+
+  $('#btnRebuild').onclick = function () {
+    if (!confirm('重建仓库索引？这会按 packages 目录重新汇总仓库列表，通常无需手动操作。')) return;
+    api('/AtlanticFleetSite/admin/rebuild').then(function (r) {
+      afNaval.toast(r.ok ? ('索引已重建，共 ' + r.repo_total + ' 个 Mod') : (r.error||'失败'), r.ok ? 'ok' : 'err');
+      refresh();
+    }).catch(function () {
+      afNaval.toast('连不上服务器，重建失败（后端可能已停止）', 'err');
+    });
+  };
+
+  // ---------- 启动 ----------
+  var saved = afNaval.store.get('adminkey', '');
+  if (saved) {
+    // ★ v2.38：这个 catch 是**保命**的，不是锦上添花。
+    //   #gate 和 #panel 的初始状态是「都不显示」（登录后才打开 #panel）。
+    //   原来若 fetch reject（后端被杀 / 502 / 断网），两条路都走不到：
+    //     - then 的 ok 分支进不了 → enter() 不执行
+    //     - else 分支也进不去（Promise 根本没 fulfilled）
+    //   结果是**整页全白，连登录框都不出现**，用户只能靠清缓存/改 localStorage 自救。
+    api('/AtlanticFleetSite/admin/login', { method:'POST', body:{} }, saved).then(function (r) {
+      if (r.ok) { saveKey(saved); enter(); } else { $('#gate').style.display = 'block'; }
+    }).catch(function () {
+      $('#gate').style.display = 'block';   // 关键：把登录框露出来，让人能重新登录
+      afNaval.toast('连不上服务器，已退回登录界面', 'err');
+    });
+  } else {
+    $('#gate').style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>

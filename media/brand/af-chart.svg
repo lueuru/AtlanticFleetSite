@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <!-- 自绘矢量海图纹理（替代原先从游戏 APK 抽出的位图海图纸纹）
+       纯几何线条，无第三方素材成分；矢量任意缩放不糊。 -->
+  <defs>
+    <pattern id="af-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M60 0H0V60" fill="none" stroke="rgba(224,177,92,.085)" stroke-width="1"/>
+    </pattern>
+    <pattern id="af-grid-fine" width="12" height="12" patternUnits="userSpaceOnUse">
+      <path d="M12 0H0V12" fill="none" stroke="rgba(224,177,92,.035)" stroke-width=".5"/>
+    </pattern>
+    <pattern id="af-contour" width="300" height="300" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="rgba(224,177,92,.05)" stroke-width="1.1">
+        <path d="M-20 60 Q 60 20 150 58 T 320 64"/>
+        <path d="M-20 130 Q 80 96 170 132 T 320 138"/>
+        <path d="M-20 205 Q 70 176 160 208 T 320 214"/>
+        <path d="M-20 272 Q 90 250 180 276 T 320 282"/>
+      </g>
+    </pattern>
+    <radialGradient id="af-vign" cx="50%" cy="42%" r="72%">
+      <stop offset="0" stop-color="rgba(224,177,92,.055)"/>
+      <stop offset="60%" stop-color="rgba(224,177,92,.014)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,.10)"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="600" height="600" fill="url(#af-grid-fine)"/>
+  <rect width="600" height="600" fill="url(#af-grid)"/>
+  <rect width="600" height="600" fill="url(#af-contour)"/>
+
+  <!-- 方位刻度：每 30° 一根短线，四边都有 -->
+  <g stroke="rgba(224,177,92,.16)" stroke-width="1">
+    <path d="M300 0v14M300 586v14M0 300h14M586 300h14"/>
+    <path d="M150 0v9M450 0v9M0 150h9M600 150h9
+             M150 591v9M450 591v9M0 450h9M600 450h9"/>
+  </g>
+  <g stroke="rgba(224,177,92,.24)" stroke-width="1.2">
+    <path d="M300 0v20M300 580v20M0 300h20M580 300h20"/>
+  </g>
+
+  <!-- 罗盘玫瑰：同心圆 + 十字 + 斜向虚线 -->
+  <g transform="translate(300 300)" fill="none" stroke="rgba(224,177,92,.09)">
+    <circle r="128" stroke-width="1"/>
+    <circle r="86" stroke-width=".8" stroke-dasharray="3 7"/>
+    <circle r="44" stroke-width=".8"/>
+    <path d="M0-128V128M-128 0H128" stroke-width=".8"/>
+    <path d="M-90-90L90 90M90-90L-90 90" stroke-width=".5" stroke-dasharray="2 9"/>
+  </g>
+
+  <rect width="600" height="600" fill="url(#af-vign)"/>
+</svg>

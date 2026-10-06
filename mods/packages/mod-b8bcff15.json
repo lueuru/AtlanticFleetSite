@@ -1,0 +1,106 @@
+{
+  "modName": "决斗·航母打击群",
+  "author": "老王",
+  "version": "2.4",
+  "description": "航弹与舰载机是唯一主角：联队规模翻倍、航弹精度与破坏力显著提升，同时压低水面舰炮的战果。一次成功的甲板命中就能决定整场战役，考验放飞机与护航的时机。",
+  "tags": [
+    "航母",
+    "航空",
+    "快节奏"
+  ],
+  "combat": {
+    "bomb": {
+      "accuracyMul": 1.45,
+      "damageMul": 1.7
+    },
+    "air.wingSizeMul": 1.9,
+    "gun": {
+      "damageMul": 0.72,
+      "spreadMul": 1.15
+    },
+    "torpedo": {
+      "damageMul": 0.9
+    },
+    "sensor.radarRangeMul": 1.6
+  },
+  "ships": [
+    {
+      "class": "Duel Fleet Carrier",
+      "type": "CV",
+      "nation": 0,
+      "tons": 27000,
+      "length": 235,
+      "beam": 24,
+      "speed": 30,
+      "range": 11000,
+      "belt": 4,
+      "turret": 4,
+      "deck": 3,
+      "guns": 0,
+      "caliber": 0,
+      "secGuns": 8,
+      "secCaliber": 4.7,
+      "torpedoes": 0,
+      "torpedoCalibre": 0,
+      "aircraft": 72,
+      "renown": 480,
+      "primaryAmmo": 0,
+      "secondaryAmmo": 240,
+      "torpedoAmmo": 0,
+      "isCarrier": true,
+      "isAircraftCarrier": true,
+      "instances": [
+        "Duel",
+        "Triumph",
+        "Vanguard"
+      ]
+    },
+    {
+      "class": "Duel Escort Carrier",
+      "type": "CVE",
+      "nation": 0,
+      "tons": 15000,
+      "length": 168,
+      "beam": 21,
+      "speed": 20,
+      "range": 14000,
+      "belt": 2,
+      "turret": 2,
+      "deck": 2,
+      "guns": 0,
+      "caliber": 0,
+      "secGuns": 2,
+      "secCaliber": 4.0,
+      "torpedoes": 0,
+      "torpedoCalibre": 0,
+      "aircraft": 28,
+      "renown": 260,
+      "primaryAmmo": 0,
+      "secondaryAmmo": 120,
+      "torpedoAmmo": 0,
+      "isCarrier": true,
+      "isEscortCarrier": true,
+      "isEscort": true,
+      "instances": [
+        "Duel Escort",
+        "Fencer",
+        "Tracker"
+      ]
+    }
+  ],
+  "fleets": [
+    {
+      "fleetName": "Fast Carrier Task Force",
+      "nation": 0,
+      "ships": [
+        "Duel Fleet Carrier",
+        "Duel Escort Carrier",
+        "Duel Escort Carrier"
+      ],
+      "date": "4 June 1942",
+      "timeofday": "Dawn",
+      "distance": 150,
+      "environment": 0
+    }
+  ]
+}

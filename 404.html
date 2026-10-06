@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>document.documentElement.className+=" af-js";</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>页面不存在 · 大西洋舰队 Mod 框架</title>
+<meta name="robots" content="noindex">
+<!-- ★ v2.31：补 canonical 与 description。
+     404 会被搜索引擎当作「软 404」抓取（返回 200 或被当作正常页处理），
+     没有 canonical 时，同一内容的各个 URL 变体（带参数、.html 后缀等）
+     会被当成多个不同页面分别处理。description 则决定分享出去时的说明文字。 -->
+<link rel="canonical" href="https://atlanticfleet.asia/404.html">
+<meta name="description" content="页面不存在。返回首页，或前往 Mod 仓库与文档站。">
+<meta property="og:title" content="页面不存在 · 大西洋舰队 Mod 框架">
+<meta property="og:description" content="页面不存在。返回首页，或前往 Mod 仓库与文档站。">
+<meta property="og:image" content="https://atlanticfleet.asia/media/brand/af-brand.svg">
+<link rel="icon" type="image/svg+xml" href="/AtlanticFleetSite/media/brand/af-brand.svg">
+<!-- 页面配色跟随系统深浅色，地址栏跟着一起变，避免深色下顶栏是浅色 -->
+<meta name="theme-color" content="#e8e2d2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#04080f" media="(prefers-color-scheme: dark)">
+<style>
+@font-face {
+  font-family: "AF Display";
+  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "AF SC";
+  src: url("/AtlanticFleetSite/media/fonts/af-sc.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+</style>
+<style>
+  /* 配色与首页共用同一套变量，明暗主题自动跟随系统 */
+  :root {
+    --ink:      #2b2822;
+    --ink-dim:  #5a5449;
+    --ink-mute: #6b6355;
+    --brass:    #8a6412;
+    --brass-2:  #a87c1c;
+    --line:     rgba(122,96,34,.24);
+    --page:     #e8e2d2;
+    --card:     rgba(255,253,247,.78);
+    --shadow:   0 14px 40px -20px rgba(70,56,30,.34);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:      #e6e2d8;
+      --ink-dim:  #a8b2bd;
+      --ink-mute: #848e9a;
+      --brass:    #e0b15c;
+      --brass-2:  #a87c1c;
+      --line:     rgba(224,177,92,.20);
+      --page:     #0a1018;
+      --card:     rgba(255,252,245,.06);
+      --shadow:   0 18px 50px -22px rgba(0,0,0,.85);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "AF SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    /* 与首页一致的极光底纹，避免大面积纯色显得死板 */
+    background-image:
+      radial-gradient(60vmax 42vmax at 14% 8%,  rgba(230,190,120,.20), transparent 62%),
+      radial-gradient(52vmax 40vmax at 88% 92%, rgba(150,185,210,.20), transparent 60%);
+  }
+  .box {
+    width: 100%;
+    max-width: 560px;
+    padding: 40px 32px;
+    text-align: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+  .code {
+    font-family: "AF Display", Georgia, serif;
+    font-size: clamp(64px, 18vw, 104px);
+    line-height: 1;
+    letter-spacing: .04em;
+    color: var(--brass);
+    margin: 0 0 6px;
+  }
+  h1 {
+    font-family: "AF Display", Georgia, serif;
+    font-size: 21px;
+    font-weight: 400;
+    margin: 0 0 12px;
+    letter-spacing: .04em;
+  }
+  p {
+    margin: 0 0 26px;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--ink-dim);
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  a.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;              /* 触控目标不小于 44px */
+    padding: 0 20px;
+    font-size: 15px;
+    text-decoration: none;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: transparent;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  a.btn:hover {
+    border-color: var(--brass);
+    background: rgba(138,100,18,.08);
+    transform: translateY(-1px);
+  }
+  a.btn.primary {
+    color: #fdfaf2;
+    background: #7d5a10;
+    border-color: #7d5a10;
+  }
+  a.btn.primary:hover { background: var(--brass-2); border-color: var(--brass-2); }
+  @media (prefers-color-scheme: dark) {
+    a.btn.primary { color: #14181d; background: var(--brass); border-color: var(--brass); }
+    a.btn.primary:hover { background: #f0c877; border-color: #f0c877; }
+  }
+  a.btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  .tip {
+    margin: 24px 0 0;
+    font-size: 13px;
+    color: var(--ink-mute);
+    line-height: 1.7;
+  }
+  @media (max-width: 480px) {
+    .box { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+  <main class="box">
+    <p class="code">404</p>
+    <h1>这个页面不在这里</h1>
+    <p>链接可能打错了，或者页面挪到了别处。<br>下面几个入口一般都能用。</p>
+    <nav class="links">
+      <a class="btn primary" href="/">回到首页</a>
+      <a class="btn" href="/AtlanticFleetSite/docs/">使用文档</a>
+      <a class="btn" href="/AtlanticFleetSite/mods/">Mod 仓库</a>
+    </nav>
+    <p class="tip">如果你是从别人分享的链接点进来的，<br>可以回到<a href="/AtlanticFleetSite/mods/">Mod 仓库</a>，或在<a href="/AtlanticFleetSite/docs/faq/">常见问题</a>里找答案。</p>
+  </main>
+</body>
+</html>

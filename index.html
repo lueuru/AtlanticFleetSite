@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>document.documentElement.className+=" af-js";</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>大西洋舰队 Mod 框架</title>
+<meta name="description" content="在手机上直接改《大西洋舰队》：调数值、加自己的舰船、装别人做的模型与贴图，不用连电脑、不写代码。含使用文档与 Mod 仓库。">
+<link rel="icon" type="image/svg+xml" href="/AtlanticFleetSite/media/brand/af-brand.svg">
+<meta name="theme-color" content="#0a1018">
+<style>
+@font-face {
+  font-family: "AF Display";
+  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "AF SC";
+  src: url("/AtlanticFleetSite/media/fonts/af-sc.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "AF Mono";
+  src: url("/AtlanticFleetSite/media/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+</style>
+<style>
+  /* 浅色（默认）：海图纸卷 */
+  :root {
+    --ink:      #2b2822;
+    --ink-dim:  #5a5449;
+    --ink-mute: #6b6355;
+    --brass:    #8a6412;
+    --brass-rgb: 138, 100, 18;   /* 供 rgba() 用，避免依赖 color-mix() */
+    --brass-2:  #a87c1c;
+    --line:     rgba(122,96,34,.24);
+    --page:     #e8e2d2;
+    --glass:    linear-gradient(150deg, rgba(255,253,247,.82) 0%, rgba(255,252,244,.62) 44%, rgba(232,224,206,.66) 100%);
+    --card-hi:  rgba(255,255,252,.95);
+    --card-lo:  rgba(90,72,40,.10);
+    --card-in:  rgba(184,140,50,.14);
+    --card-sh:  0 14px 40px -20px rgba(70,56,30,.34);
+    --chart-op: .55;
+    --chart-blend: multiply;
+    --glow-1:   rgba(230,190,120,.42);
+    --glow-2:   rgba(150,185,210,.36);
+  }
+  /* 深色：墨蓝夜色 */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:      #e6e2d8;
+      --ink-dim:  #a8b2bd;
+      --ink-mute: #848e9a;
+      --brass:    #e0b15c;
+      --brass-rgb: 224, 177, 92;
+      --brass-2:  #a87c1c;
+      --line:     rgba(224,177,92,.20);
+      --page:     #0a1018;
+      --glass:    linear-gradient(150deg, rgba(255,252,245,.09) 0%, rgba(255,250,240,.035) 42%, rgba(16,26,38,.34) 100%);
+      --card-hi:  rgba(255,252,245,.30);
+      --card-lo:  rgba(0,0,0,.30);
+      --card-in:  rgba(224,177,92,.18);
+      --card-sh:  0 18px 48px -14px rgba(0,0,0,.66);
+      --chart-op: .16;
+      --chart-blend: overlay;
+      --glow-1:   rgba(255,216,150,.30);
+      --glow-2:   rgba(110,160,200,.26);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    /* ★ 不用 flex + align-items:center 做垂直居中。
+       内容比视口高时 flex 居中会同时溢出上下两端，浏览器又滚不到溢出部分，
+       顶部会被永久裁掉（实测手机端 .brand 顶到 -47px，滚不回去）。
+       改用 margin:auto：内容超高时从顶部正常排布，可完整滚动。 */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "AF SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 背景：原版海图纸纹 + 灯塔光 */
+  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .bg::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: url("/AtlanticFleetSite/media/brand/af-chart.svg");
+    background-size: 700px 700px;
+    opacity: var(--chart-op); mix-blend-mode: var(--chart-blend);
+  }
+  .bg::after {
+    content: ""; position: absolute; top: -30vh; left: 50%;
+    width: 150vw; height: 96vh; transform: translateX(-50%);
+    background:
+      radial-gradient(ellipse at 26% 42%, var(--glow-1), transparent 58%),
+      radial-gradient(ellipse at 78% 36%, var(--glow-2), transparent 60%);
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 880px;
+    /* 内容矮于视口时用 margin:auto 居中；高于视口时 auto 外边距会算 0，
+       自然从顶部开始排 —— 两种情况都正确。 */
+    margin: auto;
+  }
+
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
+  .brand img {
+    width: 52px; height: 52px; border-radius: 10px;
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 24px -10px var(--card-sh), inset 0 1px 0 var(--card-hi);
+  }
+  .brand .nm { font-size: 15px; font-weight: 600; letter-spacing: .04em; }
+  .brand .sb {
+    display: block; margin-top: 2px;
+    font-family: "AF Mono", Consolas, monospace;
+    font-size: 10.5px; letter-spacing: .16em; color: var(--ink-mute);
+  }
+
+  h1 {
+    font-family: "AF Display", "AF SC", sans-serif;
+    font-size: clamp(30px, 6vw, 46px);
+    font-weight: 400; letter-spacing: .06em; line-height: 1.24;
+    margin: 0 0 12px;
+  }
+  h1 em { font-style: normal; color: var(--brass); }
+  .sub {
+    margin: 0 0 34px; max-width: 46em;
+    font-size: clamp(14px, 2.2vw, 16px); line-height: 1.85; color: var(--ink-dim);
+  }
+
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    position: relative;
+    display: block; padding: 22px 22px 20px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(165%) brightness(1.05);
+    -webkit-backdrop-filter: blur(20px) saturate(165%) brightness(1.05);
+    box-shadow:
+      0 18px 48px -14px var(--card-sh),
+      0 2px 10px rgba(0,0,0,.12),
+      inset 0 1px 0 var(--card-hi),
+      inset 0 -1px 0 var(--card-lo),
+      inset 0 0 42px -14px var(--card-in);
+    color: inherit; text-decoration: none;
+    transition: transform .28s cubic-bezier(.16,1,.3,1), border-color .28s, box-shadow .28s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(240,208,138,.55);
+    box-shadow:
+      0 26px 60px -18px var(--card-sh),
+      0 0 0 1px rgba(var(--brass-rgb), .34),
+      inset 0 1px 0 var(--card-hi),
+      inset 0 0 50px -12px var(--card-in);
+  }
+  .card .ic {
+    width: 34px; height: 34px; margin-bottom: 14px; color: var(--brass);
+    /* ★ 必须是「有确定高度的容器」：内联 <svg> 默认按 viewBox 撑开，
+       只写 width/height:100% 而父高不确定时，svg 会撑到几百像素
+       （实测 CSS 写 34px、实际渲染 312×418，卡片被顶到 456px 高）。
+       这里用 flex 布局 + 明确的 flex-shrink:0 锁死，并把 svg 设为绝对填满。 */
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    flex: 0 0 34px;
+  }
+  .card .ic svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+  }
+  .card h2 {
+    margin: 0 0 6px;
+    font-family: "AF Display", "AF SC", sans-serif;
+    font-size: 20px; font-weight: 400; letter-spacing: .05em;
+  }
+  .card p { margin: 0; font-size: 13.5px; line-height: 1.75; color: var(--ink-dim); }
+  .card .go {
+    display: inline-block; margin-top: 12px;
+    font-family: "AF Mono", Consolas, monospace;
+    font-size: 11.5px; color: var(--brass); opacity: .8;
+  }
+
+  .foot {
+    margin-top: 34px; padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center;
+    font-size: 13px; color: var(--ink-mute);
+  }
+  .foot a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid transparent; }
+  .foot a:hover { color: var(--brass); border-bottom-color: currentColor; }
+  .foot .sep { opacity: .4; }
+
+  .qq {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 13px; border-radius: 999px;
+    background: linear-gradient(150deg, #2f6ea8, #1d4a75);
+    color: #fff; text-decoration: none; font-weight: 600; font-size: 12.5px;
+    white-space: nowrap;
+  }
+  /* ★ 必须锁死尺寸并禁止收缩：
+     内联 <svg> 只写 width:100% 时父高不确定，它会按 viewBox 撑开压住后面的文字
+     （之前这条规则只写在 max-width:560px 里，桌面端完全没生效）。
+     用 flex:0 0 + 固定尺寸，svg 用绝对定位填满，两个断点都不会再压字。 */
+  .qq { position: relative; }
+  /* 备案号与访问方式提示 */
+  .af-legal, .af-via {
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: var(--ink-mute);
+    text-align: center;
+    line-height: 1.7;
+  }
+  .af-via code {
+    font-family: ui-monospace, "AF Mono", Consolas, monospace;
+    color: var(--ink-dim);
+  }
+  .qq svg {
+    position: relative;
+    width: 15px; height: 15px;
+    flex: 0 0 15px;
+    display: block;
+  }
+  .qq span, .qq { min-width: 0; }
+
+  @media (max-width: 560px) {
+    .card { padding: 18px; }
+  }
+
+  /* ★ 触摸设备页脚链接触控区（实测 390 宽时）
+       原先的第三方平台入口几乎点不中；现在改为胶囊按钮，尺寸达标。
+     断点取 860：768×1024 平板竖屏同样是**触摸**操作，560 太窄会漏掉它。
+     桌面端（>860）鼠标操作，加内边距只会让页脚变松垮，不加。 */
+  @media (max-width: 860px) {
+    .foot a {
+      display: inline-flex; align-items: center;
+      min-height: 40px; padding: 6px 4px;
+    }
+    .foot .qq { min-height: 40px; padding: 6px 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="wrap">
+  <div class="brand">
+    <img src="/AtlanticFleetSite/media/brand/af-brand.svg" alt="">
+    <span>
+      <span class="nm">大西洋舰队 Mod 框架</span>
+      <span class="sb">ATLANTIC FLEET · MOD FRAMEWORK</span>
+    </span>
+  </div>
+
+  <h1>改游戏，<em>不用连电脑</em></h1>
+  <p class="sub">
+    调数值、加自己的舰船、装别人做的模型与贴图 —— 都在手机里点完。
+    下面三个地方分别对应看文档、逛仓库、审核上传。
+  </p>
+
+  <div class="grid">
+    <a class="card" href="/AtlanticFleetSite/docs/">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5A1.5 1.5 0 0 1 6 4h6.5l4.5 4.5V19a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19z"/><path d="M12.5 4v5h4.5M8 13.5h7M8 16.5h4.5"/></svg></span>
+      <h2>文档</h2>
+      <p>怎么装、每一项能力怎么用、Mod 怎么写、有问题怎么排查。</p>
+      <span class="go">/docs/ →</span>
+    </a>
+
+    <a class="card" href="/AtlanticFleetSite/mods/">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.2 20 7.6v8.8L12 20.8 4 16.4V7.6z"/><path d="m4 7.6 8 4.4 8-4.4M12 12v8.8"/></svg></span>
+      <h2>Mod 仓库</h2>
+      <p>浏览和搜索已上架的 Mod，复制分享码即可安装，也能把你做的传上来。</p>
+      <span class="go">/mods/ →</span>
+    </a>
+
+    <a class="card" href="/AtlanticFleetSite/admin/">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 6.3a4.6 4.6 0 0 1-6.1 5.9L7.4 18.9a2 2 0 1 1-2.8-2.8l6.7-6.7a4.6 4.6 0 0 1 5.9-6.1l-2.8 2.8 2.2 2.2 2.8-2.8Z"/></svg></span>
+      <h2>审核后台</h2>
+      <p>处理玩家上传的 Mod。只有站长能进，需要密钥。</p>
+      <span class="go">/admin/ →</span>
+    </a>
+  </div>
+
+  <div class="foot">
+    <!-- ★ v2.42：原先这里是「QQ 群 + B 站」两个第三方入口，
+         其中还内联了一整段第三方品牌路径。全部移除，改为站内去向。 -->
+    <a href="/AtlanticFleetSite/docs/credits/">作者与致谢</a>
+    <span class="sep">·</span>
+    <a href="/AtlanticFleetSite/docs/faq/">常见问题</a>
+    <span class="sep">·</span>
+    <span>uruban</span>
+  </div>
+
+  <!-- 备案号：工信部要求已备案网站在页面底部展示备案号。
+       未备案时整块隐藏；备案通过后把号填进下面 data-icp 即可显示。
+       链接按工信部规范指向 https://beian.miit.gov.cn/ -->
+  <div class="af-legal" data-icp hidden>
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"
+       id="af-icp-link"></a>
+  </div>
+
+  <!-- 当前访问方式提示：备案完成前，部分网络下域名会被拦，
+       这时 IP 访问是正常路径。给访客一句说明，避免以为是网站坏了。 -->
+  <div class="af-via" id="af-via" hidden></div>
+</div>
+  <script>
+    // 备案号：全站唯一数据源在 /mods/icp.js?v=1.1（首页刻意不加载 af-naval.js，
+    // 那会连带引入主题、粒子、自定义光标等副作用，所以单独引这一个极小的文件）。
+    // 以前这里只有一个空的 data-icp 区块、没有任何脚本去填它，
+    // 结果备案通过后在别的页面都显示了，唯独首页永远 hidden —— 而首页恰恰是
+    // 最需要展示备案号的门面页。填了号会自动去掉 hidden。
+    (function () {
+      var s = document.createElement('script');
+      s.src = '/AtlanticFleetSite/mods/icp.js?v=1.1';
+      s.onload = function () {
+        if (!window.AF_ICP) return;
+        var box = document.querySelector('.af-legal[data-icp]');
+        var link = document.getElementById('af-icp-link');
+        if (link) link.textContent = window.AF_ICP;
+        if (box) box.hidden = false;
+      };
+      document.head.appendChild(s);
+    })();
+
+    // 按当前访问方式给出说明：备案完成前，域名在部分网络不可用，
+    // 走 IP 访问是正常的。这段只为消除"是不是网站坏了"的误解。
+    (function () {
+      var el = document.getElementById('af-via');
+      if (!el) return;
+      var isIp = /^(https?:\/\/)?(\d{1,3}\.){3}\d{1,3}/.test(location.host);
+      var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+                    || location.hostname === 'default.com';
+      if (isLocal) return;                 // 本机调试不提示
+      // ★ v2.37：文案改读 /mods/icp.js?v=1.1 的 AF_VIA_NOTE（与仓库页、后台页同源）。
+      el.textContent = isIp
+        ? ((window.AF_VIA_NOTE || '') + '（' + location.host + '）')
+        : '';
+      el.hidden = !isIp;
+    })();
+  </script>
+</body>
+</html>

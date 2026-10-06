@@ -1,0 +1,65 @@
+# —— 构建脚本与本地产物（仓库只放发布产物）——
+# 这些脚本是从主站同步站点时用的，GitHub Pages 直接发布仓库根，
+# 脚本本身不是站点内容，进仓库只会让人误以为是站点的一部分。
+build_public.sh
+deploy_prepare.py
+static_api_offline.py
+strip_game_assets.py
+inject_js_flag.py
+_verify_subpath.mjs
+_t_prefix.py
+_serve.py
+_own/
+.deploy_prefix.json
+__pycache__/
+*.pyc
+
+# —— 敏感信息 ——
+.env
+.env.*
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+*.keystore
+id_rsa*
+*.secret
+*password*
+config.local.*
+
+# —— 备份与临时文件 ——
+*.bak
+*.bak_*
+*~
+*.orig
+*.rej
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# —— 日志 ——
+*.log
+logs/
+
+# —— 编辑器 ——
+.vscode/
+.idea/
+.vs/
+*.swp
+*.swo
+
+# —— 依赖与缓存（万一以后在仓库里跑工具）——
+node_modules/
+.cache/
+.vitepress/
+dist/
+.cache-vitepress/
+
+# —— 注意刻意**不**排除的内容 ——
+#   docs/assets/*.woff2   文档站字体，页面要用
+#   media/fonts/*.woff2   站点字体，@font-face 指向它们
+#   mods/packages/*.txt   Mod 分享码，下载按钮的直链目标
+#   .well-known/          保留目录本身（证书续期可能要放文件），
+#                         只排除了里面的一次性 acme-challenge
+.well-known/acme-challenge/

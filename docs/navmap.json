@@ -1,0 +1,306 @@
+{
+ "zh": {
+  "use": "怎么用",
+  "dev": "开发者",
+  "features": "功能",
+  "deploy": "安装部署",
+  "repo": "Mod 仓库",
+  "technical": "技术细节",
+  "changelog": "更新日志",
+  "faq": "常见问题",
+  "roadmap": "路线图",
+  "credits": "制作人员",
+  "what-is-afmod": "这是什么",
+  "quickstart": "快速开始",
+  "glossary": "术语表",
+  "architecture": "整体架构"
+ },
+ "groups": {
+  "_top": [
+   {
+    "t": "大西洋舰队Mod 框架",
+    "href": "/AtlanticFleetSite/docs/"
+   }
+  ],
+  "architecture": [
+   {
+    "t": "它是如何实现的 ​",
+    "href": "/AtlanticFleetSite/docs/architecture/"
+   }
+  ],
+  "changelog": [
+   {
+    "t": "更新日志 ​",
+    "href": "/AtlanticFleetSite/docs/changelog/"
+   }
+  ],
+  "credits": [
+   {
+    "t": "致谢与许可 ​",
+    "href": "/AtlanticFleetSite/docs/credits/"
+   }
+  ],
+  "deploy": [
+   {
+    "t": "安装部署总览 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/"
+   },
+   {
+    "t": "安装后该做什么 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/after-install/"
+   },
+   {
+    "t": "安卓手机安装 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/android/"
+   },
+   {
+    "t": "从源码自己构建 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/build/"
+   },
+   {
+    "t": "首次启动与目录 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/first-run/"
+   },
+   {
+    "t": "安装 Mod 的三种方式 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/install-mod/"
+   },
+   {
+    "t": "卸载与还原 ​",
+    "href": "/AtlanticFleetSite/docs/deploy/uninstall/"
+   }
+  ],
+  "dev": [
+   {
+    "t": "开发者",
+    "href": "/AtlanticFleetSite/docs/dev/"
+   },
+   {
+    "t": "制作 AssetBundle 模型 ​",
+    "href": "/AtlanticFleetSite/docs/dev/assetbundle/"
+   },
+   {
+    "t": "编译环境搭建 ​",
+    "href": "/AtlanticFleetSite/docs/dev/build-env/"
+   },
+   {
+    "t": "框架源码结构 ​",
+    "href": "/AtlanticFleetSite/docs/dev/codebase/"
+   },
+   {
+    "t": "贡献与规范 ​",
+    "href": "/AtlanticFleetSite/docs/dev/contributing/"
+   },
+   {
+    "t": "C# 3.0 兼容约束 ​",
+    "href": "/AtlanticFleetSite/docs/dev/cs30-limits/"
+   },
+   {
+    "t": "如何修改框架本身 ​",
+    "href": "/AtlanticFleetSite/docs/dev/hack/"
+   },
+   {
+    "t": "调试与日志接口 ​",
+    "href": "/AtlanticFleetSite/docs/dev/logging-api/"
+   },
+   {
+    "t": "mod.json 完整规范 ​",
+    "href": "/AtlanticFleetSite/docs/dev/mod-json/"
+   },
+   {
+    "t": "参数键全表 ​",
+    "href": "/AtlanticFleetSite/docs/dev/param-keys/"
+   },
+   {
+    "t": "发布你的 Mod 到仓库 ​",
+    "href": "/AtlanticFleetSite/docs/dev/publish/"
+   },
+   {
+    "t": "舰船与编队定义 ​",
+    "href": "/AtlanticFleetSite/docs/dev/ship-fleet-schema/"
+   },
+   {
+    "t": "开发总览 ​",
+    "href": "/AtlanticFleetSite/docs/dev/start/"
+   }
+  ],
+  "faq": [
+   {
+    "t": "常见问题 ​",
+    "href": "/AtlanticFleetSite/docs/faq/"
+   }
+  ],
+  "features": [
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/ai/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/combat/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/economy/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/fleets/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/i18n/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/matrix/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/models/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/params/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/profile/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/sandbox/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/sensor-air/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/sharecode/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/ships/"
+   },
+   {
+    "t": "功能",
+    "href": "/AtlanticFleetSite/docs/features/start/"
+   }
+  ],
+  "glossary": [
+   {
+    "t": "术语表 ​",
+    "href": "/AtlanticFleetSite/docs/glossary/"
+   }
+  ],
+  "quickstart": [
+   {
+    "t": "快速开始 ​",
+    "href": "/AtlanticFleetSite/docs/quickstart/"
+   }
+  ],
+  "repo": [
+   {
+    "t": "Mod 仓库",
+    "href": "/AtlanticFleetSite/docs/repo/"
+   },
+   {
+    "t": "审核后台（站长） ​",
+    "href": "/AtlanticFleetSite/docs/repo/admin/"
+   },
+   {
+    "t": "浏览与安装（玩家） ​",
+    "href": "/AtlanticFleetSite/docs/repo/browse/"
+   },
+   {
+    "t": "上传你的 Mod（作者） ​",
+    "href": "/AtlanticFleetSite/docs/repo/publish/"
+   },
+   {
+    "t": "Mod 仓库总览 ​",
+    "href": "/AtlanticFleetSite/docs/repo/start/"
+   }
+  ],
+  "roadmap": [
+   {
+    "t": "路线图 ​",
+    "href": "/AtlanticFleetSite/docs/roadmap/"
+   }
+  ],
+  "technical": [
+   {
+    "t": "技术细节 ​",
+    "href": "/AtlanticFleetSite/docs/technical/"
+   }
+  ],
+  "use": [
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/conflicts/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/gestures/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/help-page/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/input/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/log-page/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/mods-page/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/panel/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/params-page/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/recipes/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/save-page/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/status-page/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/timescale/"
+   },
+   {
+    "t": "怎么用",
+    "href": "/AtlanticFleetSite/docs/use/troubleshooting/"
+   }
+  ],
+  "what-is-afmod": [
+   {
+    "t": "这是什么 ​",
+    "href": "/AtlanticFleetSite/docs/what-is-afmod/"
+   }
+  ]
+ }
+}

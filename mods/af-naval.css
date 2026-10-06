@@ -1,0 +1,2120 @@
+/* ============================================================
+   大西洋舰队 · 海军作战系统 UI（AF Naval Ops UI）
+   共享设计系统 —— Mod 仓库 / 后台上传 / 管理后台 三站复用
+
+   设计语言：老式航海仪表 + 海图纸
+     · 深色：墨蓝夜色 + 黄铜刻度 + 琥珀信号（不是荧光青，那套太科幻）
+     · 浅色：海图纸卷 + 墨线 + 朱红印章（不再是「白底灰卡片」）
+     · 玻璃面板 + 金属描边，两套主题各自成立
+     · 底纹用自绘矢量海图（/media/brand/af-chart.svg）
+   ============================================================ */
+
+/* —— 标题字体：得意黑 Smiley Sans ——
+   宽扁 + 6° 倾斜，力量感强、有棱角，最适合「海战 / 军工」这个气质。
+   OFL 协议可免费商用。只用于标题/品牌/数字，正文另配思源黑体保证可读性。 */
+@font-face {
+  font-family: "AF Display";
+  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* —— 引文 / 提示 / 数字：思源宋体（子集 510KB）——
+   衬线体在通篇无衬线里能拉开层次，用在引用、提示框、表格数字上不抢戏。 */
+@font-face {
+  font-family: "AF Serif";
+  src: url("/AtlanticFleetSite/media/fonts/af-serif-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  /* ★ v2.36：swap -> optional。
+     这个字体 498KB，是五个里最大的，却只用在引用、提示框和数字上。
+     swap 的语义是「先拿系统字体画，等下载完再换」——换字体的瞬间
+     行高变化会把整页内容向下推一下（CLS），用户正准备点的位置就偏了。
+     optional 的语义是「100ms 内没准备好就永远用系统字体」，
+     对这种非关键字体反而体验更稳。 */
+  font-display: optional;
+}
+
+/* —— 正文字体：思源黑体（子集 369KB）—— */
+@font-face {
+  font-family: "AF SC";
+  src: url("/AtlanticFleetSite/media/fonts/af-sc.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AF Mono";
+  src: url("/AtlanticFleetSite/media/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AF Mono";
+  src: url("/AtlanticFleetSite/media/fonts/jetbrains-mono-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* —— 深色：墨蓝夜色（默认值）—— */
+  --af-abyss:    #0a1018;
+  --af-hull:     #101a26;
+  --af-deck:     #16222f;
+  --af-panel:    #1b2a38;
+  --af-raise:    #24384a;
+
+  /* —— 强调色：黄铜 + 琥珀（老式航海仪表，不是荧光青）—— */
+  --af-radar:    #e0b15c;
+  --af-radar-ink: #e0b15c;   /* 深色主题下黄铜本身就亮，文字/底色同值 */
+  /* RGB 分量：供 rgba(var(--af-radar-rgb), α) 使用。
+     这样不依赖 color-mix()（需要 Chrome 111+），旧内核浏览器也能正确着色。 */
+  --af-radar-rgb: 224, 177, 92;
+  /* 提亮一档的黄铜（原色混 8% 白），用于按钮顶部的受光高光。
+     原来是 color-mix() 算的，改成固定值以兼容旧浏览器。 */
+  --af-radar-hi: #e2b769;
+  /* 移动端去掉 backdrop-filter 后的备用底色：
+     保留极光透出的感觉，但不用每帧重采样背景。 */
+  --af-glass-fallback: rgba(10, 17, 28, .74);
+  --af-glass-solid:     rgba(10, 17, 28, .93);
+  --af-radar-dim:#8a6d33;
+  --af-scan:     #f0d08a;
+  --af-data:     #7fb3d5;      /* 冷调数据蓝 */
+  --af-signal:   #e0913c;      /* 信号琥珀 */
+  --af-alert:    #d95f4a;      /* 朱红 */
+  --af-ok:       #6faa72;
+
+  --af-edge:     rgba(224, 177, 92, .20);
+  --af-edge-hi:  rgba(240, 208, 138, .48);
+  --af-hair:     rgba(224, 177, 92, .12);
+
+  --af-text:     #e6e2d8;
+  --af-text-dim: #a8b2bd;
+  --af-text-mute:#848e9a;
+  --af-title:    #f5f2ea;
+
+  /* 背景层：极光光斑改「灯塔光」——暖白与冷蓝，不再是青绿紫 */
+  --af-aurora-1: rgba(255, 216, 150, .30);
+  --af-aurora-2: rgba(110, 160, 200, .26);
+  --af-aurora-3: rgba(200, 160, 120, .18);
+  --af-aurora-4: rgba(90, 130, 170, .18);
+  --af-btn-bg: rgba(20, 48, 74, .55);
+
+  --af-glass-bg:
+      linear-gradient(150deg,
+        rgba(255, 252, 245, .09) 0%,
+        rgba(255, 250, 240, .035) 42%,
+        rgba(16, 26, 38, .34) 100%);
+  --af-glass-bf: blur(20px) saturate(165%) brightness(1.05);
+  --af-glass-edge: rgba(255, 250, 240, .13);
+  --af-glass-hi: rgba(255, 252, 245, .30);
+  --af-glass-lo: rgba(0, 0, 0, .32);
+  --af-glass-in: rgba(224, 177, 92, .18);
+  --af-glass-shadow: 0 18px 48px -14px rgba(0,0,0,.66);
+}
+
+/* ============================================================
+   ★ 浅色主题：海图纸卷
+   之前所有玻璃/极光规则都锁在 .dark 下，切到浅色等于「什么都没有」——
+   这是全站最严重的 bug。这里给浅色一套完整成立的变量。
+   ============================================================ */
+body.af-light {
+  --af-abyss:    #e8e2d2;
+  --af-hull:     #f2ede0;
+  --af-deck:     #ece6d6;
+  --af-panel:    #e4dcc8;
+  --af-raise:    #faf6ec;
+
+  --af-radar:    #8a6412;
+  /* ★ v2.20 新增：黄铜色**当文字用**时的专用值。
+     --af-radar 同时也是按钮底色，作为底色没问题；
+     但浅色主题下 #8a6412 压在米底 #e8e2d2 上只有 4.15:1（低于 AA 的 4.5）。
+     #7a5610 实测 5.13:1，同色系更深一档，观感几乎不变。 */
+  --af-radar-ink: #7a5610;
+  --af-radar-rgb: 138, 100, 18;
+  --af-radar-hi: #937025;
+  --af-glass-fallback: rgba(250, 246, 236, .80);
+  --af-glass-solid:     rgba(252, 249, 242, .95);
+  --af-toast-bg: rgba(255,252,244,.96);
+  --af-radar-dim:#b8994f;
+  --af-scan:     #a87c1c;
+  --af-data:     #2f6489;
+  --af-signal:   #b06a12;
+  --af-alert:    #b03a2c;
+  --af-ok:       #4a7a4e;
+
+  --af-edge:     rgba(90, 72, 40, .22);
+  --af-edge-hi:  rgba(122, 96, 34, .52);
+  --af-hair:     rgba(90, 72, 40, .14);
+
+  --af-text:     #33302a;
+  --af-text-dim: #4f493f;
+  --af-text-mute:#6b6355;
+  --af-title:    #1e1b16;
+
+  --af-aurora-1: rgba(230, 190, 120, .34);
+  --af-aurora-2: rgba(150, 185, 210, .30);
+  --af-aurora-3: rgba(210, 170, 130, .24);
+  --af-aurora-4: rgba(160, 175, 190, .22);
+  --af-btn-bg: rgba(255, 253, 247, .78);
+
+  --af-glass-bg:
+      linear-gradient(150deg,
+        rgba(255, 253, 247, .78) 0%,
+        rgba(255, 252, 244, .58) 44%,
+        rgba(232, 224, 206, .62) 100%);
+  --af-glass-bf: blur(16px) saturate(140%) brightness(1.02);
+  --af-glass-edge: rgba(255, 255, 250, .90);
+  --af-glass-hi: rgba(255, 255, 252, .95);
+  --af-glass-lo: rgba(90, 72, 40, .10);
+  --af-glass-in: rgba(184, 140, 50, .14);
+  --af-glass-shadow: 0 12px 34px -18px rgba(70, 56, 30, .30);
+
+  color: var(--af-text);
+  background: var(--af-abyss);
+}
+
+:root {
+  /* —— 排版：思源黑体（子集 369KB）+ JetBrains Mono —— */
+  --af-font:      "AF SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --af-font-mono: "AF Mono", "JetBrains Mono", Consolas, "Courier New", monospace;
+  /* 标题字体：得意黑。用在 h1/h2/品牌名/大数字，正文不要用（长文会累） */
+  --af-font-display: "AF Display", "AF SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  /* 衬线：引文、提示、表格数字 */
+  --af-font-serif: "AF Serif", "Songti SC", "SimSun", Georgia, serif;
+
+  /* 圆角：玻璃要有「厚度」才像玻璃，锐角显单薄。 */
+  --af-radius:  7px;
+  --af-radius-lg: 12px;
+}
+
+
+* { box-sizing: border-box; }
+
+body.af-naval {
+  margin: 0;
+  background: var(--af-abyss);
+  color: var(--af-text);
+  font-family: var(--af-font);
+  font-size: 14px;
+  line-height: 1.65;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 背景层：极光 + 粒子 + 海图网格 + 雷达扫描 ---------- */
+.af-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ============ 灯塔光 / 环境光 ============
+   玻璃要有「可模糊的东西」才成立，所以背景不能是纯色。
+   配色全部走主题变量，深浅两套自动各自成立。
+   纹理用自绘矢量海图（/media/brand/af-chart.svg）。 */
+.af-aurora {
+  position: absolute;
+  inset: -20%;
+  filter: blur(0px);
+}
+.af-blob {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.af-blob--1 {
+  top: -22%; left: -10%;
+  width: 68vw; height: 68vw; max-width: 1040px; max-height: 1040px;
+  background: radial-gradient(circle at 50% 50%,
+      var(--af-aurora-1) 0%, transparent 66%);
+  animation: af-drift-1 26s ease-in-out infinite;
+}
+.af-blob--2 {
+  top: 4%; right: -14%;
+  width: 62vw; height: 62vw; max-width: 960px; max-height: 960px;
+  background: radial-gradient(circle at 50% 50%,
+      var(--af-aurora-2) 0%, transparent 68%);
+  animation: af-drift-2 34s ease-in-out infinite;
+}
+.af-blob--3 {
+  bottom: -26%; left: 18%;
+  width: 70vw; height: 70vw; max-width: 1100px; max-height: 1100px;
+  background: radial-gradient(circle at 50% 50%,
+      var(--af-aurora-3) 0%, transparent 68%);
+  animation: af-drift-3 40s ease-in-out infinite;
+}
+.af-blob--4 {
+  top: 34%; left: 34%;
+  width: 54vw; height: 54vw; max-width: 820px; max-height: 820px;
+  background: radial-gradient(circle at 50% 50%,
+      var(--af-aurora-4) 0%, transparent 70%);
+  animation: af-drift-4 30s ease-in-out infinite;
+}
+@keyframes af-drift-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .9; }
+  33%      { transform: translate3d(11vw, 7vh, 0) scale(1.16); opacity: 1; }
+  66%      { transform: translate3d(-6vw, 13vh, 0) scale(.92); opacity: .76; }
+}
+@keyframes af-drift-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.08); opacity: .88; }
+  40%      { transform: translate3d(-13vw, 10vh, 0) scale(.88); opacity: 1; }
+  72%      { transform: translate3d(-5vw, -8vh, 0) scale(1.2); opacity: .74; }
+}
+@keyframes af-drift-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .72; }
+  50%      { transform: translate3d(15vw, -14vh, 0) scale(1.22); opacity: 1; }
+}
+@keyframes af-drift-4 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(.94); opacity: .66; }
+  45%      { transform: translate3d(-10vw, -11vh, 0) scale(1.26); opacity: .96; }
+}
+
+/* 粒子帆（canvas） */
+.af-particles {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  opacity: .85;
+}
+
+/* —— 底纹：自绘矢量海图（/media/brand/af-chart.svg）+ 细网格 ——
+   不要自绘网格冒充海图，用游戏里真实抽出来的那张。 */
+.af-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    url("/AtlanticFleetSite/media/brand/af-chart.svg"),
+    linear-gradient(var(--af-hair) 1px, transparent 1px),
+    linear-gradient(90deg, var(--af-hair) 1px, transparent 1px);
+  background-size: 720px 720px, 44px 44px, 44px 44px;
+  background-repeat: repeat, repeat, repeat;
+  opacity: .30;
+  mix-blend-mode: overlay;
+  mask-image: radial-gradient(ellipse 130% 100% at 50% 0%, #000 10%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 130% 100% at 50% 0%, #000 10%, transparent 80%);
+  animation: af-grid-drift 120s linear infinite;
+}
+body.af-light .af-bg::before {
+  opacity: .55;
+  mix-blend-mode: multiply;
+}
+@keyframes af-grid-drift {
+  to { background-position: 720px 720px, 44px 44px, 44px 44px; }
+}
+
+/* 首屏主光 + 顶部海面光晕
+   —— 保证第一屏一定有可被玻璃模糊的光，否则毛玻璃只会是灰板 */
+.af-bg::after {
+  content: "";
+  position: absolute;
+  top: -30vh; left: 50%;
+  width: 150vw; height: 96vh;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse at 26% 42%, var(--af-aurora-1), transparent 58%),
+    radial-gradient(ellipse at 78% 36%, var(--af-aurora-2), transparent 60%),
+    radial-gradient(ellipse at 50% 8%, var(--af-aurora-3), transparent 66%);
+  animation: af-breathe 9s ease-in-out infinite;
+}
+@keyframes af-breathe { 0%,100%{opacity:.72} 50%{opacity:1} }
+
+/* 雷达扫描环（装饰，右上） */
+.af-radar-scope {
+  position: absolute;
+  top: -120px; right: -120px;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  border: 1px solid rgba(224, 177, 92, 0.10);
+  opacity: .8;
+}
+.af-radar-scope::before,
+.af-radar-scope::after {
+  content: "";
+  position: absolute; inset: 15%;
+  border-radius: 50%;
+  border: 1px solid rgba(224, 177, 92, 0.08);
+}
+.af-radar-scope::after { inset: 32%; }
+.af-radar-sweep {
+  position: absolute;
+  top: -120px; right: -120px;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+      transparent 0deg,
+      transparent 300deg,
+      rgba(224, 177, 92, 0.00) 315deg,
+      rgba(224, 177, 92, 0.16) 352deg,
+      rgba(224, 177, 92, 0.28) 359deg,
+      transparent 360deg);
+  animation: af-sweep 4.6s linear infinite;
+  mask-image: radial-gradient(circle, #000 62%, transparent 72%);
+  -webkit-mask-image: radial-gradient(circle, #000 62%, transparent 72%);
+}
+@keyframes af-sweep { to { transform: rotate(360deg); } }
+
+/* ---------- 内容容器 ---------- */
+.af-wrap {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+/* ---------- 毛玻璃面板 ----------
+   注：.af-glass 的完整定义在文件末尾「深度玻璃系统」块，
+   此处仅保留一个不依赖 ::before/::after 的降级底色，
+   以免与那边的渐变描边伪元素抢位。 */
+.af-panel {
+  position: relative;
+  background: linear-gradient(160deg,
+      rgba(15, 36, 56, 0.72) 0%,
+      rgba(9, 22, 36, 0.62) 100%);
+  border: 1px solid var(--af-edge);
+  border-radius: var(--af-radius-lg);
+  box-shadow:
+    0 1px 0 rgba(160, 220, 235, 0.06) inset,
+    0 18px 42px -22px rgba(0, 0, 0, 0.85);
+}
+
+/* ---------- 标题与铭牌 ---------- */
+.af-kicker {
+  font-family: var(--af-font-mono);
+  font-size: 11px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: var(--af-radar-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.af-kicker::before {
+  content: "";
+  width: 22px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--af-radar));
+}
+.af-kicker::after {
+  content: "";
+  width: 5px; height: 5px;
+  background: var(--af-radar);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--af-radar);
+  animation: af-blink 2.2s ease-in-out infinite;
+}
+@keyframes af-blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+.af-title {
+  font-size: 30px;
+  font-weight: 300;
+  letter-spacing: .02em;
+  color: var(--af-title);
+  margin: 10px 0 6px;
+  line-height: 1.2;
+}
+.af-title strong { font-weight: 600; color: var(--af-radar-ink); }
+.af-sub { color: var(--af-text-dim); font-size: 14px; max-width: 640px; }
+
+/* ---------- 按钮 ---------- */
+.af-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.2;
+  letter-spacing: .03em;
+  padding: 10px 20px;
+  color: var(--af-text);
+  /* ★ 原本写死 rgba(20,48,74,.55)（深蓝半透明），不随主题变 ——
+     浅色主题下深灰字压深蓝底只有 3.6:1。改为按主题取值。 */
+  background: var(--af-btn-bg);
+  border: 1px solid var(--af-edge);
+  border-radius: var(--af-radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  transition: border-color .18s, color .18s, background .18s, box-shadow .25s, transform .12s;
+}
+.af-btn:hover {
+  border-color: var(--af-edge-hi);
+  color: var(--af-title);
+  box-shadow: 0 0 0 1px rgba(224, 177, 92, .12), 0 0 22px -6px rgba(224, 177, 92, .45);
+}
+.af-btn:active { transform: translateY(1px); }
+/* 主按钮（配色与描边在文件末尾的「主题收尾」块里统一定义，
+   这里只留扫光；避免同一选择器写两遍、改一处漏一处） */
+.af-btn--primary::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -120%;
+  width: 60%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.42), transparent);
+  transform: skewX(-18deg);
+  transition: left .6s ease;
+  pointer-events: none;
+}
+
+/* 按钮内容统一浮在光泽层之上（图标 / 文字都包成 span，见 af-naval.js） */
+.af-btn > * { position: relative; z-index: 1; }
+.af-btn--primary:hover::after { left: 130%; }
+.af-btn--primary:hover { color: #02100c; }
+.af-btn--danger { border-color: rgba(255,90,90,.4); color: #ff9a9a; }
+.af-btn--danger:hover {
+  border-color: rgba(255,90,90,.8);
+  box-shadow: 0 0 22px -6px rgba(255,90,90,.5);
+  color: #ffd0d0;
+}
+.af-btn--ghost { background: transparent; }
+.af-btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* ---------- 输入 ---------- */
+.af-input, .af-textarea, .af-select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--af-text);
+  background: rgba(4, 10, 18, 0.72);
+  border: 1px solid var(--af-edge);
+  border-radius: var(--af-radius);
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.af-input:focus, .af-textarea:focus, .af-select:focus {
+  border-color: var(--af-edge-hi);
+  box-shadow: 0 0 0 3px rgba(224, 177, 92, .10);
+}
+.af-textarea { resize: vertical; min-height: 84px; font-family: var(--af-font-mono); font-size: 12.5px; }
+.af-label {
+  display: block;
+  font-family: var(--af-font-mono);
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--af-text-mute);
+  margin: 0 0 7px;
+}
+
+/* ---------- 状态徽标 ---------- */
+.af-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--af-font-mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+  padding: 3px 9px;
+  border-radius: var(--af-radius);
+  border: 1px solid var(--af-edge);
+  color: var(--af-text-dim);
+  background: rgba(10, 24, 38, 0.6);
+}
+.af-tag--radar  { color: var(--af-radar-ink); border-color: rgba(224, 177, 92, .35); background: rgba(224, 177, 92, .08); }
+.af-tag--signal { color: var(--af-signal); border-color: rgba(255,181,71,.35); background: rgba(255,181,71,.08); }
+.af-tag--alert  { color: var(--af-alert); border-color: rgba(255,90,90,.35); background: rgba(255,90,90,.08); }
+.af-tag--ok     { color: var(--af-ok); border-color: rgba(61,220,132,.35); background: rgba(61,220,132,.08); }
+.af-tag .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+}
+
+/* ---------- 数据读数 ---------- */
+.af-readout {
+  font-family: var(--af-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+/* 用 --af-radar-ink：浅色主题下 --af-radar 压米黄底只有 4.21，差一点到 AA。
+   注意这条选择器比裸 .af-readout 具体，优先级更高，必须改这里。 */
+.af-readout .num { color: var(--af-radar-ink); font-size: 22px; font-weight: 600; }
+.af-readout .unit { color: var(--af-text-mute); font-size: 11px; margin-left: 3px; }
+.af-readout .lbl {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: .18em;
+  color: var(--af-text-mute);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ---------- 入场动画 ---------- */
+.af-reveal { opacity: 0; transform: translateY(22px); }
+.af-reveal.af-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);
+}
+
+/* ---------- 顶部分隔线（发光） ---------- */
+.af-hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--af-edge-hi), transparent);
+  margin: 26px 0;
+  opacity: .6;
+}
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--af-abyss); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(224, 177, 92, .35), rgba(140, 110, 60, .45));
+  border-radius: 6px;
+  border: 2px solid var(--af-abyss);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(224, 177, 92, .55); }
+
+/* ---------- 品牌标识（全站统一，页脚 / 顶栏共用） ---------- */
+.af-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.af-brand .mark {
+  display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px;
+  border-radius: 9px; color: var(--af-radar-ink); font-size: 16px;
+  /* 现在里面装的是游戏原版图标（<img>），所以不要底色、不要内边距，
+     并把溢出裁掉好让图片跟着圆角走。 */
+  overflow: hidden; padding: 0;
+  background: none;
+  border: 1px solid var(--af-edge);
+}
+.af-brand .txt { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.af-brand .nm { color: var(--af-title); font-size: 14.5px; font-weight: 600; letter-spacing: .02em; }
+.af-brand .sb {
+  color: var(--af-text-mute); font-size: 10px;
+  font-family: var(--af-font-mono); letter-spacing: .14em;
+}
+
+/* ---------- 全站统一富页脚 ---------- */
+footer.af-foot--rich {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr 1fr 1.1fr;
+  gap: 30px 34px;
+  padding: 34px 0 12px;
+  margin-top: 64px;
+  border-top: 1px solid var(--af-hair);
+  position: relative;
+}
+footer.af-foot--rich::before {
+  content: '';
+  position: absolute; top: -1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--af-radar), transparent);
+  opacity: .5;
+}
+.af-fcol { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.af-fcol h4 {
+  margin: 0 0 4px; color: var(--af-text-mute);
+  font-family: var(--af-font-mono); font-size: 10.5px;
+  letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
+}
+.af-brand--foot { margin-bottom: 6px; }
+.af-fnote { margin: 0 0 4px; color: var(--af-text-dim); font-size: 12.5px; line-height: 1.7; }
+.af-fsocial { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 4px; }
+.af-fsocial .af-btn { width: 100%; justify-content: center; }
+
+/* 页脚里的按钮文字必须压过外层「页脚链接」的颜色规则，
+   否则会被写成灰蓝、在青绿底上糊成一团看不清 */
+.af-foot .af-btn,
+.af-foot .af-btn--primary,
+.af-foot a.af-btn { color: #04140f !important; }
+.af-foot .af-btn--ghost { color: var(--af-text) !important; }
+.af-foot .af-btn--ghost:hover { color: var(--af-radar-ink) !important; }
+
+.af-flink {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  color: var(--af-text-dim); text-decoration: none;
+  font-size: 13px; padding: 4px 0; max-width: 100%;
+  transition: color .18s ease, transform .18s ease;
+}
+.af-flink-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.af-flink:hover { color: var(--af-radar-ink); transform: translateX(3px); }
+.af-flink.is-here { color: var(--af-text-mute); cursor: default; }
+.af-flink.is-here:hover { transform: none; }
+.af-cur {
+  flex: 0 0 auto;
+  font-size: 9.5px; padding: 1px 6px; border-radius: 5px;
+  /* 用 --af-radar-ink 而不是 --af-radar：浅色主题下黄铜原色压标签底只有 4.21，
+     差一点到 AA 的 4.5；--af-radar-ink 在浅色下已加深到 5.13。 */
+  background: rgba(224, 177, 92, .14); color: var(--af-radar-ink);
+  font-family: var(--af-font-mono); letter-spacing: .06em;
+}
+
+/* QQ 徽标 */
+.af-qqico {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 18px; min-width: 28px; flex: 0 0 auto;
+  padding: 0 5px; border-radius: 5px;
+  background: #ffffff; color: #0a5a4c;
+  font-family: var(--af-font-mono); font-size: 10.5px;
+  font-weight: 800; letter-spacing: .02em; line-height: 1;
+  vertical-align: middle;
+}
+/* ★ v2.42：.af-btn--qq 的两条重复 gap 声明随该按钮一起移除
+   （同一属性写两遍，前者被后者覆盖，是历史遗留）。 */
+
+/* 状态行（刷新 + 最后同步） */
+.af-syncline {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin: -6px 0 18px;
+}
+.af-syncline #lastSync {
+  color: var(--af-text-mute); font-size: 12px;
+  font-family: var(--af-font-mono); letter-spacing: .04em;
+}
+/* ★ v2.42：原先是 .af-navlink--qq（顶栏群链接的常驻高亮）。
+   该入口移除后，此高亮样式改挂到「作者」链接上 ——
+   它是顶栏里唯一的"站外/关于"类入口，值得一点视觉权重。 */
+.af-navlink--bili {
+  color: var(--af-radar-ink) !important;
+  border-color: rgba(224, 177, 92, .28) !important;
+  background: rgba(224, 177, 92, .06);
+}
+
+@media (max-width: 900px) {
+  footer.af-foot--rich { grid-template-columns: 1fr 1fr; gap: 26px 20px; }
+  .af-fcol--brand { grid-column: 1 / -1; }
+  /* ★ 触摸设备（平板/手机）统一触控高度 ——
+     全站审计实测（平板 768 档）：.af-btn 只有 38~39px、.af-flink 29px、
+     顶栏 .af-navlink 37px、品牌 logo 34px，拇指按不准。
+     注意：.af-navlink 的 44px 规则原本写在 767px 断点里，768 平板刚好漏掉。
+     桌面端（>900）鼠标操作，不受影响。 */
+  .af-btn { min-height: 40px; }
+  .af-flink { min-height: 40px; padding: 6px 0; }
+  .af-topbar .af-brand { min-height: 44px; }
+  .af-topbar .af-navlink { min-height: 40px; display: inline-flex; align-items: center; }
+}
+@media (max-width: 560px) {
+  footer.af-foot--rich { grid-template-columns: 1fr; gap: 24px; }
+}
+
+/* ---------- 顶栏横向导航容器 ----------
+   ★ display 必须定义在这里，不能写在页面内联：
+     页面内联的 .af-nav 规则加载在 af-naval.css **之后**，
+     同权重下会盖掉后面的 `@media (max-width:860px){ .af-nav{display:none} }`
+     —— 表现为「汉堡出现了，但顶部链接还在右边被裁掉/挤爆」。
+     两页内联都只写 margin/gap/align-items，不碰 display。 */
+.af-nav { display: flex; }
+
+/* ---------- 关闭动效（尊重系统设置） ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .af-bg::before, .af-bg::after, .af-radar-sweep, .af-kicker::after { animation: none !important; }
+  .af-reveal { opacity: 1 !important; transform: none !important; }
+  .af-flink { transition: none; }
+}
+
+/* ============================================================
+   ★ 深度玻璃系统（Deep Glass）
+   做法取自 2025 生产级配方，要点：
+   1. backdrop-filter 必须 blur + saturate 一起上，saturate 让透出来的颜色更艳
+   2. 单层 box-shadow 是「扁平」的根源 —— 要叠四层：
+      外投影（抬起） + inset 顶高光（受光边） + inset 底暗边（厚度） + inset 内辉光（体感）
+   3. 边框用 mask-composite 抠出渐变描边，比纯色描边精致一个量级
+   4. 玻璃面上扫一道流光（glint），"玻璃" 的暗示瞬间成立
+   ============================================================ */
+
+.af-glass {
+  position: relative;
+  /* 圆角必须显式写 —— .af-glass--edge::before 用 border-radius:inherit 取它，
+     漏了这行，渐变描边就退化成直角矩形，玻璃精致感直接塌掉。 */
+  border-radius: var(--af-radius-lg);
+  background: var(--af-glass-bg);
+  backdrop-filter: var(--af-glass-bf);
+  -webkit-backdrop-filter: var(--af-glass-bf);
+  border: 1px solid var(--af-glass-edge);
+  box-shadow:
+    0 18px 48px -14px var(--af-glass-shadow),
+    0 2px 10px rgba(0,0,0,.16),
+    inset 0 1px 0 var(--af-glass-hi),
+    inset 0 -1px 0 var(--af-glass-lo),
+    inset 0 0 42px -14px var(--af-glass-in);
+}
+/* 顶栏是通栏，不需要圆角与上浮投影 */
+.af-topbar.af-glass {
+  border-radius: 0;
+  border-left: none; border-right: none; border-top: none;
+  box-shadow:
+    0 1px 0 var(--af-glass-hi) inset,
+    0 10px 30px -18px rgba(0,0,0,.55);
+}
+.af-glass .af-glass { border-radius: var(--af-radius); }
+/* 顶栏是通栏，不需要圆角与上浮投影，单独收回 */
+/* 玻璃里嵌玻璃（如卡片外套一层容器）时，子层用更小的圆角 */
+.af-glass .af-glass { border-radius: var(--af-radius); }
+
+/* —— 军工切角标记 ——
+   玻璃用圆角，但军工的「硬」不能丢：在玻璃四角内侧贴一对直角小切角，
+   像金属面板的加工痕迹。不用 ::before/::after（已被渐变描边占用）。 */
+.af-cut::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 16px; height: 16px;
+  pointer-events: none;
+  opacity: .5;
+  background:
+    linear-gradient(225deg, rgba(224, 177, 92, .55) 0 1.2px, transparent 1.2px) top right / 100% 100% no-repeat,
+    linear-gradient(225deg, rgba(224, 177, 92, .16) 0 7px, transparent 7px) top right / 100% 100% no-repeat;
+  -webkit-mask: linear-gradient(#fff 0 0);
+          mask: linear-gradient(#fff 0 0);
+}
+
+/* 渐变描边（mask-composite 抠出 1px 边框环） */
+.af-glass--edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg,
+      rgba(255, 255, 255, .55) 0%,
+      rgba(255, 255, 255, .06) 30%,
+      rgba(224, 177, 92, .40) 62%,
+      rgba(255, 255, 255, .05) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 扫光：玻璃上斜掠过的流光 */
+.af-glint::after {
+  content: "";
+  position: absolute;
+  top: -60%; left: -140%;
+  width: 55%; height: 220%;
+  background: linear-gradient(100deg,
+      transparent 0%,
+      rgba(255, 255, 255, .00) 32%,
+      rgba(255, 255, 255, .30) 50%,
+      rgba(255, 255, 255, .00) 68%,
+      transparent 100%);
+  transform: skewX(-16deg);
+  pointer-events: none;
+  transition: left 1.05s cubic-bezier(.16, 1, .3, 1);
+}
+.af-glint:hover::after { left: 150%; }
+
+/* 玻璃容器里的子元素不要再自带不透明底，否则会把折射挡掉 */
+.af-glass .af-card,
+.af-glass .af-tile { background: rgba(255, 255, 255, .035); }
+
+/* 页脚整体上玻璃处理 */
+.af-foot--rich {
+  position: relative;
+  background: linear-gradient(170deg,
+      rgba(255, 250, 240, .07) 0%,
+      rgba(16, 26, 38, .40) 55%,
+      rgba(8, 14, 22, .56) 100%);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border-top: 1px solid var(--af-glass-edge);
+  box-shadow:
+    0 1px 0 var(--af-glass-hi) inset,
+    0 -22px 60px -30px var(--af-aurora-1);
+}
+body.af-light .af-foot--rich {
+  background: linear-gradient(170deg,
+      rgba(255, 253, 247, .80) 0%,
+      rgba(240, 234, 220, .66) 55%,
+      rgba(226, 218, 200, .74) 100%);
+}
+
+/* ---------- 品牌图标 ---------- */
+.af-ico {
+  width: 100%; height: 100%;
+  display: block;
+}
+.af-brandico {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 17px; height: 17px;
+  color: inherit;
+}
+/* 页脚「联系」列的小圆角图标块 */
+/* 带图标的链接：图标 + 文字靠左成组，不能继承 space-between 把文字推到最右 */
+.af-flink--ico { justify-content: flex-start; gap: 9px; }
+.af-flink-ic {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s;
+}
+.af-flink-ic .af-ico { width: 13px; height: 13px; }
+.af-flink-ic--qq {
+  background: linear-gradient(150deg, #f0cd8a, #a87c1c);
+  color: #1a1408;
+  box-shadow: 0 0 12px -3px rgba(224, 177, 92, .5);
+}
+.af-flink-ic--bili {
+  background: linear-gradient(150deg, #ff9bc4, #ff5fa2);
+  color: #fff;
+  box-shadow: 0 0 12px -3px rgba(255, 110, 175, .8);
+}
+.af-flink:hover .af-flink-ic { transform: scale(1.12) rotate(-4deg); }
+/* 主按钮里的品牌图标 */
+.af-btn .af-brandico { margin-right: 1px; }
+
+/* 品牌标记（页脚左上）里的罗盘 */
+.af-brand .mark { display: inline-flex; align-items: center; justify-content: center; }
+.af-brand .mark .af-ico { width: 20px; height: 20px; }
+
+/* ============================================================
+   ★ v2.40 技法：径向主题过渡（Radial Theme Transition）
+   ------------------------------------------------------------
+   主题切换时，新主题从鼠标按下的那一点扩散出去、把旧主题顶开。
+   整页瞬时变色在深浅切换时是视觉冲击最大的一帧，
+   扩散把它变成一个「过程」——这也正是 onetake 那套方法论的核心：
+   元素**接住**彼此，而不是瞬间替换。
+
+   ★ 用 View Transitions API（浏览器原生合成）而不是手写 clip-path 动画：
+     不掉帧、圆角由浏览器算好不会有锯齿、老浏览器自动降级为瞬时切换。
+   ============================================================ */
+
+/* 只在 JS 已启动径向过渡时加这个类；结束后会立刻移除。
+   不支持 View Transitions 的浏览器根本不会加这个类，所以完全无副作用。 */
+.afx-theme-radial::view-transition-old(root) {
+  /* 旧主题这一帧：从点击点开始被"擦掉"。ease 与 new 配对，避免两段节奏不一致 */
+  animation: af-theme-out .52s cubic-bezier(.4, 0, .2, 1) both;
+}
+.afx-theme-radial::view-transition-new(root) {
+  /* 新主题这一帧：从点击点扩散出来铺满。overshoot 一点，收尾更有"落定感" */
+  animation: af-theme-in .58s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes af-theme-out {
+  from { clip-path: circle(var(--afx-theme-r) at var(--afx-theme-x, 50%) var(--afx-theme-y, 50%)); }
+  /* 旧主题：圆外保留、圆内挖空 —— 越往后圆越大，旧主题越少 */
+  to   { clip-path: circle(0px at var(--afx-theme-x, 50%) var(--afx-theme-y, 50%)); }
+}
+@keyframes af-theme-in {
+  from { clip-path: circle(0px at var(--afx-theme-x, 50%) var(--afx-theme-y, 50%)); }
+  to   { clip-path: circle(var(--afx-theme-r) at var(--afx-theme-x, 50%) var(--afx-theme-y, 50%)); }
+}
+
+/* 有旧主题的那一帧也要做动画，否则默认的淡出会跟我们的扩散打架 */
+.afx-theme-radial::view-transition-old(root),
+.afx-theme-radial::view-transition-new(root) {
+  /* 关掉浏览器默认的交叉淡入淡出，否则会看到"两层半透明叠加" */
+  mix-blend-mode: normal;
+}
+
+/* ★ 触屏与降级：
+   View Transitions 会创建全屏快照层，在低端安卓 WebView 上偶有掉帧。
+   系统要求减少动效时，JS 那侧已经直接 return 了（根本不启动过渡），
+   这里再加一道 CSS 兜底，防止任何情况下仍有动画。 */
+@media (prefers-reduced-motion: reduce) {
+  .afx-theme-radial::view-transition-old(root),
+  .afx-theme-radial::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+★ v2.40 技法：卡片光标详情（Cursor Card Detail）
+   ------------------------------------------------------------
+   桌面端把「作者 / 版本 / 大小 / 简介前若干字」做成一张跟随光标的小卡，
+   悬停卡片时浮出。不用点开、不遮挡主体内容。
+   为什么有用：卡片正面只放了简介的一小段，作者想判断"这个Mod 值不值得装"
+   需要的信息（作者是谁、多大、装了多少次）往往不在首屏。
+
+   ★ 只有桌面端启用（@media hover:hover 且 pointer:fine）：
+     触屏设备没有"悬停"这个概念，做了也只是在点击瞬间闪一下，反而干扰。
+   ============================================================ */
+
+.af-peek {
+  position: fixed;
+  z-index: 45;
+  left: 0; top: 0;
+  max-width: 268px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--af-card-solid, rgba(10, 16, 26, .93));
+  border: 1px solid var(--af-edge, rgba(255, 255, 255, .12));
+  box-shadow: 0 18px 44px -16px rgba(0, 0, 0, .7),
+              inset 0 1px 0 rgba(255, 255, 255, .07);
+  color: var(--af-text, #e8eef4);
+  font-size: 13px;
+  line-height: 1.6;
+  pointer-events: none;      /* 绝不挡点击：它是纯提示层 */
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* 出现/消失各有一段，但**出现必须比消失快**：
+   悬停提示慢半拍才出 = 感觉卡；消失慢一点 = 不刺眼、不慌。 */
+.af-peek.is-on {
+  opacity: 1;
+  transition: opacity .18s cubic-bezier(.16, 1, .3, 1);
+}
+.af-peek {
+  transition: opacity .3s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ★ 卡片本体也要给一点反馈，让"能点"这件事在悬停时就成立 */
+@media (hover: hover) and (pointer: fine) {
+  .af-card[data-afx-peek] { cursor: help; }
+}
+
+.af-peek-nm { font-weight: 700; margin-bottom: 4px; color: var(--af-text-hi, #fff); }
+.af-peek-meta {
+  color: var(--af-text-dim, #8fa3ad);
+  font-size: 11.5px;
+  font-family: var(--af-font-mono, ui-monospace, monospace);
+  margin-bottom: 6px;
+}
+.af-peek-desc { color: var(--af-text-dim, #9fb2bc); font-size: 12.5px; }
+.af-peek-act {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--af-radar-ink, #e0b15c);
+}
+
+/* 触屏与降级：不启用，直接不出这个元素 */
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .af-peek { display: none !important; }
+}
+
+/* ---------- 自定义光标 ---------- */
+.af-cursor,
+.af-cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+  will-change: transform;
+}
+.af-cursor {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--af-radar);
+  box-shadow: 0 0 10px 2px rgba(224, 177, 92, .85);
+}
+.af-cursor-ring {
+  width: 34px; height: 34px;
+  border: 1.5px solid rgba(224, 177, 92, .55);
+  border-radius: 50%;
+  transition: width .22s cubic-bezier(.2,.7,.2,1), height .22s cubic-bezier(.2,.7,.2,1),
+              border-color .22s, background-color .22s, opacity .25s;
+}
+body.af-cursor-on .af-cursor,
+body.af-cursor-on .af-cursor-ring { opacity: 1; }
+/* 移到可点元素上：圆环张开 */
+.af-cursor-ring.is-hot {
+  width: 52px; height: 52px;
+  border-color: rgba(224, 177, 92, .9);
+  background: rgba(224, 177, 92, .10);
+}
+.af-cursor-ring.is-down {
+  width: 26px; height: 26px;
+  background: rgba(224, 177, 92, .22);
+}
+/* 自定义光标生效时隐藏系统箭头（只在桌面、且非触屏） */
+@media (hover: hover) and (pointer: fine) {
+  body.af-cursor-on,
+  body.af-cursor-on * { cursor: none !important; }
+}
+
+/* ---------- 磁吸 / 倾斜 的基础过渡 ---------- */
+.af-magnet { will-change: transform; transition: transform .18s cubic-bezier(.2,.7,.2,1); }
+.af-magnet .af-btn-t { display: inline-block; will-change: transform; }
+.af-tilt {
+  will-change: transform;
+  transition: transform .3s cubic-bezier(.2,.7,.2,1), box-shadow .3s;
+  position: relative;
+}
+/* 倾斜卡片的跟随高光 */
+.af-tilt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, .16), transparent 62%);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.af-tilt:hover::after { opacity: 1; }
+
+/* ---------- 小屏 / 低动效 降级 ----------
+   ★ 关于毛玻璃在移动端的处理：
+     backdrop-filter 每一帧都要重新采样元素背后的像素，是移动端滚动掉帧的头号原因。
+     但**不能直接删**——毛玻璃是这套视觉的核心。所以移动端改成
+     「不透明一点的半透明底色」：看起来仍是玻璃质感（同样的模糊后色、
+     同样的四层高光阴影、同样透出极光），但不再每帧重采样。
+     动画参数一处未改。 */
+@media (max-width: 760px) {
+  .af-aurora { filter: blur(6px); }
+  .af-blob--1, .af-blob--2 { width: 92vw; height: 92vw; }
+  .af-blob--3, .af-blob--4 { width: 86vw; height: 86vw; }
+  /* 玻璃：底色加不透明度顶掉模糊，保留全部高光/阴影/描边 */
+  .af-glass, .af-foot--rich {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--af-glass-fallback);
+  }
+  /* ★ v2.36：详情弹层的遮罩也在这层降级里。
+     它是 `position:fixed; inset:0` 的**全屏** backdrop-filter ——
+     手机上点开一张 Mod 卡片，就要为一整屏像素建模糊快照，
+     弹层自己的入场动画又会触发它重新采样，实测这一下就是几十毫秒的掉帧。
+     只关模糊、**保留它自己的深色半透明底色**（不能换成玻璃兜底色，视觉会变）。 */
+  .af-mask {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .af-cursor, .af-cursor-ring { display: none; }
+}
+
+/* 极低性能设备（内存/核数都吃紧）彻底关掉毛玻璃与极光动画 */
+@media (max-width: 760px) and (max-device-memory: 4GB) {
+  .af-glass, .af-foot--rich { background: var(--af-glass-solid); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .af-blob { animation: none !important; }
+  .af-particles { display: none; }
+  .af-cursor, .af-cursor-ring { display: none; }
+  .af-magnet { transition: none; }
+}
+
+/* ---------- 顶栏导航里的小图标 ---------- */
+.af-navico {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 15px; height: 15px;
+  margin-right: 5px;
+  vertical-align: -2px;
+}
+.af-navico .af-ico { width: 100%; height: 100%; }
+/* ★ v2.42：原先这里有四个品牌色类（.af-navico--qq 青蓝 #7fe6ff、
+   .af-navico--bili 粉 #ff9bc4 —— 那是两个平台的官方色）。
+   第三方入口移除后这些类只用在「作者」这一项上，
+   统一到站点自己的黄铜强调色，视觉语言才与全站一致。 */
+.af-navico--bili { color: var(--af-radar); }
+.af-navlink--bili:hover {
+  color: var(--af-radar-ink) !important;
+  border-color: rgba(224, 177, 92, .30) !important;
+  background: rgba(224, 177, 92, .10) !important;
+}
+
+/* ============================================================
+   ★ 主题切换（日/夜）
+   之前极光与玻璃规则全锁在 .dark 下，切到浅色等于整站裸奔，
+   而且用户无法主动切换。这里给一个显式开关 + 记忆 + 跟随系统。
+   三站共用同一套开关，状态存在 localStorage。
+   ============================================================ */
+:root, body.af-dark { color-scheme: dark; }
+body.af-light { color-scheme: light; }
+
+.af-themetog {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  z-index: 9000;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 40px; padding: 0 15px;
+  border-radius: 999px;
+  border: 1px solid var(--af-glass-edge);
+  background: var(--af-glass-bg);
+  backdrop-filter: blur(16px) saturate(170%);
+  -webkit-backdrop-filter: blur(16px) saturate(170%);
+  color: var(--af-text);
+  font-family: var(--af-font);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    0 8px 24px -10px rgba(0,0,0,.55),
+    inset 0 1px 0 var(--af-glass-hi);
+  transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s;
+}
+.af-themetog:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -10px rgba(0,0,0,.62), inset 0 1px 0 var(--af-glass-hi); }
+.af-themetog .af-ico { width: 17px; height: 17px; }
+.af-themetog .lbl { min-width: 2.6em; text-align: left; }
+body.af-dark  .af-themetog .i-sun { display: block; }
+body.af-dark  .af-themetog .i-moon { display: none; }
+body.af-light .af-themetog .i-sun { display: none; }
+body.af-light .af-themetog .i-moon { display: block; }
+
+/* 浅色下把自绘的深色残留清掉（卡片/输入框/代码块等） */
+body.af-light .af-input,
+body.af-light .af-textarea,
+body.af-light .af-chip,
+body.af-light .af-tag {
+  background: rgba(255, 255, 255, .72);
+  color: var(--af-text);
+  border-color: var(--af-edge);
+}
+body.af-light .af-drop {
+  background: rgba(255, 255, 255, .42);
+  border-color: var(--af-edge);
+}
+body.af-light .af-stat { background: transparent; }
+body.af-light .af-empty .ico { color: var(--af-radar-dim); }
+body.af-light pre,
+body.af-light code { color: #4a3f2c; }
+body.af-light .af-modal { background: var(--af-glass-bg); }
+body.af-light .af-mask { background: rgba(60, 50, 30, .34); }
+
+/* ============================================================
+   Mod 大类：分类筛选条 + 卡片上的类型标签 + 资源清单
+   目的：不要把 Mod 视觉上限定成「改数值 + 加船」，
+   别人做的模型文件、贴图、音频、界面皮肤、剧本都要能显式呈现。
+   ============================================================ */
+.af-kindbar {
+  display: flex; flex-wrap: wrap; gap: 7px;
+  margin: 16px 0 4px;
+}
+.af-kindchip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--af-edge);
+  background: rgba(255, 255, 255, .05);
+  color: var(--af-text-dim);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all .18s cubic-bezier(.2,.7,.2,1);
+}
+.af-kindchip b {
+  font-family: var(--af-font-mono);
+  font-size: 11px; font-weight: 700;
+  opacity: .65;
+}
+.af-kindchip:hover {
+  color: var(--af-text);
+  border-color: var(--af-edge-hi);
+  transform: translateY(-1px);
+}
+.af-kindchip.on { box-shadow: 0 3px 12px -4px var(--af-radar); }
+.af-kindchip.on b { opacity: .8; }
+body.af-light .af-kindchip { background: rgba(255, 255, 255, .60); }
+
+/* ★ v2.19 选中态之前只有一个几乎看不出区别的阴影，
+   而且实测深色模式下 .on 的文字色继承成浅米色 rgb(255,246,226)，
+   压在浅色 chip 背景上 = 看不见（截图里就是一个"空白圆角块"）。
+   现在选中态必须有明确的底色 + 深色文字，不能只靠阴影暗示。 */
+.af-kindchip.on {
+  background: linear-gradient(140deg, rgba(224, 177, 92, .30), rgba(224, 177, 92, .16));
+  border-color: var(--af-radar-ink);
+  color: var(--af-text);
+  font-weight: 700;
+}
+body.af-light .af-kindchip.on {
+  background: linear-gradient(140deg, #e0b15c, #c69a34);
+  border-color: #a87c1c;
+  /* 黄铜底上必须用深墨色字：浅色字在 #e0b15c 上对比度不足 2:1，读不出来 */
+  color: #22180a;
+  box-shadow: 0 3px 12px -4px rgba(168, 124, 28, .6);
+}
+body.af-light .af-kindchip.on b { color: #3a2a0c; opacity: .9; }
+
+/* ★ v2.19 深色主题的选中态必须单独给一套色。
+   之前的媒体查询兜底写成了 `html:not(.af-dark)`，而主题类其实挂在 **body** 上，
+   条件永远为真 → 深色模式也被刷成黄铜底 + 深墨字 = 实测对比度 1.64，看不清。
+   现在按 body 上的类来判，并且深浅各自明确。 */
+body.af-light .af-kindchip.on,
+body:not(.af-dark) .af-kindchip.on {
+  background: linear-gradient(140deg, #e0b15c, #c69a34);
+  border-color: #a87c1c;
+  color: #22180a;              /* 黄铜底上必须深墨字 */
+  font-weight: 700;
+}
+body.af-light .af-kindchip.on b,
+body:not(.af-dark) .af-kindchip.on b { color: #3a2a0c; opacity: .9; }
+
+/* 深色：半透明黄铜底 + 亮黄铜字，与未选中态拉开层次 */
+body.af-dark .af-kindchip.on {
+  background: linear-gradient(140deg, rgba(224, 177, 92, .26), rgba(224, 177, 92, .13));
+  border-color: var(--af-radar-ink);
+  color: #f3dcab;
+}
+body.af-dark .af-kindchip.on b { color: #e0b15c; opacity: .95; }
+
+/* JS 没跑时按系统偏好兜底（body 上没有 af-dark/af-light 任何一个） */
+@media (prefers-color-scheme: light) {
+  body:not(.af-dark):not(.af-light) .af-kindchip.on {
+    background: linear-gradient(140deg, #e0b15c, #c69a34);
+    border-color: #a87c1c; color: #22180a; font-weight: 700;
+  }
+  body:not(.af-dark):not(.af-light) .af-kindchip.on b { color: #3a2a0c; opacity: .9; }
+  body:not(.af-dark):not(.af-light) .af-kindchip { background: rgba(255, 255, 255, .60); }
+}
+
+/* 卡片里的类型行 */
+.af-kindrow {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 0 8px; flex-wrap: wrap;
+}
+.af-kind {
+  display: inline-flex; align-items: center;
+  padding: 2.5px 9px;
+  border-radius: 5px;
+  font-size: 11.5px; font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--af-radar-ink);
+  background: rgba(var(--af-radar-rgb), 0.14);
+  border: 1px solid rgba(var(--af-radar-rgb), 0.34);
+}
+/* 每类给一个可辨识的色，让分类一眼能分 */
+.af-kind[data-kind="model"]  { color: #e0913c; background: rgba(224,145,60,.14);  border-color: rgba(224,145,60,.36); }
+.af-kind[data-kind="audio"]  { color: #b47fd0; background: rgba(180,127,208,.14); border-color: rgba(180,127,208,.36); }
+.af-kind[data-kind="ui"]     { color: #6fa8dc; background: rgba(111,168,220,.14); border-color: rgba(111,168,220,.36); }
+.af-kind[data-kind="scenario"]{ color: #d98a8a; background: rgba(217,138,138,.14); border-color: rgba(217,138,138,.36); }
+.af-kind[data-kind="localize"]{ color: #8fc98f; background: rgba(143,201,143,.14); border-color: rgba(143,201,143,.36); }
+.af-kind[data-kind="tool"]   { color: #9aa3ad; background: rgba(154,163,173,.14); border-color: rgba(154,163,173,.34); }
+.af-kind[data-kind="pack"]   { color: #e0b15c; background: rgba(224,177,92,.16);  border-color: rgba(224,177,92,.40); }
+.af-kind[data-kind="fleet"]  { color: #7fc8c0; background: rgba(127,200,192,.14); border-color: rgba(127,200,192,.34); }
+
+.af-facts {
+  font-size: 11.5px;
+  color: var(--af-text-mute);
+  font-family: var(--af-font-mono);
+}
+
+/* 资源清单：别人做的模型文件 / 贴图 / 音频 */
+.af-assetlist {
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: var(--af-radius);
+  background: rgba(0, 0, 0, .16);
+  border: 1px solid var(--af-hair);
+  border-left: 2px solid var(--af-radar-dim);
+}
+body.af-light .af-assetlist { background: rgba(0, 0, 0, .035); }
+.af-asset {
+  font-family: var(--af-font-mono);
+  font-size: 11.5px;
+  color: var(--af-text-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.af-asset em {
+  font-style: normal;
+  color: var(--af-radar-ink);
+  margin-right: 6px;
+  font-weight: 700;
+}
+
+.af-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--af-text-mute);
+}
+.af-hint code {
+  font-family: var(--af-font-mono);
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(127, 200, 192, .12);
+  color: var(--af-radar-ink);
+}
+.af-hint + .af-hint { margin-top: 8px; }
+#fJson + .af-hint { margin-top: 7px; }
+
+/* 品牌标记用游戏原版图标的图片尺寸（见上文合并后的 .af-brand .mark） */
+.af-brand .mark img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: calc(var(--af-radius) - 1px);
+}
+
+/* —— 折叠说明块（后台「怎么拿到密钥」）—— */
+.af-howto {
+  margin: 0 0 18px;
+  border: 1px solid var(--af-edge);
+  border-radius: var(--af-radius);
+  background: rgba(127, 200, 192, .06);
+  overflow: hidden;
+}
+.af-howto > summary {
+  cursor: pointer;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--af-radar-ink);
+  list-style: none;
+  user-select: none;
+}
+.af-howto > summary::-webkit-details-marker { display: none; }
+.af-howto > summary::before {
+  content: "？";
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 17px; height: 17px; margin-right: 8px;
+  border-radius: 50%;
+  background: var(--af-radar);
+  color: var(--af-hull);
+  font-size: 11px; font-weight: 800;
+  vertical-align: -3px;
+}
+.af-howto[open] > summary { border-bottom: 1px solid var(--af-hair); }
+.af-howto ol {
+  margin: 0; padding: 14px 18px 14px 34px;
+  font-size: 13px; line-height: 1.85;
+  color: var(--af-text-dim);
+}
+.af-howto li { margin-bottom: 8px; }
+.af-howto li:last-child { margin-bottom: 0; }
+.af-howto code {
+  font-family: var(--af-font-mono);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(127, 200, 192, .14);
+  color: var(--af-radar-ink);
+  word-break: break-all;
+}
+.af-howto a { color: var(--af-radar-ink); text-decoration: underline; }
+.af-tip {
+  margin: 0 14px 14px;
+  padding: 9px 12px;
+  border-radius: var(--af-radius);
+  border-left: 2px solid var(--af-radar);
+  background: rgba(127, 200, 192, .10);
+  font-size: 12px;
+  color: var(--af-text-mute);
+}
+
+/* ============================================================
+   主题收尾：把硬编码的荧光青换成主题变量
+   之前主按钮 / QQ 按钮 / 芯片高亮都直接写死了青绿色值，
+   换配色时这些「钉子」没跟着换，导致整体观感还是上一套。
+   ============================================================ */
+.af-btn--primary {
+  background: linear-gradient(180deg,
+      var(--af-radar-hi),
+      var(--af-radar));
+  color: #17130a;
+  font-weight: 600;
+  border-color: rgba(var(--af-radar-rgb), 0.7);
+  box-shadow: 0 0 24px -6px rgba(var(--af-radar-rgb), 0.7);
+}
+/* ★ v2.42：.af-btn--qq 的这一整块与 .af-btn--primary 的值已经完全相同
+   （只剩类名不同），随该按钮一起移除。原先下方注释还写着"QQ 品牌蓝"，
+   实际值早已改成黄铜 —— 注释与实现不一致，正是该清理的信号。 */
+.af-chip.on,
+.af-kindchip.on {
+  background: var(--af-radar);
+  border-color: transparent;
+}
+/* 顶栏 / 芯片 / 描边里残留的青绿，统一换成黄铜 */
+.af-navlink:hover { color: var(--af-radar-ink); border-color: var(--af-edge); background: rgba(var(--af-radar-rgb), 0.08); }
+.af-chip:hover { color: var(--af-radar-ink); border-color: var(--af-edge-hi); }
+.af-readout { color: var(--af-radar-ink); }
+.af-tag--radar { color: var(--af-radar-ink); border-color: rgba(var(--af-radar-rgb), 0.34); }
+.af-tag--radar .dot { background: var(--af-radar); box-shadow: 0 0 8px var(--af-radar); }
+.af-cursor { background: var(--af-radar); box-shadow: 0 0 10px 2px rgba(var(--af-radar-rgb), 0.85); }
+.af-cursor-ring { border-color: rgba(var(--af-radar-rgb), 0.6); }
+.af-cursor-ring.is-hot { border-color: var(--af-radar-ink); background: rgba(var(--af-radar-rgb), 0.12); }
+.af-cursor-ring.is-down { background: rgba(var(--af-radar-rgb), 0.24); }
+.af-radar-scope { border-color: rgba(var(--af-radar-rgb), 0.14); }
+.af-radar-scope::before, .af-radar-scope::after { border-color: rgba(var(--af-radar-rgb), 0.11); }
+.af-radar-sweep { background: conic-gradient(from 0deg, transparent 0deg, rgba(var(--af-radar-rgb), 0.16) 40deg, transparent 80deg); }
+/* 浅色下 11px 的黄铜小字压米黄底只有 4.15:1（略低于 AA 的 4.5），
+   单独加深一档到 5.13:1；深色主题不受影响（那边压深底本来就够）。 */
+body.af-light .af-kicker { color: #7a5610; }
+.af-kicker { color: var(--af-radar-ink); }
+.af-kicker::before { background: linear-gradient(90deg, transparent, var(--af-radar)); }
+.af-kicker::after { background: var(--af-radar); box-shadow: 0 0 8px var(--af-radar); }
+.af-brand .mark { background: radial-gradient(circle at 50% 120%, rgba(var(--af-radar-rgb), 0.26), rgba(8,20,32,.9)); }
+.af-curve, .af-hairline { background: linear-gradient(90deg, transparent, var(--af-edge-hi), transparent); }
+/* 浅色下「选中态」按钮的文字对比度修正：
+   浅色主题里 --af-radar 是深黄铜，浅底白字会看不清；深色主题相反。
+   用 color-mix 让前景色随底色走，两套都保证可读。 */
+body.af-dark  .af-chip.on,
+body.af-dark  .af-kindchip.on { color: #17130a; }
+
+/* ============================================================
+   标题字体落地：得意黑上标题，正文留思源黑体
+   得意黑是「宽扁 + 倾斜」的显示字体，长段落用它会累，所以只给大字。
+   ============================================================ */
+.af-title,
+.af-brand .nm,
+.af-stat .af-readout,
+.af-stat .num,
+.af-decode-card .nm,
+.af-modal h3,
+.af-kindbar .af-kindchip,
+.af-howto > summary,
+.af-empty .ico {
+  font-family: var(--af-font-display);
+  letter-spacing: .01em;
+}
+/* 得意黑本身已带 6° 倾斜，标题里的 <strong> 再加粗一点会糊，保持常规字重 */
+.af-title strong,
+.af-modal h3 strong {
+  font-weight: 400;
+  color: var(--af-radar-ink);
+}
+/* 统计大数字：得意黑的数字很有机械感，适合仪表盘 */
+.af-readout, .af-stat .num {
+  font-weight: 400;
+  letter-spacing: .02em;
+}
+/* 按钮与标签保持正文字体，太窄的字会挤 */
+.af-btn, .af-navlink, .af-kindchip, .af-tag, .af-chip {
+  font-family: var(--af-font);
+}
+
+/* —— 得意黑是窄体，字距要放开才不挤 ——
+   得意黑本身字面偏窄 + 自带 6° 倾斜，默认字距下中文会「粘」在一起。
+   标题类给 .06em 以上的额外字距，数字类给 .04em。 */
+.af-title { letter-spacing: .06em; }
+.af-brand .nm { letter-spacing: .05em; }
+.af-stat .af-readout,
+.af-stat .num,
+.af-readout { letter-spacing: .05em; }
+.af-decode-card .nm { letter-spacing: .05em; }
+.af-modal h3 { letter-spacing: .05em; }
+.af-empty .ico { letter-spacing: 0; }
+/* 得意黑字面窄，行高要留够，否则上下两行会挤在一起 */
+.af-title { line-height: 1.28; }
+
+/* ============================================================
+   三套字体的分工（都只上标题/引文，正文一律思源黑）
+   ============================================================ */
+
+/* 引文、提示框、代码块里的中文：衬线体，跟正文拉开层次 */
+.af-hint,
+.af-decode-card .ds,
+.af-decode-out,
+blockquote,
+.af-note {
+  font-family: var(--af-font-serif);
+}
+/* 表格与参数键：衬线数字比无衬线更好对齐（衬线数字等宽） */
+.af-param .pv,
+.af-facts,
+.af-readout,
+.af-metric .v,
+.af-modal .kv dd {
+  font-family: var(--af-font-serif);
+  font-variant-numeric: tabular-nums;
+}
+/* 但小字号的界面文字不能换宋体（会糊） */
+.af-btn, .af-navlink, .af-chip, .af-tag, .af-kindchip,
+.af-label, .af-input, .af-textarea, .af-stats .lbl, .af-stat .lbl {
+  font-family: var(--af-font);
+}
+
+/* data-ico 占位符的尺寸：字符图标换成了 SVG，需要显式给宽高 */
+.ico[data-ico], .big[data-ico], .seal[data-ico] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+.ico[data-ico] .af-ico { width: 34px; height: 34px; }
+.big[data-ico] .af-ico { width: 40px; height: 40px; }
+.seal[data-ico] .af-ico { width: 38px; height: 38px; }
+/* 原来这些字符是彩色字，SVG 是 currentColor，色调跟着 CSS 走 */
+.af-empty .ico { color: var(--af-text-mute); }
+.af-drop .big { color: var(--af-radar-ink); }
+.af-gate .seal { color: var(--af-radar-ink); }
+
+/* ============================================================
+   选中态 / 主按钮的文字颜色（用变量，两套主题各自成立）
+   ★ 之前这里写死了两条互相矛盾的规则（浅色一处说用深字、另一处说用浅字），
+     而且把「深色模式」也误判成浅色，导致主按钮出现「浅字 + 黄铜底」= 对比度 1.01，
+     字几乎看不见。现在改成：文字色始终取「反色」，
+     由 --af-btn-ink 在两套主题里各自定义，规则只有一条不会再打架。
+   ============================================================ */
+:root {
+  /* 主按钮 / 选中芯片的文字色。
+     底色都是 --af-radar（黄铜），但两套主题里黄铜的亮度正好相反：
+       深色主题 #e0b15c（亮）→ 需要深字，实测 9.36:1
+       浅色主题 #8a6412（暗）→ 需要白字，深字只有 3.17:1（看不清）
+     所以这里不能统一给深色，必须按主题分别给。 */
+  --af-btn-ink: #17130a;
+}
+body.af-light { --af-btn-ink: #fff6e2; }
+
+.af-btn--primary,
+.af-chip.on,
+.af-kindchip.on {
+  color: var(--af-btn-ink);
+}
+/* 清掉遗留的 hover 变色（原来写死了青绿系的深色） */
+.af-btn--primary:hover,
+.af-chip.on:hover,
+.af-kindchip.on:hover {
+  color: var(--af-btn-ink);
+}
+
+/* ============================================================
+   Mod 类型标签的对比度修正
+   ★ 基础规则里 color 和 background 都用 var(--af-radar)（同一色相），
+     「黄铜字 + 黄铜半透明底」实测对比度只有 1.0 —— 字几乎看不见。
+     这里给每一类统一成「亮字 + 低透明度同色底」，
+     底色透明度压到 .16 以下、文字保持高亮度，保证读得清。
+   ★ ship 之前没有单独配色（落到了基础规则上），一并补上。
+   ============================================================ */
+.af-kind[data-kind="ship"]     { color: #d8c79a; background: rgba(216,199,154,.13); border-color: rgba(216,199,154,.34); }
+.af-kind[data-kind="param"]    { color: #a9c9e8; background: rgba(169,201,232,.13); border-color: rgba(169,201,232,.34); }
+.af-kind[data-kind="fleet"]    { color: #8fd8d0; background: rgba(143,216,208,.13); border-color: rgba(143,216,208,.34); }
+.af-kind[data-kind="model"]    { color: #efab63; background: rgba(239,171,99,.13);  border-color: rgba(239,171,99,.34); }
+.af-kind[data-kind="audio"]    { color: #cba0e3; background: rgba(203,160,227,.13); border-color: rgba(203,160,227,.34); }
+.af-kind[data-kind="ui"]       { color: #93bde3; background: rgba(147,189,227,.13); border-color: rgba(147,189,227,.34); }
+.af-kind[data-kind="scenario"] { color: #e5a3a3; background: rgba(229,163,163,.13); border-color: rgba(229,163,163,.34); }
+.af-kind[data-kind="localize"] { color: #a8dba8; background: rgba(168,219,168,.13); border-color: rgba(168,219,168,.34); }
+.af-kind[data-kind="tool"]     { color: #bcc4cd; background: rgba(188,196,205,.13); border-color: rgba(188,196,205,.32); }
+.af-kind[data-kind="pack"]     { color: #efc477; background: rgba(239,196,119,.14); border-color: rgba(239,196,119,.38); }
+
+/* 浅色主题下这些亮色在米黄底上会发飘，统一压深 */
+body.af-light .af-kind[data-kind="ship"]     { color: #6b5a2a; background: rgba(107,90,42,.12); }
+body.af-light .af-kind[data-kind="param"]    { color: #2f5478; background: rgba(47,84,120,.12); }
+body.af-light .af-kind[data-kind="fleet"]    { color: #2a6a63; background: rgba(42,106,99,.12); }
+body.af-light .af-kind[data-kind="model"]    { color: #8a5312; background: rgba(138,83,18,.12); }
+body.af-light .af-kind[data-kind="audio"]    { color: #6a3d85; background: rgba(106,61,133,.12); }
+body.af-light .af-kind[data-kind="ui"]       { color: #2b5680; background: rgba(43,86,128,.12); }
+body.af-light .af-kind[data-kind="scenario"] { color: #8a3c3c; background: rgba(138,60,60,.12); }
+body.af-light .af-kind[data-kind="localize"] { color: #3d6b3d; background: rgba(61,107,61,.12); }
+body.af-light .af-kind[data-kind="tool"]     { color: #4a5259; background: rgba(74,82,89,.12); }
+body.af-light .af-kind[data-kind="pack"]     { color: #7a5410; background: rgba(122,84,16,.12); }
+
+/* ============================================================
+   ★ sticky 顶栏的滚动偏移（修「组件遮挡」）
+   顶栏高 60px 且 sticky。页面没设 scroll-padding-top 时，
+   任何锚点跳转 / scrollIntoView 都会让目标元素顶部对齐视口顶部 ——
+   也就是被顶栏吃掉 60px。实测滚到卡片区时，卡片标题中心点
+   elementFromPoint 命中的是 header.af-topbar，**点都点不到**。
+   这里给滚动容器留出顶栏空间，跳转后目标完整可见。
+   ============================================================ */
+html {
+  scroll-padding-top: 76px;   /* 顶栏 60 + 16 余量 */
+  scroll-behavior: smooth;
+}
+/* 有独立滚动条的容器（详情弹层等）同样留白 */
+.af-modal,
+.af-decode-out {
+  scroll-padding-top: 16px;
+}
+/* 卡片、区块都加 scroll-margin，作为锚点目标时不被顶栏盖住 */
+.af-card,
+.af-tools,
+.af-kindbar,
+.af-hero,
+section[id],
+div[id="grid"] {
+  scroll-margin-top: 76px;
+}
+/* 尊重「减少动效」设置：不要把平滑滚动强加给不适应的用户 */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+
+/* ============================================================
+   ★ 手机端触控目标尺寸（44px 铁律）
+   实测（390×844 触控模拟）：按钮高度普遍 29~39px，
+   而手指触控的最低标准是 44px —— 低于它就会「点了没反应」或点错。
+   桌面端保持紧凑（鼠标精确，不用放大），只在窄屏放宽。
+   ============================================================ */
+@media (max-width: 767px) {
+  /* 所有按钮：撑到 44px 是可点的下限。视觉高度靠 padding 撑，
+     不要用固定 height，否则两行文字会被裁掉。 */
+  .af-btn {
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  /* 芯片（排序 / 分类筛选）：横向排列会挤，允许换行并放大 */
+  .af-chip,
+  .af-kindchip {
+    min-height: 44px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  /* 分类型标签（卡片上那个）是纯展示不是可点的，保持小巧不放大 */
+  .af-tag { min-height: 0; }
+
+  /* 页脚链接：整行 29px 高，手机上容易点串行 */
+  .af-flink {
+    min-height: 44px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .af-fcol h4 { margin-bottom: 8px; }
+
+  /* 主题切换按钮 */
+  .af-themetog { min-height: 44px; }
+
+  /* 输入框：手机上聚焦区域也要够大 */
+  .af-input, .af-textarea, select.af-input {
+    min-height: 44px;
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+  select.af-input { height: auto; }
+
+  /* 顶栏导航项 */
+  .af-navlink {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* 更窄的屏（小屏手机）再宽松一点，避免横向挤成两层 */
+@media (max-width: 400px) {
+  .af-btn { padding-left: 14px; padding-right: 14px; }
+  .af-kindchip { padding-left: 11px; padding-right: 11px; }
+}
+
+/* ============================================================
+   ★ 手机端顶栏：改成横向可滚动
+   实测（390px）：导航项被 min-height 撑高后，顶栏是 nowrap 不换行，
+   于是「解析分享码」挤成 35x119 的竖排，「B 站 / QQ 群」被推到
+   x=334/397 —— **超出 390px 屏宽，屏幕外点不到**。
+   这里让导航自己横向滚动，并把品牌名在窄屏收起来腾地方。
+   ============================================================ */
+@media (max-width: 767px) {
+  .af-topbar {
+    gap: 8px;
+    padding: 8px 12px;
+    overflow: hidden;
+  }
+  /* 品牌区在窄屏只留图标，文字让位给导航 */
+  .af-brand .txt { display: none; }
+  .af-brand { flex: 0 0 auto; }
+
+  .af-nav {
+    margin-left: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* 右侧渐隐，暗示「还能往右滑」 */
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
+            mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
+  }
+  .af-nav::-webkit-scrollbar { display: none; }
+
+  .af-navlink {
+    flex: 0 0 auto;        /* 不许被压扁，这是竖排的直接原因 */
+    white-space: nowrap;   /* 文字不折行 */
+    min-height: 40px;
+    padding: 8px 11px;
+    font-size: 12.5px;
+  }
+}
+
+/* 更窄的屏：连图标间距也收紧 */
+@media (max-width: 360px) {
+  .af-topbar { padding: 8px; }
+  .af-navlink { padding: 8px 9px; font-size: 12px; }
+}
+
+/* 后台顶栏在窄屏同样收缩（品牌副标题占地方） */
+@media (max-width: 767px) {
+  .af-brand .sb { display: none; }
+}
+
+/* ============================================================
+   轻提示（toast）—— 仓库页与后台共用
+   ★ 之前这段样式只内联在仓库页的 <style> 里，后台虽然调的是同一个
+     afNaval.toast()，却因为拿不到样式而显示成没有边框/背景的裸文字。
+     共享组件的样式就该放在共享 CSS 里。
+   ============================================================ */
+.af-toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translate(-50%, 24px);
+  z-index: 90; padding: 12px 22px; border-radius: var(--af-radius);
+  background: var(--af-toast-bg, rgba(12,30,48,.95)); border: 1px solid var(--af-edge-hi);
+  color: var(--af-text); font-size: 13.5px; opacity: 0; pointer-events: none;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: opacity .28s, transform .28s; max-width: 90vw; text-align: center;
+}
+.af-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.af-toast--ok { border-color: rgba(61,220,132,.7); box-shadow: 0 0 30px -10px rgba(61,220,132,.6); }
+.af-toast--err { border-color: rgba(255,90,90,.6); box-shadow: 0 0 30px -10px rgba(255,90,90,.6); }
+/* warn：降级/提醒用（之前没定义这个变体，调 warn 会退化成无高亮的默认样式） */
+.af-toast--warn { border-color: rgba(var(--af-radar-rgb), .6); box-shadow: 0 0 30px -10px rgba(var(--af-radar-rgb), .6); }
+
+/* ============================================================
+   ★ 悬浮主题按钮遮挡内容的修复
+   .af-themetog 是 position:fixed 贴在视口右下角的，
+   页面滚到哪儿它都在那儿 —— 于是它会永久压住「最后一张卡片」的右下角
+   （实测「自制模型」那张卡的图标说明被盖住）。
+   修法：给页面底部预留一条「安全区」，让内容滚完这块留白后才到按钮位置。
+        按钮本身的样式与动画一个字没动。
+   ============================================================ */
+body {
+  /* 主题按钮高 44px + 距底 16px + 额外 8px 余量 */
+  padding-bottom: 76px;
+}
+/* 页脚自身留出这块安全区。
+   注：这里不用 :has() 来判断「本页有没有页脚」——它在旧内核（<Chrome 105）会整条失效。
+   代价是 body 与页脚各留一点，滚到底多一截空白，可接受。 */
+.af-foot--rich {
+  padding-bottom: 96px;
+}
+
+/* ============================================================
+   ★ 悬浮主题按钮：阅读时让路
+   它 fixed 在右下角，页面滚到哪儿都在那儿 —— 读者正在看的那段文字
+   正好被它盖住（实测「故障排查」页有 4 个列表项被压）。
+   做法：向下滚动时淡出并让按钮略微「沉下去」，向上滚动或停顿时淡回。
+        按钮外观、动画曲线、悬停效果全部保留。
+   ============================================================ */
+.af-themetog {
+  transition: opacity .28s cubic-bezier(.16, 1, .3, 1),
+              transform .28s cubic-bezier(.16, 1, .3, 1),
+              box-shadow .28s;
+}
+body.af-tog-hide .af-themetog {
+  opacity: 0;
+  transform: translateY(10px) scale(.94);
+  pointer-events: none;
+}
+/* 指针设备上鼠标靠近右下角时也要让路（用户想点它时不能点不到） */
+@media (hover: hover) and (pointer: fine) {
+  body.af-tog-hide .af-themetog { pointer-events: auto; }
+}
+
+/* ============================================================
+   浅色主题下的黄铜色小字加深
+   --af-radar 在浅色里是 #8a6412（暗黄铜），压米黄底 #e8e2d2 只有 4.15:1，
+   略低于 AA 的 4.5。黄铜色的小字（标签、分类）需要看清，这里单独加深一档；
+   深色主题不受影响（那边 #e0b15c 压深底已有 10.19）。
+   ============================================================ */
+body.af-light {
+  --af-radar-ink: #7a5610;   /* 5.13:1 */
+}
+body.af-dark {
+  --af-radar-ink: var(--af-radar);
+}
+.af-tag--radar,
+.af-kicker,
+.af-readout {
+  color: var(--af-radar-ink);
+}
+
+/* ============================================================
+   ★ 顶栏文字色：与主题无关，恒为浅色
+   顶栏是通栏深色（两套主题都是深墨绿底），但导航项颜色取的是
+   --af-text-dim —— 那个变量在**浅色主题下是深灰**，
+   于是浅色模式下顶栏变成「深灰字压深墨绿底」，实测只有 2.14:1。
+   这里把顶栏内所有文字类元素固定为浅色，不随主题变。
+   ============================================================ */
+.af-topbar,
+.af-topbar.af-glass {
+  --af-text: #e6e2d8;
+  --af-text-dim: #a8b2bd;
+  --af-text-mute: #848e9a;
+  /* ★ 漏了这条：--af-radar 在浅色主题下是暗金 #8a6412（米底 4.15 勉强达标），
+     但顶栏是**深墨绿底**，暗金压深底只有 3.47:1，「QQ 群」几乎读不出来。
+     顶栏既然恒为深色，--af-radar-ink 也该在这里被钉回深色主题那一档。
+     注意 admin/index.html 是硬编码顶栏（不经过本文件的变量作用域），
+     那边已在页面内单独补了同样的覆盖。 */
+  --af-radar-ink: #e0b15c;
+  --af-edge: rgba(224, 177, 92, .18);
+  --af-edge-hi: rgba(224, 177, 92, .30);
+}
+.af-topbar .af-navlink,
+/* 顶栏容器自身（不只是子元素）：它的 color 也被浅色主题的 --af-text 变深了 */
+.af-topbar,
+.af-topbar.af-glass {
+  color: #e6e2d8;
+}
+
+.af-topbar .af-brand .nm,
+.af-topbar .af-brand .sb,
+.af-topbar .af-cur {
+  color: var(--af-text-dim);
+}
+.af-topbar .af-brand .nm { color: var(--af-text); }
+
+/* ============================================================
+   ① 顶栏必须不透明
+   顶栏是常驻在内容之上的固定层，而玻璃底是半透明的 ——
+   浅色主题下「上传我的 Mod」「看安装教程」会直接透到顶栏上（截图实测）。
+   这里给它一个不透明的深墨绿底（与顶栏的深色文字配套），两套主题一致。
+   ============================================================ */
+.af-topbar,
+.af-topbar.af-glass {
+  background: #0a1418 !important;
+  background-image:
+    linear-gradient(180deg, rgba(224, 177, 92, .05), transparent 70%) !important;
+}
+
+/* ============================================================
+   ② 选中态筛选芯片：底与字必须反色
+   「全部」是选中态，底色已是亮黄铜，但文字仍是浅色 → 白底白字看不见。
+   文字统一取 --af-btn-ink（深色主题=深字、浅色主题=浅字，各自适配底色）。
+   ============================================================ */
+.af-chip.on,
+.af-kindchip.on {
+  background: var(--af-radar);
+  color: var(--af-btn-ink);
+  border-color: transparent;
+}
+
+/* 顶栏内文字兜底：顶栏是两套主题下都存在的**深色**层，
+   里面的文字必须是浅色，不能被浅色主题的 --af-text 变成深灰。
+   这里按元素列全，避免漏。 */
+.af-topbar .af-brand .nm,
+.af-topbar .af-brand .sb,
+.af-topbar .af-navlink,
+.af-topbar .af-cur,
+.af-topbar .af-tag,
+.af-topbar .lbl {
+  color: #e6e2d8;
+}
+.af-topbar .af-brand .sb,
+.af-topbar .af-navlink,
+.af-topbar .af-cur {
+  color: #a8b2bd;
+}
+
+/* ============================================================
+   页脚：ICP 备案号 + 访问方式说明
+   工信部要求已备案网站在页面底部展示备案号并链接到备案系统。
+   号填在 af-naval.js 的 AF.ICP 常量里，留空则不显示。
+   af-fvia 是「当前通过 IP 访问」的说明 —— 备案完成前域名在部分网络
+   会被拦，走 IP 是正常路径，写清楚免得访客以为网站坏了。
+   ============================================================ */
+.af-ficp,
+.af-fvia {
+  margin-top: 14px;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--af-text-mute);
+  text-align: center;
+}
+.af-ficp a {
+  color: var(--af-text-dim);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color .18s, border-color .18s;
+}
+.af-ficp a:hover {
+  color: var(--af-radar-ink);
+  border-bottom-color: currentColor;
+}
+.af-fvia:empty { display: none; }
+/* =========================================================
+   手机端抽屉导航（v2.19）
+   为什么必须做：390px 屏上 .af-nav 实际宽 540px，
+   「管理后台」被截断、「B 站」「QQ 群」整条落在屏外点不到，
+   而页头 overflow 又是 hidden，用户连"横向滑一下"都没辙。
+   ========================================================= */
+.af-burger { display: none; }
+
+@media (max-width: 860px) {
+  /* 窄屏隐藏横向链接，改用汉堡 */
+  .af-nav { display: none; }
+  .af-burger {
+    display: inline-flex; flex-direction: column; justify-content: center;
+    gap: 5px;
+    width: 46px; height: 44px;          /* 触控目标 ≥44px */
+    margin-left: auto;
+    padding: 0 11px;
+    border: 1px solid var(--af-edge);
+    border-radius: 11px;
+    background: rgba(224, 177, 92, .10);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .af-burger span {
+    display: block; height: 2px; width: 100%;
+    border-radius: 2px;
+    background: var(--af-radar);
+    transition: transform .28s cubic-bezier(.16,1,.3,1), opacity .2s;
+  }
+  .af-burger:active { background: rgba(224, 177, 92, .20); }
+  .af-burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .af-burger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+  .af-burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+}
+
+.af-mnav { position: fixed; inset: 0; z-index: 9000; }
+.af-mnav[hidden] { display: none; }
+.af-mnav__scrim {
+  position: absolute; inset: 0;
+  background: rgba(6, 12, 20, .66);
+  opacity: 0; transition: opacity .28s cubic-bezier(.16,1,.3,1);
+}
+.af-mnav__panel {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: min(320px, 82vw);
+  display: flex; flex-direction: column;
+  background: linear-gradient(165deg, #14212f 0%, #0d1720 58%, #0a121a 100%);
+  box-shadow: 14px 0 42px -14px rgba(0,0,0,.6), inset -1px 0 0 var(--af-edge);
+  transform: translateX(-102%);
+  transition: transform .3s cubic-bezier(.16,1,.3,1);
+  overscroll-behavior: contain;
+}
+.af-mnav.is-open .af-mnav__scrim { opacity: 1; }
+.af-mnav.is-open .af-mnav__panel { transform: translateX(0); }
+/* 武装期（刚打开 450ms）遮罩完全不可点：吃掉"打开那一击"的穿透 */
+.af-mnav.is-arming .af-mnav__scrim { pointer-events: none; }
+
+/* 抽屉开着时，页头与右下角切换钮必须让位。
+   抽屉里已经有独立的「×」，外面再浮一个会变成"两个关闭键"，
+   用户会犹豫点哪个；浮在上层还挡住遮罩，观感也乱。 */
+body.af-mnav-open .af-topbar,
+body.af-mnav-open .af-themetog,
+body.af-mnav-open .af-nav { opacity: 0; pointer-events: none; }
+.af-topbar, .af-themetog { transition: opacity .25s ease; }
+.af-mnav__head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; min-height: 58px; padding: 9px 10px 9px 16px;
+  border-bottom: 1px solid var(--af-edge);
+}
+.af-mnav__brand { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--af-radar); }
+.af-mnav__x {
+  position: relative;
+  width: 44px; height: 44px;          /* 触控目标 ≥44px */
+  border: 1px solid var(--af-edge);
+  border-radius: 11px;
+  background: rgba(224,177,92,.08);
+  color: var(--af-text); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.af-mnav__x:active { background: rgba(224,177,92,.22); }
+.af-mnav__x svg { position: absolute; inset: 0; width: 100%; height: 100%; padding: 11px; }
+.af-mnav__body {
+  flex: 1 1 auto; min-height: 0;      /* flex 子项不写这个，内容一多就撑破面板 */
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 8px 10px 20px;
+}
+.af-mnav__a {
+  display: flex; align-items: center;
+  min-height: 48px; padding: 10px 14px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  color: var(--af-text); text-decoration: none;
+  font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .16s;
+}
+.af-mnav__a:active { background: rgba(224, 177, 92, .18); }
+@media (prefers-color-scheme: light) {
+  .af-mnav__panel { background: linear-gradient(165deg, #fffdf7 0%, #faf6ec 52%, #f0e8d6 100%); }
+  .af-mnav__scrim { background: rgba(34, 27, 14, .58); }
+}
+
+/* ============================================================
+   ★ v2.26 交互动效 — 技法 5：Liquid Tab Indicator（液态指示器）
+   ------------------------------------------------------------
+   学自「8 种高质量交互动效」清单。做成分类条下滑动的胶囊指示器。
+   为什么用 non-bounce 缓动：本项目整体用 cubic-bezier(.16,1,.3,1)，
+   刻意避开 elastic/back-out —— 弹跳缓动在新版 UI 里显旧（impeccable 的反模式清单）。
+   无障碍：prefers-reduced-motion 下不启用（JS 侧判定），指示器保持隐藏，
+   选中态仍由 .af-kindchip.on 的阴影独立表达，不依赖动效传达信息。
+   渐进增强：只有 JS 成功插入指示器后，bar 才会加上 af-kindbar--liq 类，
+   此时才把 .on 的背景交给指示器负责 —— JS 挂了也不影响选中态可见。
+   ============================================================ */
+.af-kindbar { position: relative; }
+.af-kindbar--liq .af-kindchip.on { background: transparent; }
+.af-kind-ind {
+  position: absolute;
+  left: 0; top: 0;
+  border-radius: 999px;
+  background: var(--af-glass-in);
+  border: 1px solid var(--af-edge-hi);
+  box-shadow: 0 3px 14px -5px var(--af-radar), inset 0 1px 0 var(--af-glass-hi);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform, width, height;
+  transition:
+    transform .34s cubic-bezier(.16, 1, .3, 1),
+    width .34s cubic-bezier(.16, 1, .3, 1),
+    height .34s cubic-bezier(.16, 1, .3, 1),
+    opacity .22s linear;
+}
+.af-kindbar--liq .af-kindchip { position: relative; z-index: 1; }
+
+/* ============================================================
+   ★ v2.26 交互动效 — 技法 4：Center-focus Scaling（中心聚焦）
+   ------------------------------------------------------------
+   鼠标停在某张 Mod 卡片上时，同排其他卡片退到后面去。
+   两处克制：
+   1) 只在「真·鼠标」环境生效（hover:hover 且 pointer:fine）。
+      触屏设备没有真实 hover，否则每次点完都会留下一片淡出的卡片。
+   2) 用 media 查询包住 prefers-reduced-motion —— 系统要求减少动效时整条规则不生效。
+   幅度也刻意小（opacity .52 + scale .985），不做「其余全消失」那种舞台感，
+   因为这里是工具站不是作品集，浏览效率优先。
+   ============================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .af-grid { transition: none; }
+  .af-grid > .af-card {
+    transition: opacity .26s cubic-bezier(.16, 1, .3, 1),
+                transform .26s cubic-bezier(.16, 1, .3, 1);
+  }
+  .af-grid:hover > .af-card:not(:hover) { opacity: .52; transform: scale(.985); }
+}
+
+/* ============================================================
+   ★ v2.27 页面跳转过渡遮罩
+   ------------------------------------------------------------
+   点站内链接时淡入一片底色，跳转后新页立刻淡出，避免"硬跳"。
+   保命设计：遮罩是 body 的最后一个子元素、pointer-events 默认 none，
+   即使 JS 出错，2 秒后也会自动淡出，不会把页面永久挡住。
+   reduced-motion 下不启用（afx.js 侧判定），此时 DOM 里根本不会插入它。
+   ============================================================ */
+.afx-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--af-abyss);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s linear;
+}
+.afx-veil--on { opacity: 1; }
+
+/* ============================================================
+   ★ v2.34：让 .af-chip / .af-kindchip 同时兼容 <span> 与 <button>
+   ------------------------------------------------------------
+   为什么要改：这两个类原来全部用 <span>，**键盘 Tab 会直接跳过它们** ——
+   纯键盘用户与读屏用户根本没法切换排序、按类型筛选、切换后台标签页。
+   改用 <button> 后只需要补一条对齐：button 的 UA 默认样式是
+   text-align:center，而 span 是 start，不改的话文字会莫名居中。
+   这里只补项目样式里**没有**的属性，不会覆盖既有的配色与尺寸。
+   ============================================================ */
+button.af-chip,
+button.af-kindchip {
+  text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* 键盘操作时的可见焦点圈：不要只靠 hover 反馈 */
+button.af-chip:focus-visible,
+button.af-kindchip:focus-visible {
+  outline: 2px solid var(--af-radar);
+  outline-offset: 2px;
+}
+
+/* ★ 无条件降级兜底（由 inject_js_flag.py 注入）
+   JS 在 <head> 里同步加 .af-js；JS 没跑到时这个类永远不存在，
+   下面的规则生效，入场元素直接是终态 —— 不会出现「内容静默消失」。
+   与 prefers-reduced-motion 那个降级块互补：那个只管用户主动
+   要求减少动效，这里管 JS 根本跑不起来的情况。 */
+html:not(.af-js) .af-enter,
+html:not(.af-js) .af-reveal,
+html:not(.af-js) .af-stagger > * {
+  opacity: 1 !important;
+  transform: none !important;
+}
