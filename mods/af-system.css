@@ -94,12 +94,30 @@
                "Liberation Mono", ui-monospace, monospace;
   --af-f-serif: "Songti SC", "SimSun", Georgia, "Times New Roman", serif;
 
-  --af-t-display: 700 var(--af-s-8)/1.15 var(--af-f-sans);   /* 首屏主标题 */
-  --af-t-title:   650 var(--af-s-6)/1.25 var(--af-f-sans);   /* 区块标题 */
-  --af-t-body:    400 var(--af-s-4)/1.70 var(--af-f-sans);   /* 正文 */
-  --af-t-label:   600 var(--af-s-3)/1.40 var(--af-f-sans);   /* 标签、按钮 */
-  --af-t-mono:    400 var(--af-s-3)/1.55 var(--af-f-mono);   /* 数值、id */
-  --af-t-cap:     600 var(--af-s-2)/1.30 var(--af-f-sans);   /* 全大写小标签 */
+  /* ---------- 1.5b 字号阶梯 ----------
+     ★ v2.45：字号原先直接借用间距变量（--af-t-label: 600 var(--af-s-3)/…，
+       而 --af-s-3 = 12px）。这是把两件事绑在一起的设计捷径：
+         · 间距可以随断点缩（窄屏留白要小）
+         · 字号跟着缩 → 手机端按钮/chip 全部只有 12px
+       实测 390px 视口下，仓库页 41 个可见控件字号全是 12px。
+       触控目标 44px 达标，但**12px 的字在手机上明显偏小**，
+       且窄屏（≤400px 处 --af-s-4 也会缩）会让正文跟着变形。
+       现在字号走独立阶梯，与间距彻底解耦；
+       要「小屏字更小」就在窄屏断点里显式改这一组令牌，而不是牵连间距。 */
+  --af-fs-display: 40px;   /* 首屏主标题（另用 clamp 做连续缩放） */
+  --af-fs-title:   24px;   /* 区块标题 */
+  --af-fs-body:    15px;   /* 正文 */
+  --af-fs-label:   14px;   /* 按钮、标签、表单控件 */
+  --af-fs-mono:    13px;   /* 数值、id */
+  --af-fs-cap:     11px;   /* 全大写小标签 */
+
+  /* 六个排版角色（字重/行高/字体不变，只把字号换成上面的阶梯） */
+  --af-t-display: 700 var(--af-fs-display)/1.15 var(--af-f-sans);   /* 首屏主标题 */
+  --af-t-title:   650 var(--af-fs-title)/1.25 var(--af-f-sans);     /* 区块标题 */
+  --af-t-body:    400 var(--af-fs-body)/1.70 var(--af-f-sans);      /* 正文 */
+  --af-t-label:   600 var(--af-fs-label)/1.40 var(--af-f-sans);     /* 标签、按钮 */
+  --af-t-mono:    400 var(--af-fs-mono)/1.55 var(--af-f-mono);      /* 数值、id */
+  --af-t-cap:     600 var(--af-fs-cap)/1.30 var(--af-f-sans);       /* 全大写小标签 */
   --af-t-cap-lt:  .14em;   /* 全大写的字间距 */
 
   /* =============================================================================
@@ -185,10 +203,30 @@ body { font: var(--af-t-body); }
 .af-title {
   font: var(--af-t-display);
   letter-spacing: -.01em;      /* 大字号下加一点负字距，观感更紧实 */
+  /* ★ v2.45：展示级文字加一层极轻的向下投影。
+     玻璃表面有折射与内辉光，纯色文字贴上去会显得"印"在玻璃上、
+     和玻璃不在同一个空间。1~2px 的向下柔影能把字"抬"离表面一点。
+     只给 display 级（首屏主标题、区块大标题）——
+     正文和小标签加阴影会让密集文字发虚、也拖慢渲染。 */
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .34);
 }
-.af-h1 { font: var(--af-t-display); }
+.af-h1 {
+  font: var(--af-t-display);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .34);
+}
 
-h2, .af-section-title { font: var(--af-t-title); }
+h2, .af-section-title {
+  font: var(--af-t-title);
+  text-shadow: 0 1px 7px rgba(0, 0, 0, .26);
+}
+/* 浅色主题下玻璃是亮的，向下投影会显脏 —— 换成向上的一点点提亮 */
+body.af-light .af-hero h1,
+body.af-light .af-title,
+body.af-light .af-h1,
+body.af-light h2,
+body.af-light .af-section-title {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, .82);
+}
 
 .af-label,
 .af-kicker {
@@ -800,7 +838,10 @@ a:focus:not(:focus-visible) { outline: none; }
   align-items: center;
   gap: var(--af-s-1);
   margin-top: var(--af-s-1);
-  font: 400 var(--af-s-3)/1.5 var(--af-f-sans);
+  /* 错误提示：★ v2.45 从 --af-s-3（12px）改为 --af-fs-mono 档的 13px。
+     错误信息是用户此刻最需要读清的一行字，比正文可以小一号，
+     但不能小到 12px —— 那在手机上要眯眼看。 */
+  font: 500 var(--af-fs-mono)/1.5 var(--af-f-sans);
   color: var(--af-alert);
 }
 .af-errtext { display: none; }
@@ -983,9 +1024,11 @@ a:focus:not(:focus-visible) { outline: none; }
     --af-glass-blur-sm: blur(5px)  saturate(140%) brightness(1.02);
     /* 触控目标统一下限 */
     --af-tap-min: 44px;
-    /* 手机上正文行高再放大一点：窄屏换行更多，行高不够会"糊成一片" */
-    --af-t-body: 400 var(--af-s-4)/1.80 var(--af-f-sans);
-    --af-t-title: 650 var(--af-s-5)/1.30 var(--af-f-sans);
+    /* 手机上正文行高再放大一点：窄屏换行更多，行高不够会"糊成一片"。
+       ★ v2.45：这里也改用独立字号阶梯，不再借用间距变量 ——
+         否则 --af-s-4 在 ≤400px 处被改成 14px 时，正文字号会被顺带改掉。 */
+    --af-t-body: 400 var(--af-fs-body)/1.80 var(--af-f-sans);
+    --af-t-title: 650 var(--af-fs-title)/1.30 var(--af-f-sans);
   }
 
   /* 触控目标：需要"整块可点"的容器在手机上抬到 44px。
@@ -1049,7 +1092,86 @@ a:focus:not(:focus-visible) { outline: none; }
   .af-card { padding: var(--af-s-3); }
 }
 
-/* ---------- 4.3 全局降级（这一节是"两端都能用"的兜底） ---------- */
+/* =============================================================================
+   2.6 浮层玻璃的折射描边与斜向亮带（af-liquid 体系的正式接线）
+   -----------------------------------------------------------------------------
+   为什么单独一节：
+     2.2~2.4 节把 af-liquid（blur + mask 渐变描边 + soft-light 亮带）
+     完整实现了出来，但**全站没有任何元素在用它** —— 模态、Toast、提示卡
+     用的都是实色 border。看上去"玻璃都在"，实际少了两样最能被眼睛认出来的东西：
+       · 边缘折射：真实玻璃棱边是渐变的（上亮下暗、四角最亮），
+         实色 border 给不出；
+       · 斜向亮带：悬停时有一道光掠过表面，"玻璃"的暗示瞬间成立。
+     2.5 节的注释也写明了预期："卡片背后是极光背景 → 弱"，
+     也就是说**浮在内容之上的小片**才配得上完整玻璃。
+
+   为什么用 :where()：
+     零特异性。这样这些描边是"锦上添花"，任何页面内联样式都能覆盖它，
+     不会反过来把页面自己的边框压掉（同权重内联胜，页面能赢）。
+     刻意不用 .af-modal.af-glass 这种双类写法 —— 那是 (0,2,0)，
+     页面内联虽然仍胜，但会让 af-naval.css 里的既有规则也被顶掉。
+   ========================================================================== */
+
+/* ---------- 折射描边（1px 渐变环） ---------- */
+/* padding + mask-composite 的原理：
+   伪元素铺满并 padding 出 1px，内容盒（content-box）是"内圈"、
+   两张全黑渐变一内一外，用 mask-composite: exclude / xor 把内圈挖掉，
+   剩下的就是那 1px 的环。border-color 做不到这个。 */
+:where(.af-modal, .af-toast, .af-peek, .af-mnav__panel)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;          /* 绝不挡点击 */
+  background: var(--af-glass-refract);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: .82;
+}
+/* 抽屉面板靠右，只在左棱受光，描边要比通栏容器弱一档 */
+:where(.af-mnav__panel)::before { opacity: .6; }
+/* 提示卡很小，描边再弱一点，否则整张卡片会"发光" */
+:where(.af-peek)::before { opacity: .5; }
+
+/* ---------- 斜向亮带（悬停时掠过表面） ---------- */
+/* ★ 只在桌面端开启，且尊重 reduced-motion：
+     亮带是纯装饰。触屏没有 hover，它永远扫不动，纯耗电；
+     而开了"减少动态效果"的用户看到的是一条来回闪的亮带 —— 反而干扰。
+     这两个条件是 @media 的一部分，不能写成普通规则（见 4.3 节降级）。 */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  :where(.af-modal, .af-toast, .af-peek)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    overflow: hidden;
+    background: linear-gradient(
+      104deg,
+      transparent 34%,
+      rgba(255, 255, 255, .16) 47%,
+      rgba(255, 255, 255, .06) 53%,
+      transparent 66%);
+    background-size: 260% 100%;
+    background-position: 130% 0;
+    /* 只动 background-position，不动 transform ——
+       同一元素只写一处 transform 是本项目的硬规矩（见 MEMORY）。 */
+    transition: background-position var(--af-tr-page);
+    mix-blend-mode: soft-light;   /* 亮带"擦"过而不是"糊"上去 */
+  }
+  :where(.af-peek)::after { opacity: .6; }
+}
+
+/* =============================================================================
+   4.3 全局降级（这一节是"两端都能用"的兜底）
+   ========================================================================== */
 
 /* 不支持 backdrop-filter 时（老安卓 WebView、部分安卓机），
    玻璃必须退化成**不透明底**而不是"什么都没有" ——
@@ -1065,6 +1187,13 @@ a:focus:not(:focus-visible) { outline: none; }
   }
   /* 折射描边保留 —— 它不依赖 backdrop-filter，是纯渐变 */
   .af-liquid::before { opacity: .7; }
+
+  /* ★ v2.45：2.6 节新加的浮层描边也要一起处理。
+     这类设备上玻璃已经退化成**不透明实色底**，背后没有任何东西可折射，
+     再留一圈渐变描边只会变成"实心方块上套了条花边" —— 更糟。
+     所以这里把描边压到很低的透明度（不粗暴删掉：
+     边缘仍然需要一点对比度来界定不透明块的边界）。 */
+  :where(.af-modal, .af-toast, .af-peek, .af-mnav__panel)::before { opacity: .2; }
 }
 
 /* 减少动态效果：保留状态变化（那是信息），去掉位移与装饰（那是运动）。 */
@@ -1078,6 +1207,11 @@ a:focus:not(:focus-visible) { outline: none; }
   /* 悬停位移全部撤掉：快速移动视差/上浮会引发前庭不适 */
   .af-card:hover, .af-btn:hover { transform: none !important; }
   .af-liquid--shine::after { display: none; }
+  /* ★ v2.45：2.6 节的斜向亮带同样要去掉。
+     它是 background-position 位移动画，上面的 transition-duration:0.01ms
+     虽然能让它"几乎不动"，但仍然留着一条静态亮带压在内容上。
+     而且这类用户往往正是前庭敏感人群，直接 display:none 更干净。 */
+  :where(.af-modal, .af-toast, .af-peek)::after { display: none; }
 
   /* ★★ 关键的一条：入场元素必须**直接是终态**。
      上面把 transition 压到 0.01ms 只让「过渡」变快，**不影响初始值** ——

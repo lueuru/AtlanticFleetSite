@@ -433,6 +433,23 @@
       d.fonts.ready.then(function () { refreshDurations(); bindNavSpy(); })
         .catch(function () { });
     }
+    /* ★ v2.45：视口尺寸变了要重读断点与时长。
+       以前只在启动和字体就绪时读一次，于是：
+         · 手机横竖屏一换，narrow()/isDesktop() 仍按旧断点判断
+           → 抽屉该开不开、该关不关；
+         · CSS 里窄屏断点会改 --af-s-* 间距，JS 侧的 T 时长也随主题变，
+           旋转后动效时长与 CSS 写的不一致（表现为动画忽然变快/变慢）。
+       refreshDurations() 本来就导出了（外部可调），但**全站没有任何
+       resize 监听调用它** —— 能力在、接线缺。 */
+    var rt = 0;
+    w.addEventListener('resize', function () {
+      // 去抖：拖窗口时 resize 每秒能触发几十次，getComputedStyle 不便宜
+      clearTimeout(rt);
+      rt = setTimeout(function () {
+        refreshDurations();
+        bindNavSpy();          // 区块位置随字号/间距变了，重新计算高亮目标
+      }, 160);
+    }, { passive: true });
   }
 
   /* ---------- 对外 API ---------- */

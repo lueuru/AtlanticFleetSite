@@ -210,7 +210,8 @@ body.af-naval {
 .af-bg {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  /* 背景装饰层，走令牌里的 deco 档，与 af-system.css 的 .af-bg 定义保持一致。 */
+  z-index: var(--af-z-deco);
   pointer-events: none;
   overflow: hidden;
 }
@@ -365,7 +366,10 @@ body.af-light .af-bg::before {
 /* ---------- 内容容器 ---------- */
 .af-wrap {
   position: relative;
-  z-index: 2;
+  /* 内容层（100）必须高于背景装饰层（deco=10）——
+     原来这里写 2，恰好也大于 0 所以看起来没事；
+     一旦背景改走令牌到 10，内容层就必须同步抬上去。 */
+  z-index: var(--af-z-content);
   max-width: 1180px;
   margin: 0 auto;
   padding: 0 20px 80px;
@@ -927,11 +931,17 @@ body.af-light .af-foot--rich {
 
 .af-peek {
   position: fixed;
-  z-index: 45;
+  /* 悬停提示卡：设计系统把它归在"浮层"档（600）。 */
+  z-index: var(--af-z-float);
   left: 0; top: 0;
   max-width: 268px;
   padding: 12px 14px;
   border-radius: 10px;
+  /* ★ 玻璃的权威定义在 af-system.css 的「悬停提示卡（真玻璃）」一节 ——
+     它晚于本文件加载、且同特异性，所以这里的 background/border/box-shadow
+     全部会被它盖掉。
+     写在这里的旧值（不透明 --af-card-solid）只是历史遗留的兜底：
+     万一 af-system.css 没加载，提示卡至少还能看。 */
   background: var(--af-card-solid, rgba(10, 16, 26, .93));
   border: 1px solid var(--af-edge, rgba(255, 255, 255, .12));
   box-shadow: 0 18px 44px -16px rgba(0, 0, 0, .7),
@@ -983,7 +993,7 @@ body.af-light .af-foot--rich {
 .af-cursor-ring {
   position: fixed;
   top: 0; left: 0;
-  z-index: 99999;
+  z-index: var(--af-z-cursor);
   pointer-events: none;
   opacity: 0;
   transition: opacity .25s ease;
@@ -1114,7 +1124,10 @@ body.af-light { color-scheme: light; }
 .af-themetog {
   position: fixed;
   right: 16px; bottom: 16px;
-  z-index: 9000;
+  /* ★ 原来写死 9000，与 .af-mnav（抽屉）撞在同一层 ——
+     抽屉打开时主题按钮浮在遮罩之上，点得到它、点不到抽屉关闭区。
+     悬浮控件属于"浮层"档，比抽屉(800)高、比模态(900)低。 */
+  z-index: var(--af-z-float);
   display: inline-flex; align-items: center; gap: 7px;
   height: 40px; padding: 0 15px;
   border-radius: 999px;
@@ -1727,7 +1740,10 @@ div[id="grid"] {
    ============================================================ */
 .af-toast {
   position: fixed; left: 50%; bottom: 34px; transform: translate(-50%, 24px);
-  z-index: 90; padding: 12px 22px; border-radius: var(--af-radius);
+  /* ★ 原来写死 90 —— 抽屉(800)、模态遮罩(900)一开就把 Toast 盖住了，
+     而 Toast 在这套设计里恰恰是"最高优先级告警"，必须永远可见。 */
+  z-index: var(--af-z-toast);
+  padding: 12px 22px; border-radius: var(--af-radius);
   background: var(--af-toast-bg, rgba(12,30,48,.95)); border: 1px solid var(--af-edge-hi);
   color: var(--af-text); font-size: 13.5px; opacity: 0; pointer-events: none;
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -1936,7 +1952,7 @@ body.af-dark {
   .af-burger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 }
 
-.af-mnav { position: fixed; inset: 0; z-index: 9000; }
+.af-mnav { position: fixed; inset: 0; z-index: var(--af-z-drawer); }
 .af-mnav[hidden] { display: none; }
 .af-mnav__scrim {
   position: absolute; inset: 0;
@@ -1999,9 +2015,16 @@ body.af-mnav-open .af-nav { opacity: 0; pointer-events: none; }
   transition: background .16s;
 }
 .af-mnav__a:active { background: rgba(224, 177, 92, .18); }
+/* ★ 这段必须带 :not(.af-dark):not(.af-light) 守卫。
+   站内主题是「用户手动选」（JS 写 body.af-light / body.af-dark，见 af-naval.js），
+   不跟系统走。少了守卫就会出现：系统是浅色、用户手动选了深色 →
+   抽屉被这条规则强行刷成浅色实底，与全站深色主题打架。
+   同文件 1251 行的分类 chip 兜底写法就是这个守卫，两处必须一致。 */
 @media (prefers-color-scheme: light) {
-  .af-mnav__panel { background: linear-gradient(165deg, #fffdf7 0%, #faf6ec 52%, #f0e8d6 100%); }
-  .af-mnav__scrim { background: rgba(34, 27, 14, .58); }
+  body:not(.af-dark):not(.af-light) .af-mnav__panel {
+    background: linear-gradient(165deg, #fffdf7 0%, #faf6ec 52%, #f0e8d6 100%);
+  }
+  body:not(.af-dark):not(.af-light) .af-mnav__scrim { background: rgba(34, 27, 14, .58); }
 }
 
 /* ============================================================
@@ -2067,7 +2090,8 @@ body.af-mnav-open .af-nav { opacity: 0; pointer-events: none; }
 .afx-veil {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  /* ★ 原来写死 999，低于抽屉的 9000 —— 模态遮罩压在抽屉之下。 */
+  z-index: var(--af-z-modal);
   background: var(--af-abyss);
   opacity: 0;
   pointer-events: none;

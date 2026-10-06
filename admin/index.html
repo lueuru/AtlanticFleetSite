@@ -527,10 +527,22 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     //   现在等 refresh() 真的跑完再给反馈，并在等待期间禁用按钮，避免连点。
     var b = this;
     b.disabled = true;
-    refresh().then(function (ok) {
-      b.disabled = false;
-      if (ok) afNaval.toast('已刷新', 'ok');
-    });
+    /* ★ v2.45：补catch + finally。
+       原来只有 .then(...)：refresh() 一旦 reject（网络断了、
+       后端停了、或以后有人往 refresh 里加了 throw），
+       这个 then 整段不会跑 → b.disabled 永远是 true →
+       「刷新」按钮永久变灰、点不动，只能刷新整个页面。
+       finally 保证无论成功失败都恢复。 */
+    refresh()
+      .then(function (ok) {
+        if (ok) afNaval.toast('已刷新', 'ok');
+      })
+      .catch(function () {
+        afNaval.toast('刷新失败（连不上服务器？）', 'err');
+      })
+      .finally(function () {
+        b.disabled = false;
+      });
   };
 
   $('#btnRebuild').onclick = function () {

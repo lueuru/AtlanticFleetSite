@@ -40,11 +40,21 @@
     --card-hi:  rgba(255,255,252,.95);
     --card-lo:  rgba(90,72,40,.10);
     --card-in:  rgba(184,140,50,.14);
-    --card-sh:  0 14px 40px -20px rgba(70,56,30,.34);
+    /* ★ v2.45 修一个真 bug：--card-sh 原来是**一整条阴影值**
+       （0 14px 40px -20px rgba(...)），却在 7 处被当作**颜色**填进
+       box-shadow 的颜色位：0 18px 48px -14px var(--card-sh)。
+       这是非法值 → 浏览器把整条 box-shadow 声明丢掉 →
+       首页三张卡片、页脚、品牌块**全部没有投影**（computed 实测为 none）。
+       修法：变量只存"阴影颜色"，偏移/模糊/扩散由每处自己组合，
+       这样深浅主题也只需换颜色、不用重写几何。 */
+    --card-sh:  rgba(70,56,30,.34);
     --chart-op: .55;
     --chart-blend: multiply;
     --glow-1:   rgba(230,190,120,.42);
     --glow-2:   rgba(150,185,210,.36);
+    /* ★ v2.45：首屏标题的投影。浅色玻璃是亮的，向下暗影会显脏 →
+       用向上的一点点提亮代替。两套主题各给一份，不要写死。 */
+    --h1-shadow: 0 1px 2px rgba(255,255,255,.86);
   }
   /* 深色：墨蓝夜色 */
   @media (prefers-color-scheme: dark) {
@@ -61,11 +71,13 @@
       --card-hi:  rgba(255,252,245,.30);
       --card-lo:  rgba(0,0,0,.30);
       --card-in:  rgba(224,177,92,.18);
-      --card-sh:  0 18px 48px -14px rgba(0,0,0,.66);
+      --card-sh:  rgba(0,0,0,.66);
       --chart-op: .16;
       --chart-blend: overlay;
       --glow-1:   rgba(255,216,150,.30);
       --glow-2:   rgba(110,160,200,.26);
+      /* 深色玻璃上才是向下柔影 —— 亮底浅底正好相反，两套不能共用一个值 */
+      --h1-shadow: 0 2px 10px rgba(0,0,0,.34);
     }
   }
   * { box-sizing: border-box; }
@@ -129,6 +141,11 @@
     font-size: clamp(30px, 6vw, 46px);
     font-weight: 400; letter-spacing: .06em; line-height: 1.24;
     margin: 0 0 12px;
+    /* ★ v2.45：首屏大标题加一层极轻投影（取值随浅/深色主题切换，
+       见上面 --h1-shadow 的两处定义）。
+       背后是极光玻璃，文字要"抬"离表面一点才不会像印上去。
+       首页是独立样式、不走设计系统的类名，所以这里单独写一份。 */
+    text-shadow: var(--h1-shadow);
   }
   h1 em { font-style: normal; color: var(--brass); }
   .sub {

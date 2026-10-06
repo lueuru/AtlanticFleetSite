@@ -1085,10 +1085,15 @@
     }).catch(function () {
       afNaval.toast('网络异常，请稍后重试', 'err');
       $('#prog').classList.remove('show');
-    }).then(function () {
+    }).finally(function () {
       btn.disabled = false;
       // ★ v2.41：用统一 API 退出加载态（含 aria-busy）。
       //   原来只写 btn.disabled = false，加载遮罩残留 → 按钮一直是转圈状态。
+      // ★ v2.45：改用 finally 而非 then ——
+      //   then 只在「前面的 catch 没有再抛错」时才跑。
+      //   catch 里只要有一句 throw（哪怕是第三方代码或后续维护加的），
+      //   这段清理就被整段跳过，按钮永远卡在转圈的加载态，
+      //   只能刷新页面。用户看到的就是「点了没反应」。
       if (window.afMotion) window.afMotion.loading(btn, false);
     });
   };
