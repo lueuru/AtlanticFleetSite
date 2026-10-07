@@ -148,6 +148,36 @@
     color: var(--ink-mute);
     line-height: 1.7;
   }
+  /* ---- 社区与联系入口（2026-10-07 新增）----
+     样式与首页 .flink 保持一致，图标同样是 24px 内联矢量。
+     不用 <img> 位图：192×192 缩到 24px 边缘发糊，且六个入口长得一样分不清平台。 */
+  .social {
+    margin: 22px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    justify-content: center;
+    list-style: none;
+  }
+  .social:empty { display: none; }   /* links.js 没载入时不留空壳 */
+  .flink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;              /* 触控目标不小于 44px */
+    font-size: 14px;
+    text-decoration: none;
+    color: var(--ink-dim);
+    transition: color .18s ease;
+  }
+  .flink:hover { color: var(--brass); }
+  .flink:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 4px; }
+  .flink-ic { display: inline-flex; width: 20px; height: 20px; }
+  /* svg 不写 width/height attribute（那样在某些浏览器里会被固定尺寸），
+     统一由 CSS 控制，图标任意尺寸都清晰 */
+  .flink-ic svg { width: 100%; height: 100%; display: block; }
   @media (max-width: 480px) {
     .box { padding: 32px 20px; }
   }
@@ -164,6 +194,64 @@
       <a class="btn" href="/AtlanticFleetSite/mods/">Mod 仓库</a>
     </nav>
     <p class="tip">如果你是从别人分享的链接点进来的，<br>可以回到<a href="/AtlanticFleetSite/mods/">Mod 仓库</a>，或在<a href="/AtlanticFleetSite/docs/faq/">常见问题</a>里找答案。</p>
+    <!-- 社区与联系入口：数据源与首页 / Mod 仓库 / 后台完全同一个
+         —— /mods/links.js 的 AF_LINKS。404 页原先一个联系入口都没有，
+         访客走到这里（说明已经迷路一次）时最需要联系方式，却找不到。
+         动态渲染而不是写死 <a>：地址没填的项不露出坏链接（写 href="#"
+         会把人点进空页，比不显示更糟）。填好地址刷新即自动出现。 -->
+    <nav class="social" id="af-social" aria-label="社区与联系"></nav>
   </main>
+  <script>
+    // 与首页同一套加载顺序：先 af-icons.js（links.js 的 iconSvg 从
+    // AF_ICONS 取图标，取不到就是无图标入口），再 links.js。
+    // 动态插入只能靠 onload 串行；并排写两个 <script> 浏览器不保证执行顺序。
+    (function () {
+      var s = document.createElement('script');
+      s.src = '/AtlanticFleetSite/mods/af-icons.js?v=1.0';
+      s.onload = function () {
+        var s2 = document.createElement('script');
+        s2.src = '/AtlanticFleetSite/mods/links.js?v=1.0';
+        s2.onload = renderSocial;
+        // 拿不到就不显示，页脚空着不影响 404 页面本身
+        s2.onerror = function () {};
+        document.head.appendChild(s2);
+      };
+      // 图标脚本挂了也要继续载 links.js（退化成无图标文字入口）
+      s.onerror = function () { renderSocial(); };
+      document.head.appendChild(s);
+
+      function renderSocial() {
+        var L = window.AF_LINKS;
+        var box = document.getElementById('af-social');
+        if (!L || !L.list || !L.list.length || !box) return;
+        var frag = document.createDocumentFragment();
+        L.list.forEach(function (it) {
+          var a = document.createElement('a');
+          a.className = 'flink flink--' + it.key;
+          a.href = it.href;
+          a.title = it.title;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          if (it.iconSvg) {
+            // 必须 innerHTML：createElement('svg') 造不出 SVG 元素
+            //（浏览器不认那个标签名，会当未知 HTML 元素）。
+            // 内容来自 /mods/af-icons.js（本地常量，无外部输入），不存在注入面。
+            var ic = document.createElement('span');
+            ic.className = 'flink-ic';
+            ic.innerHTML = it.iconSvg;
+            a.appendChild(ic);
+          }
+          // 图标与文字必须分两个节点。用 a.textContent = it.text 会把
+          // <a> 的内容整个替换成纯文字，图标一点都进不去。
+          var tx = document.createElement('span');
+          tx.className = 'flink-t';
+          tx.textContent = it.text;
+          a.appendChild(tx);
+          frag.appendChild(a);
+        });
+        box.appendChild(frag);
+      }
+    })();
+  </script>
 </body>
 </html>
