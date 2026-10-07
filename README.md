@@ -46,23 +46,28 @@
 
 <div align="center">
 
-<img src="https://img.shields.io/badge/HTML-5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5">
-<img src="https://img.shields.io/badge/CSS-3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3">
-<img src="https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript">
-<img src="https://img.shields.io/badge/Python-3.8-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-<img src="https://img.shields.io/badge/VitePress-1.6-646CFF?style=flat-square" alt="VitePress">
-<img src="https://img.shields.io/badge/GSAP-3.12-0ACF83?style=flat-square" alt="GSAP">
-<img src="https://img.shields.io/badge/Unity-4.7-222C37?style=flat-square&logo=unity&logoColor=white" alt="Unity">
-<img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx">
-<img src="https://img.shields.io/badge/Windows_Server-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Windows Server">
+<img src="https://img.shields.io/badge/HTML-5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5" width="110">
+<img src="https://img.shields.io/badge/CSS-3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3" width="96">
+<img src="https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript" width="150">
+<img src="https://img.shields.io/badge/Python-3.8-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" width="120">
+<img src="https://img.shields.io/badge/VitePress-1.6-646CFF?style=flat-square" alt="VitePress" width="135">
+<img src="https://img.shields.io/badge/GSAP-3.12-0ACF83?style=flat-square" alt="GSAP" width="118">
+<img src="https://img.shields.io/badge/Unity-4.7-222C37?style=flat-square&logo=unity&logoColor=white" alt="Unity" width="112">
+<img src="https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white" alt="Nginx" width="112">
+<img src="https://img.shields.io/badge/Windows_Server-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Windows Server" width="180">
 
 </div>
 
 <div align="center">
 
-**前端** 原生 HTML/CSS/JS，无框架依赖，零构建即可运行 　|　 **文档** VitePress 1.6 静态站点
-　 **动效** GSAP + ScrollTrigger + Lenis 　|　 **后端** Python 标准库（零第三方依赖）
-　 **托管** Windows Server + Nginx 反向代理
+| 层 | 技术 | 选型理由 |
+|:---:|---|---|
+| **前端** | HTML5 · CSS3 · ES2022 | 原生三件套，无框架依赖，零构建即可运行 |
+| **文档** | VitePress 1.6 | 65 页静态站点，产物可直接 CDN 托管 |
+| **动效** | GSAP 3 + ScrollTrigger + Lenis | 全部**本地化托管**，不走 CDN |
+| **后端** | Python 3.8 标准库 | **零第三方依赖**，无 supply chain 风险 |
+| **客户端** | Unity 4.7（Mod 框架） | 手机端直接加载 Mod 包 |
+| **托管** | Windows Server + Nginx | 自建服务器，反向代理 + 静态服务 |
 
 </div>
 
