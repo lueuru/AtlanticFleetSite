@@ -437,6 +437,42 @@
   color: var(--ink-mute);
 }
 
+/* ---------- 加载失败后的「重试」按钮 ----------
+   ★ 触控目标按 44px 给（移动端可点区域标准），别按视觉高度给 ——
+     按钮看上去 28px 高，但它周围的可点区域要够大，
+     否则手指按不准，点了像没反应。 */
+.af-retry {
+  margin-left: 10px;
+  min-height: 44px;          /* 触控目标，不跟视觉高度 */
+  padding: 0 16px;
+  border: 1px solid var(--brass);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--brass);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  /* 视觉上只占 28px，靠 padding 把可点区域撑到 44px */
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.af-retry:hover {
+  background: var(--brass);
+  color: var(--bg);
+}
+.af-retry:active {
+  background: var(--brass);
+  color: var(--bg);
+  opacity: 0.82;
+}
+/* 键盘可达：焦点框不能被 outline:none 抹掉 */
+.af-retry:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
 /* ================================================================
    8. 进场动画
    ---------------------------------------------------------------

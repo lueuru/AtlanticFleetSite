@@ -20,6 +20,14 @@
   var API = '/api/content';
   // ★ 轮播自动切换间隔。放在这里而不是 CSS 里，因为它是**逻辑**不是样式。
   var HERO_MS = 6000;
+  // ★ 加载超时（毫秒）。
+  //   为什么必须自己设：fetch **没有内置超时**。后端进程被计划任务重启、
+  //   nginx 连接被 keep-alive 占住、或网络中途断掉时，连接会一直挂着不返回。
+  //   实测表现是首页板块的骨架停在「加载中」不动 —— 用户看到的是一个
+  //   永远不会自己好的空白页，却没有任何提示告诉他该刷新。
+  //   fetch 本身在超时后**不会**中断底层请求，但我们会走到 catch 分支，
+  //   页面至少能给出一个明确状态 + 重试入口。
+  var LOAD_TIMEOUT = 8000;
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) {
@@ -62,6 +70,42 @@
     if (!box) return;
     box.innerHTML = '';
     box.appendChild(el('div', 'af-empty', text || '暂无内容'));
+  }
+
+  /** 带超时的 JSON 请求。
+   *  ★ fetch 对 4xx/5xx **不会** reject，必须自己看 status ——
+   *    只判 res.ok 会把 404 当成功 → 走进错误分支还以为是空数据。
+   *  ★ 超时用 Promise.race + 定时器，不用 AbortController ——
+   *    AbortController 是较新的 API，老浏览器上可能压根不存在，
+   *    直接用会让整个脚本抛错、一个板块都渲染不出来。
+   */
+  function fetchJSON(url, ms) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        reject(new Error('请求超时（' + Math.round(ms / 1000) + ' 秒无响应）'));
+      }, ms);
+
+      fetch(url, { headers: { Accept: 'application/json' } })
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (j) {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          resolve(j);
+        })
+        .catch(function (err) {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          reject(err);
+        });
+    });
   }
 
   // ---------- 1. 轮播 ----------
@@ -414,19 +458,31 @@
 
   // ---------- 启动 ----------
 
-  function boot() {
-    setupReveal();
-    setupHero();
+  /** 失败提示条：文案说明出了什么事，并给一个能立刻再试一次的按钮。
+   *  ★ 为什么给按钮而不只写一句话：
+   *    偶发断网 / 后端重启这类故障，等几十秒就会自己好。
+   *    没有入口的话，用户唯一能做的就是手动刷新整页，
+   *    代价是丢失已经滚动到的位置、以及重跑一遍进场动画。
+   */
+  function showLoadError(msg) {
+    var n = $('#afNote');
+    if (!n) return;
+    n.innerHTML = '';
+    n.appendChild(el('span', null, '内容暂时无法加载：' + msg));
+    var btn = el('button', 'af-retry', '重试');
+    btn.type = 'button';
+    btn.addEventListener('click', function () {
+      n.innerHTML = '';
+      n.appendChild(el('span', null, '正在重新加载…'));
+      load();
+    });
+    n.appendChild(btn);
+  }
 
-    // fetch 对 4xx/5xx **不会** reject，必须自己看 status。
-    // 只判 res.ok 会把 404 当成功 → 走进错误分支还以为是空数据。
-    fetch(API, { headers: { Accept: 'application/json' } })
-      .then(function (res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
+  function load() {
+    fetchJSON(API, LOAD_TIMEOUT)
       .then(function (d) {
-        if (!d || d.ok !== true) throw new Error('bad payload');
+        if (!d || d.ok !== true) throw new Error('返回数据格式不对');
         var site = d.site || {};
         renderHero(site);
         renderIntro(site);
@@ -446,9 +502,14 @@
         renderLinks(null);
         renderShips(null);
         renderFeed(null);
-        var n = $('#afNote');
-        if (n) { n.innerHTML = ''; n.appendChild(el('span', null, '内容暂时无法加载：' + (err.message || err))); }
+        showLoadError(err && (err.message || err));
       });
+  }
+
+  function boot() {
+    setupReveal();
+    setupHero();
+    load();
   }
 
   if (document.readyState === 'loading') {

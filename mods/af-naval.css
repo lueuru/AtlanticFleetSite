@@ -883,6 +883,32 @@ body.af-light .af-foot--rich {
 }
 .af-flink:hover .af-flink-ic svg { opacity: 1; }
 .af-flink:hover .af-flink-ic { transform: scale(1.12); }
+
+/* ★ v2.51 移动端触控目标：页脚社交入口可点区域提到 44px。
+   ---------------------------------------------------------------
+   问题：`.af-flink-ic` 是 22×22、整条 `.af-flink` 也没有最小高度，
+     实际可点区域约 22~26px 高。手指触屏的有效命中半径比鼠标大得多，
+     低于 44px 就会出现「看着在这儿、我点了却没反应」——
+     而且因为链接本身是有效的，玩家会以为页面卡了。
+
+   为什么用 padding 撑开而不是把图标放大到 44px：
+     图标放大到 44px 在页脚里会显得又笨又挤，还破坏和旁边文字的比例。
+     所以保持视觉尺寸不变（22px），用纵向 padding 把**可点区域**撑到 44px，
+     视觉与手感分开处理。这是移动端适配的标准做法。
+
+   为什么只在手机端加：
+     桌面端用鼠标，44px 的行高会把页脚撑得很松、链接之间出现大段空白。
+     `@media` 里写**字面量**断点 760px —— `@media (max-width: var(--x))`
+     是非法语法，浏览器会丢弃整条规则（断点令牌只能给 JS 读）。 */
+@media (max-width: 760px) {
+  .af-flink--ext {
+    /* min-height 而不是 height：内容多于一行时仍能正常撑开，不会截断文字 */
+    min-height: 44px;
+    /* 负 margin 把 padding 撑出来的空间收回来，避免页脚被拉长一截 */
+    margin: -9px 0 -9px;
+    padding: 9px 0;
+  }
+}
 /* 社区入口组：与上方站内链接之间留出呼吸，且上下成组时不自成一列 */
 .af-fsocial-list {
   display: flex; flex-direction: column; gap: 2px;

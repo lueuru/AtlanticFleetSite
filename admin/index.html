@@ -128,6 +128,85 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 .af-topbar .af-brand .nm { color: #e6e2d8; }
 .af-topbar .af-brand .sb { color: #a8b0ba; }
 @media (max-width: 640px) { .af-wrap { padding: 0 14px 60px; } }
+
+/* ---------- v2.51 管理分区切换 ---------- */
+/* 用 role="tablist"/"tab" 而不是复用 .af-tabs/.af-chip：
+   两组东西语义不同（.af-tabs 是**筛选**，这组是**换页面**），
+   套同一套样式会让读屏软件把分区切换念成"筛选待审核"，点进去完全是另一件事。 */
+.af-seg {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 22px 0 4px; padding: 5px;
+  border: 1px solid var(--af-hair); border-radius: 12px;
+  background: rgba(4, 10, 18, .28);
+}
+.af-seg__b {
+  flex: 0 0 auto;
+  min-height: 38px; padding: 0 13px;
+  border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: var(--af-text-dim);
+  font: inherit; font-size: 13px; cursor: pointer;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.af-seg__b:hover { color: var(--af-title); background: rgba(255, 255, 255, .05); }
+.af-seg__b.is-on {
+  color: var(--af-radar-ink);           /* 浅色主题下已加深到 5.13 对比度 */
+  background: rgba(224, 177, 92, .12);
+  border-color: rgba(224, 177, 92, .34);
+}
+.af-seg__b:focus-visible { outline: 2px solid var(--af-radar); outline-offset: 1px; }
+
+.af-segpanel { margin-top: 16px; }
+/* 面板内的通用小节标题 */
+.af-subhead {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 20px 0 10px;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--af-text-mute); font-family: var(--af-font-mono);
+}
+.af-subhead::after { content: ""; flex: 1 1 20px; height: 1px; background: var(--af-hair); }
+.af-note {
+  margin: 0 0 12px; padding: 10px 12px;
+  border: 1px solid var(--af-hair); border-left: 2px solid var(--af-radar);
+  border-radius: 8px; background: rgba(224, 177, 92, .06);
+  font-size: 12.5px; color: var(--af-text-dim); line-height: 1.7;
+}
+/* 表单：后台要编辑的东西多，label 与 input 必须成对且方向一致 */
+.af-form { display: grid; gap: 10px; max-width: 720px; }
+.af-form label { font-size: 12px; color: var(--af-text-dim); }
+.af-form input, .af-form textarea, .af-form select {
+  width: 100%; padding: 9px 11px;
+  border: 1px solid var(--af-edge); border-radius: 8px;
+  background: rgba(4, 10, 18, .5); color: var(--af-text);
+  font: inherit; font-size: 13px;
+}
+.af-form textarea { min-height: 92px; resize: vertical; line-height: 1.7; }
+.af-form input:focus, .af-form textarea:focus, .af-form select:focus {
+  outline: none; border-color: var(--af-radar);
+}
+/* ★ 触控目标 ≥44px：后台主要是手机上传图片用，44px 起步 */
+.af-form .af-btn, .af-row .af-btn { min-height: 44px; }
+.af-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.af-rowend { margin-top: 12px; }
+/* 媒体库/舰船这类列表项 */
+.af-cardrow {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 0; border-bottom: 1px solid var(--af-hair);
+}
+.af-cardrow:last-child { border-bottom: 0; }
+.af-cardrow__thumb {
+  flex: 0 0 auto; width: 52px; height: 52px;
+  border: 1px solid var(--af-hair); border-radius: 8px;
+  background: rgba(255,255,255,.04) center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--af-text-mute);
+}
+.af-cardrow__b { flex: 1 1 auto; min-width: 0; }
+.af-cardrow__t { font-size: 13.5px; color: var(--af-title); word-break: break-word; }
+.af-cardrow__m { font-size: 11.5px; color: var(--af-text-mute); margin-top: 3px; word-break: break-all; }
+.af-busy { padding: 22px; text-align: center; color: var(--af-text-mute); font-size: 13px; }
+@media (max-width: 760px) {
+  .af-seg__b { flex: 1 1 auto; }   /* 手机上横向滚动不如换行好点 */
+}
 </style>
 </head>
 <body class="af-naval">
@@ -252,6 +331,9 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       <span id="lastSync"></span>
     </div>
 
+    <!-- ★ v2.51：把这块包进 #modsWrap —— 分区切换靠显隐它，
+         而不是把整段 DOM 搬来搬去（搬 DOM 会丢掉已填的筛选状态和滚动位置）。 -->
+    <div id="modsWrap">
     <div class="af-tabs">
       <button type="button" class="af-chip" data-tab="pending">待审核</button>
       <button type="button" class="af-chip" data-tab="approved">已上架</button>
@@ -265,6 +347,33 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     <div class="af-empty" id="empty" style="display:none">
       <div class="ico" data-ico="pass"></div><div>这里没有待处理的条目</div>
     </div>
+    </div><!-- /#modsWrap -->
+
+    <!-- ==================== v2.51 内容管理区 ====================
+         后端 v2.49 就把内容管理接口全做完了（/admin/content、/admin/announcements、
+         /admin/ships、/admin/media、/admin/analytics、/admin/audit、/admin/sync），
+         但后台前端一个都没接 —— 登录页文案已经在说「在『账号』页重设密码」，
+         而那个页签并不存在。这块是把欠账补上，不是加新功能。
+         ★ 每个页签独立按需加载：切过去才发请求。
+           一次性全拉会让登录后首屏等 6 个接口，慢且容易一个失败就整页白掉。 -->
+    <div class="af-seg" role="tablist" aria-label="管理分区">
+      <button type="button" class="af-seg__b is-on" data-seg="mods"      role="tab" aria-selected="true">Mod 审核</button>
+      <button type="button" class="af-seg__b"       data-seg="content"   role="tab" aria-selected="false">内容管理</button>
+      <button type="button" class="af-seg__b"       data-seg="feed"      role="tab" aria-selected="false">公告与更新日志</button>
+      <button type="button" class="af-seg__b"       data-seg="ships"     role="tab" aria-selected="false">舰船数据</button>
+      <button type="button" class="af-seg__b"       data-seg="media"     role="tab" aria-selected="false">媒体库</button>
+      <button type="button" class="af-seg__b"       data-seg="analytics" role="tab" aria-selected="false">访问统计</button>
+      <button type="button" class="af-seg__b"       data-seg="accounts"  role="tab" aria-selected="false">账号</button>
+    </div>
+
+    <!-- 每个 seg 一个容器，未激活的 display:none，避免一次渲染七块 DOM -->
+    <div class="af-segpanel" data-segpanel="content"   hidden></div>
+    <div class="af-segpanel" data-segpanel="feed"      hidden></div>
+    <div class="af-segpanel" data-segpanel="ships"     hidden></div>
+    <div class="af-segpanel" data-segpanel="media"     hidden></div>
+    <div class="af-segpanel" data-segpanel="analytics" hidden></div>
+    <div class="af-segpanel" data-segpanel="accounts"  hidden></div>
+
   </section>
 </main>
 
@@ -321,8 +430,20 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
   //   脚本（本站有第三方脚本、也有 XSS 风险面）就拿到了密码本身。
   //   token 只对这个后台有用，且后端随时可吊销。
   // ★ SESSION 已在上方声明过，这里不再重复 var（重复声明虽合法但会误导读者）。
-  function saveSession(s) { SESSION = s || ''; afNaval.store.set('adminsess', SESSION); }
-  function loadSession() { SESSION = afNaval.store.get('adminsess') || ''; return SESSION; }
+  //   v2.52：连**用户名**一起存 —— /admin/password 要用 username 指明"改谁的密码"，
+  //   而 SESSION 只是 token，里面没有账号名。不存的话改密码功能没法调通。
+  var SESSION_USER = '';
+  function saveSession(s, user) {
+    SESSION = s || '';
+    SESSION_USER = user || '';
+    afNaval.store.set('adminsess', SESSION);
+    if (SESSION_USER) afNaval.store.set('adminuser', SESSION_USER);
+  }
+  function loadSession() {
+    SESSION = afNaval.store.get('adminsess') || '';
+    SESSION_USER = afNaval.store.get('adminuser') || '';
+    return SESSION;
+  }
 
   /* 顶栏与抽屉里各有一个「退出」，必须一起显隐，否则登录后抽屉里那个
      永远停在 display:none（等于没有），未登录时又冒出来。 */
@@ -335,10 +456,17 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     // 先把 token 发给后端吊销，再清本地 —— 顺序反了的话
     // 万一请求失败，这个 token 还留在服务器上（8 小时内都能用）
     var s = SESSION;
-    SESSION = ''; afNaval.store.del('adminsess');
+    SESSION = ''; SESSION_USER = '';
+    afNaval.store.del('adminsess'); afNaval.store.del('adminuser');
     $('#panel').style.display = 'none';
     $('#gate').style.display = 'block';
     setLogoutVisible(false);
+    // ★ v2.51：连带清掉内容管理区的缓存。
+    //   不清的话下一个登录的人（多半就是你自己换了浏览器标签）会看到
+    //   上一个会话拉到的公告/舰船数据 —— 表现为"后台数据不跟着我改的变"，
+    //   查起来非常费时间。
+    if (typeof segCache !== 'undefined') segCache = {};
+    if (typeof seg !== 'undefined') seg = 'mods';
     if (s) { try { api('/AtlanticFleetSite/admin/logout', { method: 'POST', body: {} }, s); } catch (e) {} }
   }
 
@@ -360,7 +488,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     api('/AtlanticFleetSite/admin/login', { method: 'POST', body: { username: user, password: pwd } }, '')
       .then(function (r) {
         if (r.ok && r.session) {
-          saveSession(r.session);
+          saveSession(r.session, r.username || 'admin');
           enter();
           afNaval.toast('欢迎回来，' + (r.username || '管理员'), 'ok');
         } else {
@@ -436,6 +564,681 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
   /* 抽屉里的同一个动作（手机上顶栏链接被折叠，用户只能从这里退） */
   var _mnavOut = document.getElementById('mnavOut');
   if (_mnavOut) _mnavOut.onclick = function (e) { e.preventDefault(); logout(); };
+
+  // ================================================================
+  // v2.51 内容管理区（6 个分区）
+  // ---------------------------------------------------------------
+  // ★ 设计上的三个决定，改动前请先读完：
+  //
+  // 1) **按需加载，缓存结果**
+  //    切到某个分区才发它那一个请求。登录后首屏如果一口气发 6 个请求，
+  //    会慢，而且任何一个失败都可能让整页看起来像坏了 —— 而用户此刻
+  //    只想看 Mod 待办数。加载过的记在 segCache 里，再切回去不重发。
+  //
+  // 2) **每个分区自己处理失败，绝不静默**
+  //    分区面板不是整页：一个分区挂了（比如媒体库没初始化返回 503），
+  //    其他分区照常用。原实现里"整个 panel 都白掉"是最糟的一种失败 ——
+  //    管理员看不出是哪个功能坏了。
+  //
+  // 3) **写操作一律二次确认 + 成功后局部刷新**
+  //    这些接口直接改线上首页（/admin/site 就是首页那几个板块的数据源）。
+  //    删一条公告、撤一个舰船，玩家立刻看得见。
+  //    所以破坏性操作必须 confirm，且不做"全量 refresh"（会把管理员正在看的东西刷掉）。
+  // ================================================================
+  var seg = 'mods';
+  var segCache = {};
+
+  function segPanel(name) { return document.querySelector('[data-segpanel="' + name + '"]'); }
+
+  /** 分区面板的统一骨架：标题 + 状态位 + 内容位。
+   *  状态位单独占一行是刻意的 —— 内容加载中/失败/成功必须能被区分开，
+   *  "空白"是所有实现里最容易出的状态，因为它同时可能是"没数据"和"崩了"。 */
+  function segShell(name, title, sub) {
+    var p = segPanel(name);
+    if (!p) return null;
+    p.innerHTML = '';
+    var head = document.createElement('div');
+    head.className = 'af-subhead';
+    head.textContent = title;
+    p.appendChild(head);
+    if (sub) {
+      var note = document.createElement('p');
+      note.className = 'af-note';
+      note.textContent = sub;
+      p.appendChild(note);
+    }
+    var busy = document.createElement('div');
+    busy.className = 'af-busy';
+    busy.textContent = '正在加载…';
+    p.appendChild(busy);
+    p.__busy = busy;
+    return p;
+  }
+  /** 摘掉"正在加载"提示，但**不塞任何新内容**。
+   *  ★ v2.51 修：六个 render* 都是自己 appendChild 到 p 上、从不调用 segDone，
+   *    于是 p.__busy（那行"正在加载…"）永远留在页面上 —— 管理员会同时看到
+   *    转圈提示和已经渲染好的内容，看起来像"还没加载完但数据都有了"。
+   *    根因是对称分支不对称：segShell 造了 busy，segDone 摘 busy 却没人调用。
+   *    这里给 render* 一个对称的收尾口，busy 的生与灭就都在同一条路径上。 */
+  function segClear(p) {
+    if (!p) return;
+    if (p.__busy && p.__busy.parentNode) p.__busy.parentNode.removeChild(p.__busy);
+    p.__busy = null;
+  }
+  /** 渲染成功：摘掉"正在加载"，往容器里塞真内容 */
+  function segDone(p, node) {
+    if (!p) return;
+    segClear(p);
+    if (node) p.appendChild(node);
+  }
+  /** 渲染失败：把错误显示出来，**并给一个重试按钮**
+   *  ★ 与首页那个重试按钮同一理由：偶发故障等一会自己好，
+   *    没入口的话管理员唯一能做的就是刷新整页、丢掉当前上下文。 */
+  function segFail(p, msg, retry) {
+    if (!p) return;
+    segClear(p);
+    var box = document.createElement('div');
+    box.className = 'af-empty';
+    box.textContent = '加载失败：' + msg;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'af-btn af-btn--ghost';
+    btn.style.marginTop = '12px';
+    btn.textContent = '重试';
+    btn.addEventListener('click', retry);
+    var row = document.createElement('div');
+    row.appendChild(box);
+    row.appendChild(btn);
+    p.appendChild(row);
+  }
+
+  function div(cls, text) {
+    var n = document.createElement('div');
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = String(text);
+    return n;
+  }
+  function mkLabel(text) {
+    var l = document.createElement('label');
+    l.textContent = text;
+    return l;
+  }
+  function mkInput(ph, val, multiline) {
+    var i = document.createElement(multiline ? 'textarea' : 'input');
+    if (!multiline) i.type = 'text';
+    if (ph) i.placeholder = ph;
+    if (val != null) i.value = String(val);
+    return i;
+  }
+  /** 一个写操作按钮：自动做「防连点 + 失败一定会说出来」。
+   *  ★ v2.52 新增：原先每个写操作各写一遍 api(...).then(...)，于是
+   *   · 有 4 处忘了 .catch —— 断网/502 时点了完全没反应（静默失败）；
+   *   · 没有一处防连点 —— 「新增舰船」连点两下就插两条同名数据。
+   *   统一收口在这里：一处实现，行为一致。 */
+  function mkActBtn(text, cls, run) {
+    var b = mkBtn(text, cls, function () {
+      // ★ disabled 不是样式问题：连点两次会真的发两次请求
+      if (b.disabled) return;
+      b.disabled = true;
+      var old = b.textContent;
+      b.textContent = '处理中…';
+      function back() { b.disabled = false; b.textContent = old; }
+      try {
+        run(function (errMsg) {
+          back();
+          afNaval.toast(errMsg, 'err');
+        });
+      } catch (e) {
+        back();
+        afNaval.toast('操作失败：' + ((e && e.message) || e), 'err');
+      }
+    });
+    return b;
+  }
+
+  /** 包一层 api()：把「业务失败」也走 reject，统一由 mkActBtn 的 onErr 报出。
+   *  ★ 不这么做的话，每个调用点都要自己写 if(!r.ok)，漏一处就是一个静默失败点。 */
+  function apiOk(path, opts) {
+    return api(path, opts).then(function (r) {
+      if (r && r.ok) return r;
+      throw new Error((r && r.error) || '未知错误');
+    });
+  }
+
+  function mkBtn(text, cls, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'af-btn ' + (cls || 'af-btn--ghost');
+    b.textContent = text;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  // ---------- 分区 1：内容管理（首页轮播/数据/链接） ----------
+  function loadContent(force) {
+    if (!force && segCache.content) { renderContent(segCache.content); return; }
+    var p = segShell('content', '首页内容', '这里改的是首页轮播、数据概览、项目简介和友情链接。改完刷新首页就能看到。');
+    api('/AtlanticFleetSite/admin/content').then(function (r) {
+      if (!r.ok) { segFail(p, r.error || '未知错误', function () { loadContent(true); }); return; }
+      segCache.content = r;
+      renderContent(r);
+    }).catch(function (e) { segFail(p, (e && e.message) || e, function () { loadContent(true); }); });
+  }
+
+  function renderContent(r) {
+    var p = segShell('content', '首页内容', '这里改的是首页轮播、数据概览、项目简介和友情链接。改完刷新首页就能看到。');
+    // ★ 加载已成功落地，把 segShell 埋的"正在加载…"摘掉（不塞内容 —— 下面自己 append）
+    segClear(p);
+    var site = r.site || {};
+
+    // -- 轮播 --
+    p.appendChild(div('af-subhead', '主视觉轮播'));
+    var slides = (site.hero && site.hero.slides) || [];
+    if (!slides.length) {
+      p.appendChild(div('af-note', '后台还没配轮播图。首页会退化成一张纯文字主视觉（不会空白）。'));
+    } else {
+      slides.forEach(function (s, i) {
+        var row = div('af-cardrow');
+        var th = div('af-cardrow__thumb', '图 ' + (i + 1));
+        if (s.image) th.style.backgroundImage = 'url("' + esc(s.image) + '")';
+        row.appendChild(th);
+        var b = div('af-cardrow__b');
+        b.appendChild(div('af-cardrow__t', s.title || '(未命名)'));
+        b.appendChild(div('af-cardrow__m', (s.kicker || '') + (s.text ? ' · ' + String(s.text).slice(0, 40) : '')));
+        row.appendChild(b);
+        row.appendChild(mkActBtn('删', 'af-btn--ghost', function () {
+          if (!confirm('删掉这张轮播图？\n首页会少一张主视觉，刷新后生效。')) return;
+          var next = slides.filter(function (_, j) { return j !== i; });
+          saveSite({ hero: { slides: next } }, '已删除轮播图');
+        }));
+        p.appendChild(row);
+      });
+    }
+
+    // 新增轮播：只收标题与图片地址。链接文字本身由 links.js 管，不在这里维护。
+    var addF = div('af-form');
+    addF.style.marginTop = '10px';
+    var tTitle = mkInput('标题，例如「大西洋舰队」');
+    var tKick = mkInput('小字前缀，可空');
+    var tText = mkInput('一句话说明，可空', '', true);
+    var tImg = mkInput('图片地址 /media/... 或完整网址');
+    [mkLabel('标题'), tTitle, mkLabel('小字前缀'), tKick, mkLabel('说明'), tText, mkLabel('图片地址'), tImg].forEach(function (n) { addF.appendChild(n); });
+    var addRow = div('af-row af-rowend');
+    addRow.appendChild(mkBtn('加入轮播', 'af-btn--primary', function () {
+      var title = (tTitle.value || '').trim();
+      if (!title) { afNaval.toast('标题不能为空', 'err'); tTitle.focus(); return; }
+      var item = { title: title };
+      if ((tKick.value || '').trim()) item.kicker = tKick.value.trim();
+      if ((tText.value || '').trim()) item.text = tText.value.trim();
+      if ((tImg.value || '').trim()) item.image = tImg.value.trim();
+      var next = slides.concat([item]);
+      saveSite({ hero: { slides: next } }, '已加入轮播图');
+    }));
+    addF.appendChild(addRow);
+    p.appendChild(addF);
+
+    // -- 数据概览 --
+    p.appendChild(div('af-subhead', '数据概览数字'));
+    var stats = site.stats || [];
+    if (!stats.length) {
+      p.appendChild(div('af-note', '还没有数据项。首页那一栏会显示占位。'));
+    } else {
+      var sf = div('af-form');
+      var iVal = mkInput('数值，例如 128', stats[0] && stats[0].value);
+      var iUnit = mkInput('单位，可空', stats[0] && stats[0].unit);
+      var iName = mkInput('名称，例如 已发布 Mod', stats[0] && stats[0].label);
+      [mkLabel('数值'), iVal, mkLabel('单位'), iUnit, mkLabel('名称'), iName].forEach(function (n) { sf.appendChild(n); });
+      var srow = div('af-row af-rowend');
+      srow.appendChild(mkActBtn('保存数据项', 'af-btn--primary', function () {
+        var v = parseInt(iVal.value, 10);
+        if (isNaN(v)) { afNaval.toast('数值必须是数字', 'err'); iVal.focus(); return; }
+        var label = (iName.value || '').trim();
+        if (!label) { afNaval.toast('名称不能为空', 'err'); iName.focus(); return; }
+        var next = [{ value: v, unit: (iUnit.value || '').trim(), label: label }];
+        saveSite({ stats: next }, '已保存数据项');
+      }));
+      srow.appendChild(mkBtn('加一项', 'af-btn--ghost', function () {
+        var v = parseInt(iVal.value, 10);
+        if (isNaN(v) || !(iName.value || '').trim()) { afNaval.toast('数值与名称都要填', 'err'); return; }
+        var next = stats.concat([{ value: v, unit: (iUnit.value || '').trim(), label: iName.value.trim() }]);
+        saveSite({ stats: next }, '已增加数据项');
+      }));
+      sf.appendChild(srow);
+      p.appendChild(sf);
+    }
+  }
+
+  /** 保存首页内容（局部合并，不是整份覆盖） */
+  function saveSite(patch, okMsg) {
+    apiOk('/AtlanticFleetSite/admin/site', { method: 'POST', body: patch }).then(function () {
+      segCache.content = null;      // 让下次进来重新拉，别拿旧缓存覆盖新值
+      afNaval.toast(okMsg || '已保存', 'ok');
+      loadContent(true);
+      refresh();                    // 首页指标也会变
+    }).catch(function (e) { afNaval.toast('保存失败：' + ((e && e.message) || e), 'err'); });
+  }
+
+  // ---------- 分区 2：公告与更新日志 ----------
+  function loadFeed(force) {
+    if (!force && segCache.feed) { renderFeed(segCache.feed); return; }
+    var p = segShell('feed', '公告与更新日志', '公告显示在首页「最新动态」，更新日志带版本号。置顶的会排在最前。');
+    api('/AtlanticFleetSite/admin/content').then(function (r) {
+      if (!r.ok) { segFail(p, r.error || '未知错误', function () { loadFeed(true); }); return; }
+      segCache.feed = r;
+      renderFeed(r);
+    }).catch(function (e) { segFail(p, (e && e.message) || e, function () { loadFeed(true); }); });
+  }
+
+  function renderFeed(r) {
+    var p = segShell('feed', '公告与更新日志', '公告显示在首页「最新动态」，更新日志带版本号。置顶的会排在最前。');
+    // ★ 加载已成功落地，把 segShell 埋的"正在加载…"摘掉（不塞内容 —— 下面自己 append）
+    segClear(p);
+    var feed = r.feed || [];
+    if (!feed.length) p.appendChild(div('af-note', '还没有任何公告。'));
+
+    feed.forEach(function (it) {
+      var row = div('af-cardrow');
+      var b = div('af-cardrow__b');
+      var head = it.title || '(无标题)';
+      if (it.version) head += '  v' + it.version;
+      if (it.pinned) head += '  ★置顶';
+      b.appendChild(div('af-cardrow__t', head));
+      b.appendChild(div('af-cardrow__m', (it.kind || '') + ' · ' + String(it.created_at || it.time || '')));
+      if (it.body) b.appendChild(div('af-cardrow__m', String(it.body).slice(0, 120)));
+      row.appendChild(b);
+      row.appendChild(mkActBtn(it.pinned ? '取消置顶' : '置顶', 'af-btn--ghost', function (onErr) {
+        // ★ v2.52：原来这里发的是 action:'pin'，但后端 /admin/announcements
+        //   只认 add / edit / update / delete / del / remove —— 'pin' 落在最后的兜底分支，
+        //   恒定返回「action 只能是 add / edit / delete」。**置顶按钮 100% 失败**，
+        //   而后端 update_feed 本来就支持 pinned 字段，是纯前端的契约错配。
+        //   改发 edit（走 update_feed，pinned 会按布尔值落库）。
+        apiOk('/AtlanticFleetSite/admin/announcements', { method: 'POST', body: { action: 'edit', id: it.id, pinned: !it.pinned } })
+          .then(function () {
+            segCache.feed = null; afNaval.toast('已更新', 'ok'); loadFeed(true);
+          }, onErr);
+      }));
+      row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
+        if (!confirm('删掉这条公告？\n首页会立刻少一条，刷新后生效。')) return;
+        apiOk('/AtlanticFleetSite/admin/announcements', { method: 'POST', body: { action: 'delete', id: it.id } })
+          .then(function () {
+            segCache.feed = null; afNaval.toast('已删除', 'ok'); loadFeed(true);
+          }, onErr);
+      }));
+      p.appendChild(row);
+    });
+
+    // 新增
+    var f = div('af-form');
+    var iKind = mkInput('类型：announcement 或 changelog', 'announcement');
+    var iTitle = mkInput('标题');
+    var iVer = mkInput('版本号，可空（填了会显示成 v1.2.3）');
+    var iBody = mkInput('正文', '', true);
+    var pinBox = document.createElement('label');
+    var pinCb = document.createElement('input');
+    pinCb.type = 'checkbox';
+    pinBox.appendChild(pinCb);
+    pinBox.appendChild(document.createTextNode(' 置顶'));
+    [mkLabel('类型'), iKind, mkLabel('标题'), iTitle, mkLabel('版本号'), iVer, mkLabel('正文'), iBody, pinBox].forEach(function (n) { f.appendChild(n); });
+    var r2 = div('af-row af-rowend');
+    r2.appendChild(mkActBtn('发布', 'af-btn--primary', function (onErr) {
+      var title = (iTitle.value || '').trim();
+      if (!title) { afNaval.toast('标题不能为空', 'err'); iTitle.focus(); return; }
+      apiOk('/AtlanticFleetSite/admin/announcements', {
+        method: 'POST',
+        body: {
+          action: 'add',
+          kind: (iKind.value || 'announcement').trim(),
+          title: title, body: (iBody.value || '').trim(),
+          version: (iVer.value || '').trim(), pinned: !!pinCb.checked
+        }
+      }).then(function () {
+        // ★ 清空表单：不清的话「再发一条」很容易把上一条连着发两遍
+        iTitle.value = ''; iVer.value = ''; iBody.value = ''; pinCb.checked = false;
+        segCache.feed = null; afNaval.toast('已发布', 'ok'); loadFeed(true);
+      }, onErr);
+    }));
+    f.appendChild(r2);
+    p.appendChild(f);
+  }
+
+  // ---------- 分区 3：舰船数据 ----------
+  function loadShips(force) {
+    if (!force && segCache.ships) { renderShips(segCache.ships); return; }
+    var p = segShell('ships', '舰船数据', '显示在首页「舰船档案」。字段留空就只显示名称。');
+    api('/AtlanticFleetSite/admin/content').then(function (r) {
+      if (!r.ok) { segFail(p, r.error || '未知错误', function () { loadShips(true); }); return; }
+      segCache.ships = r;
+      renderShips(r);
+    }).catch(function (e) { segFail(p, (e && e.message) || e, function () { loadShips(true); }); });
+  }
+
+  function renderShips(r) {
+    var p = segShell('ships', '舰船数据', '显示在首页「舰船档案」。字段留空就只显示名称。');
+    // ★ 加载已成功落地，把 segShell 埋的"正在加载…"摘掉（不塞内容 —— 下面自己 append）
+    segClear(p);
+    var ships = r.ships || [];
+    if (!ships.length) p.appendChild(div('af-note', '还没有舰船数据。'));
+
+    ships.forEach(function (s) {
+      var row = div('af-cardrow');
+      var th = div('af-cardrow__thumb', '舰');
+      if (s.image) th.style.backgroundImage = 'url("' + esc(s.image) + '")';
+      row.appendChild(th);
+      var b = div('af-cardrow__b');
+      b.appendChild(div('af-cardrow__t', s.name || '(未命名)'));
+      var meta = [s.name_en || s.class || s.nation].filter(Boolean);
+      b.appendChild(div('af-cardrow__m', meta.join(' · ') || '（没填舰级/国家）'));
+      row.appendChild(b);
+      row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
+        if (!confirm('删掉「' + (s.name || '这艘舰') + '」？\n首页舰船档案里会少一条。')) return;
+        apiOk('/AtlanticFleetSite/admin/ships', { method: 'POST', body: { action: 'delete', id: s.id } }).then(function () {
+          segCache.ships = null; afNaval.toast('已删除', 'ok'); loadShips(true);
+        }, onErr);
+      }));
+      p.appendChild(row);
+    });
+
+    var f = div('af-form');
+    var iName = mkInput('舰名');
+    // ★ v2.52 契约错配：原来这个框发的是 ship.cls，但后端 SHIP_FIELDS 白名单里
+    //   根本没有 'cls'（有的是 'class'，Python 侧的写法）→ sanitize_ship
+    //   把舰级**直接丢掉**，管理员填了没反应、列表也永远显示「（无class/国家信息）」。
+    //   权威字段名以首页为准：home.js 读的是 s.class，所以这里对齐成 class。
+    //   顺带把「英文名」露出来（name_en 也是白名单字段，且首页显示时优先于 class）。
+    var iNameEn = mkInput('英文名，可空');
+    var iCls = mkInput('舰级 / 分类，可空');
+    var iNat = mkInput('国家 / 阵营，可空');
+    [mkLabel('舰名'), iName, mkLabel('英文名'), iNameEn,
+     mkLabel('舰级/分类'), iCls, mkLabel('国家/阵营'), iNat].forEach(function (n) { f.appendChild(n); });
+    // ★ 不提供图片地址输入框：后端 SHIP_FIELDS 里没有 image，
+    //   原来那个框填了同样会被静默丢掉（假功能比没有更气人）。
+    //   要配图就在舰名对应的 mod 资源里做，或后台媒体库上传后由代码侧接入。
+    var r2 = div('af-row af-rowend');
+    r2.appendChild(mkActBtn('新增舰船', 'af-btn--primary', function (onErr) {
+      var name = (iName.value || '').trim();
+      if (!name) { afNaval.toast('舰名不能为空', 'err'); iName.focus(); return; }
+      var ship = { name: name };
+      if ((iNameEn.value || '').trim()) ship.name_en = iNameEn.value.trim();
+      if ((iCls.value || '').trim()) ship.class = iCls.value.trim();
+      if ((iNat.value || '').trim()) ship.nation = iNat.value.trim();
+      apiOk('/AtlanticFleetSite/admin/ships', { method: 'POST', body: { action: 'save', ship: ship } }).then(function () {
+        // 存成功后清空表单：不清的话连点两下就是两条同名舰（原来没清更容易踩）
+        iName.value = ''; iNameEn.value = ''; iCls.value = ''; iNat.value = '';
+        segCache.ships = null; afNaval.toast('已保存', 'ok'); loadShips(true);
+      }, onErr);
+    }));
+    f.appendChild(r2);
+    p.appendChild(f);
+  }
+
+  // ---------- 分区 4：媒体库 ----------
+  function loadMedia(force) {
+    if (!force && segCache.media) { renderMedia(segCache.media); return; }
+    var p = segShell('media', '媒体库', '上传的图片会进这里。首页和文档里引用的图片建议都从这里走，别散在服务器上。');
+    api('/AtlanticFleetSite/admin/media').then(function (r) {
+      if (!r.ok) { segFail(p, r.error || '未知错误', function () { loadMedia(true); }); return; }
+      segCache.media = r;
+      renderMedia(r);
+    }).catch(function (e) { segFail(p, (e && e.message) || e, function () { loadMedia(true); }); });
+  }
+
+  function renderMedia(r) {
+    var p = segShell('media', '媒体库', '上传的图片会进这里。首页和文档里引用的图片建议都从这里走，别散在服务器上。');
+    // ★ 加载已成功落地，把 segShell 埋的"正在加载…"摘掉（不塞内容 —— 下面自己 append）
+    segClear(p);
+
+    // 上传：走 multipart，不能用 JSON —— 所以这里不用 api() 封装
+    var up = document.createElement('div');
+    up.className = 'af-form';
+    var fi = document.createElement('input');
+    fi.type = 'file';
+    fi.accept = 'image/*';
+    fi.style.padding = '9px 11px';
+    up.appendChild(mkLabel('选一张图片'));
+    up.appendChild(fi);
+    var ur = div('af-row af-rowend');
+    ur.appendChild(mkActBtn('上传', 'af-btn--primary', function (onErr) {
+      var f0 = fi.files && fi.files[0];
+      if (!f0) { afNaval.toast('先选一张图片', 'err'); return; }
+      // ★ 扩展名白名单：只给图片。服务器没有 php/cgi（纯静态服务），
+      //   但白名单仍要设 —— 万一以后加了解释器，这道就是唯一防线。
+      if (!/^image\//.test(f0.type)) { afNaval.toast('只接受图片文件', 'err'); return; }
+      var fd = new FormData();
+      fd.append('file', f0);
+      afNaval.toast('上传中…', 'info');
+      fetch('/api/admin/media/upload', { method: 'POST', headers: { 'X-AF-Session': SESSION }, body: fd })
+        .then(function (x) { return x.json().catch(function () { return { ok: false, error: 'HTTP ' + x.status }; }); })
+        .then(function (x) {
+          if (!x.ok) throw new Error(x.error || '未知错误');
+          segCache.media = null;
+          afNaval.toast('已上传', 'ok');
+          loadMedia(true);
+        }, onErr);
+    }));
+    up.appendChild(ur);
+    p.appendChild(up);
+
+    // ---------- 登记站外图片链接 ----------
+    // ★ v2.53：原来这里只有"上传"，没有"登记外链"——
+    //   后端 /admin/media 的 action:'link' 一直没人调。
+    //   实际场景是有的：站外 https 图床能放 SVG，而 SVG 的脚本风险
+    //   由引用方控制，本站不落盘（后端 add_link 的注释就是这么写的）。
+    // ★ 校验规则与后端 add_link 保持一致（https + 合法图片扩展名）：
+    //   不在前端先校验，就得白等一次往返才知道被拒。
+    var lf = div('af-form');
+    lf.style.marginTop = '12px';
+    var lUrl = mkInput('https:// 图片地址，例如 https://cdn.example.com/a.png');
+    var lName = mkInput('名称，可空');
+    var lNote = mkInput('备注，可空');
+    [mkLabel('站外图片地址'), lUrl, mkLabel('名称'), lName, mkLabel('备注'), lNote]
+      .forEach(function (n) { lf.appendChild(n); });
+    var lr = div('af-row af-rowend');
+    lr.appendChild(mkActBtn('登记链接', 'af-btn--primary', function (onErr) {
+      var u = (lUrl.value || '').trim();
+      if (!u) { afNaval.toast('地址不能为空', 'err'); lUrl.focus(); return; }
+      if (!/^https:\/\//i.test(u)) { afNaval.toast('只接受 https 开头的地址', 'err'); lUrl.focus(); return; }
+      var ext = (u.match(/\.([A-Za-z0-9]{2,5})(?:\?|#|$)/) || [])[1];
+      ext = (ext || '').toLowerCase();
+      if (ext === 'jpeg') ext = 'jpg';
+      if (['png', 'jpg', 'webp', 'gif', 'svg'].indexOf(ext) < 0) {
+        afNaval.toast('看起来不像图片地址（识别到 .' + (ext || '无扩展名') + '）', 'err');
+        lUrl.focus(); return;
+      }
+      apiOk('/AtlanticFleetSite/admin/media', {
+        method: 'POST',
+        body: { action: 'link', url: u, name: (lName.value || '').trim(), note: (lNote.value || '').trim() },
+      }).then(function () {
+        lUrl.value = ''; lName.value = ''; lNote.value = '';
+        segCache.media = null; afNaval.toast('已登记', 'ok'); loadMedia(true);
+      }, onErr);
+    }));
+    lf.appendChild(lr);
+    p.appendChild(lf);
+
+    p.appendChild(div('af-subhead', '已有文件'));
+    var items = r.items || [];
+    if (!items.length) p.appendChild(div('af-note', '媒体库还是空的。'));
+    items.forEach(function (it) {
+      var url = it.url || it.path || '';
+      var row = div('af-cardrow');
+      var th = div('af-cardrow__thumb', '');
+      if (url) th.style.backgroundImage = 'url("' + esc(url) + '")';
+      row.appendChild(th);
+      var b = div('af-cardrow__b');
+      b.appendChild(div('af-cardrow__t', it.name || url || '(未命名)'));
+      // ★ 站外登记的条目和本站上传的必须能一眼分开：
+      //   站外的不占本站磁盘、随对方站点消失，且扩展名可能是 SVG。
+      //   不标出来的话管理员会以为它存在本站上。
+      var kindTag = it.link ? '站外链接 · ' : '';
+      var meta = (it.size ? sizeText(it.size) + ' · ' : '') + (it.note ? it.note + ' · ' : '') + url;
+      b.appendChild(div('af-cardrow__m', kindTag + meta));
+      row.appendChild(b);
+      var cp = mkBtn('复制地址', 'af-btn--ghost', function () {
+        var done = function () { afNaval.toast('地址已复制', 'ok'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done, function () { afNaval.toast('复制失败，请手动选中', 'err'); });
+        } else {
+          // 老浏览器没有 clipboard API：给一个可选中的输入框，别只弹一句"复制失败"
+          var i2 = document.createElement('input');
+          i2.value = url; i2.readOnly = true;
+          i2.style.cssText = 'width:100%;margin-top:8px;padding:7px;font-size:12px;';
+          b.appendChild(i2);
+          try { i2.select(); document.execCommand('copy'); done(); } catch (e) {}
+        }
+      });
+      row.appendChild(cp);
+      // ★ v2.53：按钮按条目类型区分 —— 站外登记的条目**删不掉文件**
+      //   （后端 MEDIA.delete 只处理本站 uploads 目录，遇到外链恒拒绝），
+      //   给它一个「删除」按钮就是又一个点了必然报错的按钮。
+      //   站外条目提供「取消登记」（后端 v2.53 新增的 unlink）。
+      if (it.link) {
+        row.appendChild(mkActBtn('取消登记', 'af-btn--ghost', function (onErr) {
+          if (!confirm('取消登记「' + (it.name || url) + '」？\n' +
+                       '只删掉这条登记，不会动对方的图。')) return;
+          apiOk('/AtlanticFleetSite/admin/media', { method: 'POST', body: { action: 'unlink', id: it.id } })
+            .then(function () {
+              segCache.media = null; afNaval.toast('已取消登记', 'ok'); loadMedia(true);
+            }, onErr);
+        }));
+      } else {
+        row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
+          if (!confirm('删掉「' + (it.name || '这个文件') + '」？\n' +
+                       '之后引用它的地方会变成裂图。')) return;
+          apiOk('/AtlanticFleetSite/admin/media', { method: 'POST', body: { action: 'delete', id: it.id } })
+            .then(function () {
+              segCache.media = null; afNaval.toast('已删除', 'ok'); loadMedia(true);
+            }, onErr);
+        }));
+      }
+      p.appendChild(row);
+    });
+  }
+
+  // ---------- 分区 5：访问统计 ----------
+  function loadAnalytics(force) {
+    if (!force && segCache.analytics) { renderAnalytics(segCache.analytics); return; }
+    var p = segShell('analytics', '访问统计', '服务器自己记的粗略数据，不装任何第三方追踪脚本。');
+    api('/AtlanticFleetSite/admin/analytics').then(function (r) {
+      if (!r.ok) { segFail(p, r.error || '未知错误', function () { loadAnalytics(true); }); return; }
+      segCache.analytics = r;
+      renderAnalytics(r);
+    }).catch(function (e) { segFail(p, (e && e.message) || e, function () { loadAnalytics(true); }); });
+  }
+
+  function renderAnalytics(r) {
+    var p = segShell('analytics', '访问统计', '服务器自己记的粗略数据，不装任何第三方追踪脚本。');
+    // ★ 加载已成功落地，把 segShell 埋的"正在加载…"摘掉（不塞内容 —— 下面自己 append）
+    segClear(p);
+    var a = r.analytics || {};
+    // 不写死字段名：后端加字段时这里自动多一行，不会静默漏掉一个数
+    var keys = Object.keys(a).filter(function (k) { return typeof a[k] !== 'object'; });
+    if (!keys.length) { p.appendChild(div('af-note', '后端还没有返回统计数据。')); return; }
+    var dl = document.createElement('dl');
+    dl.className = 'af-kv';
+    keys.forEach(function (k) {
+      var dt = document.createElement('dt');
+      dt.textContent = k;
+      var dd = document.createElement('dd');
+      var v = a[k];
+      dd.textContent = typeof v === 'number' ? String(Math.round(v * 100) / 100) : String(v);
+      dl.appendChild(dt); dl.appendChild(dd);
+    });
+    p.appendChild(dl);
+
+    var row = div('af-row af-rowend');
+    row.appendChild(mkBtn('刷新统计', 'af-btn--ghost', function () { loadAnalytics(true); }));
+    p.appendChild(row);
+  }
+
+  // ---------- 分区 6：账号 ----------
+  function loadAccounts(force) {
+    if (!force && segCache.accounts) { renderAccounts(segCache.accounts); return; }
+    var p = segShell('accounts', '账号', '只有你能登进后台。改完密码别人不知道，只有你自己记得住。');
+    api('/AtlanticFleetSite/admin/accounts').then(function (r) {
+      if (!r.ok) { segFail(p, r.error || '未知错误', function () { loadAccounts(true); }); return; }
+      segCache.accounts = r;
+      renderAccounts(r);
+    }).catch(function (e) { segFail(p, (e && e.message) || e, function () { loadAccounts(true); }); });
+  }
+
+  function renderAccounts(r) {
+    var p = segShell('accounts', '账号', '只有你能登进后台。改完密码别人不知道，只有你自己记得住。');
+    // ★ 加载已成功落地，把 segShell 埋的"正在加载…"摘掉（不塞内容 —— 下面自己 append）
+    segClear(p);
+    var accs = r.accounts || [];
+    if (!accs.length) p.appendChild(div('af-note', '一个账号都没有。'));
+    accs.forEach(function (a) {
+      var row = div('af-cardrow');
+      row.appendChild(div('af-cardrow__thumb', '人'));
+      var b = div('af-cardrow__b');
+      b.appendChild(div('af-cardrow__t', a.username || '(未命名)'));
+      b.appendChild(div('af-cardrow__m', [a.role, a.created_at ? '建于 ' + a.created_at : ''].filter(Boolean).join(' · ')));
+      row.appendChild(b);
+      p.appendChild(row);
+    });
+
+    // 改自己的密码
+    p.appendChild(div('af-subhead', '改密码'));
+    var f = div('af-form');
+    var iOld = mkInput('当前密码');
+    iOld.type = 'password';
+    var iNew = mkInput('新密码（至少 8 位）');
+    iNew.type = 'password';
+    [mkLabel('当前密码'), iOld, mkLabel('新密码'), iNew].forEach(function (n) { f.appendChild(n); });
+    var r2 = div('af-row af-rowend');
+    r2.appendChild(mkActBtn('改密码', 'af-btn--primary', function (onErr) {
+      var o = iOld.value || '', nw = iNew.value || '';
+      if (!o || !nw) { afNaval.toast('两项都要填', 'err'); return; }
+      if (nw.length < 8) { afNaval.toast('新密码至少 8 位', 'err'); iNew.focus(); return; }
+      // ★ v2.52 契约错配：原来发的是 { old_password, new_password }，
+      //   而后端 /admin/password 读的是 body.username 和 body.password
+      //   （username 指的是"要改谁的密码"）—— 字段名对不上且没传 username，
+      //   结果恒定 404「账号不存在」。这里按后端实际字段名发。
+      // ★ 密钥（应急通道）登录时后端不返回 username，此时直接拦下：
+      //   发过去必然失败，不如一句话说清原因。
+      if (!SESSION_USER) { afNaval.toast('当前登录方式无法改密码，请用账号密码登录后再试', 'err'); return; }
+      apiOk('/AtlanticFleetSite/admin/password', {
+        method: 'POST',
+        body: { username: SESSION_USER, old_password: o, password: nw }
+      }).then(function (r) {
+        iOld.value = ''; iNew.value = '';
+        afNaval.toast((r && r.msg) || '密码已改', 'ok');
+        // ★ 后端改完吊销全部会话并返回 relogin:true —— 必须真的回登录页，
+        //   否则界面还显示"已登录"，下一次点任何按钮都 403 而没人知道原因。
+        if (r && r.relogin) setTimeout(function () { logout(); }, 600);
+      }, onErr);
+    }));
+    f.appendChild(r2);
+    p.appendChild(f);
+  }
+
+  // ---------- 分区切换 ----------
+  var SEG_LOAD = {
+    content: loadContent, feed: loadFeed, ships: loadShips,
+    media: loadMedia, analytics: loadAnalytics, accounts: loadAccounts
+  };
+
+  function switchSeg(name) {
+    if (!name || name === seg) return;
+    seg = name;
+    Array.prototype.forEach.call(document.querySelectorAll('.af-seg__b'), function (b) {
+      var on = b.getAttribute('data-seg') === name;
+      b.classList.toggle('is-on', on);
+      // ★ aria-selected 必须跟着改，否则读屏软件报的仍然是原来那个页签
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    // Mod 审核区用自己的 .af-tabs / .af-list，不参与 seg 容器
+    var isMods = name === 'mods';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-segpanel]'), function (pn) {
+      var on = !isMods && pn.getAttribute('data-segpanel') === name;
+      pn.hidden = !on;
+    });
+    var modsWrap = document.getElementById('modsWrap');
+    if (modsWrap) modsWrap.hidden = !isMods;
+    var segBar = document.querySelector('.af-seg');
+    if (segBar) segBar.style.marginTop = isMods ? '22px' : '4px';
+    if (SEG_LOAD[name]) SEG_LOAD[name](false);
+  }
 
   function enter() {
     $('#gate').style.display = 'none';
@@ -642,6 +1445,31 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     $('#list').style.display = 'flex';
     render();
   });
+
+  // ★ v2.51 分区切换：点 .af-seg__b 换内容区。
+  //   绑在**容器**上而不是每个按钮上 —— 按钮是动态可增的，
+  //   逐个绑的话以后加一个分区就忘了绑，表现为"点了没反应"且不报错。
+  var segBarEl = document.querySelector('.af-seg');
+  if (segBarEl) {
+    segBarEl.addEventListener('click', function (e) {
+      var b = e.target.closest('.af-seg__b'); if (!b) return;
+      switchSeg(b.getAttribute('data-seg'));
+    });
+    // 键盘：左右方向键在 tablist 里切换是标准行为，纯靠 Tab 键太慢
+    segBarEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var bs = [].slice.call(this.querySelectorAll('.af-seg__b'));
+      var i = bs.indexOf(document.activeElement);
+      if (i < 0) return;
+      e.preventDefault();
+      var next = bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length];
+      next.focus();
+      switchSeg(next.getAttribute('data-seg'));
+    });
+  }
+
+  // （登出时的分区缓存清理由 logout() 内部直接做，不在这里包一层 ——
+//   清理逻辑只写一份，否则以后再加要清的状态一定会漏掉一处。）
   function showLogs() {
     api('/AtlanticFleetSite/admin/logs').then(function (r) {
       if (!r.ok) return afNaval.toast(r.error || '读取失败', 'err');

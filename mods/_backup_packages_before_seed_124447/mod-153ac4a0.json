@@ -1,8 +1,0 @@
-{
-  "modName": "远洋警戒·强化声呐",
-  "author": "老王",
-  "version": "0.9",
-  "description": "把反潜声呐与雷达范围都拉高，适合喜欢先发现对手的玩家。",
-  "tags": ["传感器", "战术"],
-  "combat": { "sensor": { "radarRangeMul": 1.8, "sonarRangeMul": 2.2 } }
-}
