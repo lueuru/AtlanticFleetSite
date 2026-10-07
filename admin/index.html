@@ -1174,6 +1174,26 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       b.appendChild(div('af-cardrow__t', a.username || '(未命名)'));
       b.appendChild(div('af-cardrow__m', [a.role, a.created_at ? '建于 ' + a.created_at : ''].filter(Boolean).join(' · ')));
       row.appendChild(b);
+      // ★ v2.53：删账号入口。此前后端底层有 delete() 但 API 没接出来，
+      //   于是「列表里有个不要的账号」只能手工改 admin_accounts.json ——
+      //   而那个文件在生产目录里没人会去碰。
+      //   后端有两条硬守卫（不能删自己 / 不能删到只剩一个超管），
+      //   这边不重复判断，失败原因由后端原样带回来。
+      if (SESSION_USER && a.username !== SESSION_USER) {
+        row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
+          if (!confirm('删掉账号「' + (a.username || '') + '」？\n' +
+                       '这个账号将无法再登录后台，它当前持有的会话也会立即失效。')) return;
+          apiOk('/AtlanticFleetSite/admin/accounts', {
+            method: 'POST',
+            body: { action: 'delete', username: a.username }
+          }).then(function (res) {
+            segCache.accounts = null;
+            afNaval.toast('已删除' + (res && res.revoked_sessions
+              ? '，同时踢掉 ' + res.revoked_sessions + ' 个会话' : ''), 'ok');
+            loadAccounts(true);
+          }, onErr);
+        }));
+      }
       p.appendChild(row);
     });
 
