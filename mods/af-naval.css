@@ -186,9 +186,16 @@ body.af-light {
   /* 衬线：引文、提示、表格数字 */
   --af-font-serif: "AF Serif", "Songti SC", "SimSun", Georgia, serif;
 
-  /* 圆角：玻璃要有「厚度」才像玻璃，锐角显单薄。 */
-  --af-radius:  7px;
-  --af-radius-lg: 12px;
+  /* 圆角：玻璃要有「厚度」才像玻璃，锐角显单薄。
+   ★ v2.55：这两个值原来在这里写死（7px / 12px），而 af-system.css 后面又用
+     --af-r-sm / --af-r-lg（7px / 14px）重新定义了同名变量并覆盖它们。
+     同优先级下后加载的 af-system.css 胜出 → 86 处 var(--af-radius-lg)
+     实际拿到 14px，而这里写着 12px。**改这里的值不会有任何效果**，
+     排障时极易误判成「改了没生效」。
+     现在改成引用 af-system.css 的令牌，消除双定义。
+     ★ 生效值仍是 7px / 14px，与修改前完全一致，全站视觉零位移。 */
+  --af-radius:  var(--af-r-sm, 7px);
+  --af-radius-lg: var(--af-r-lg, 14px);
 }
 
 

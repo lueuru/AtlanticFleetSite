@@ -243,6 +243,19 @@ blockquote.af-quote {
      计数动画时数字宽度不变，否则 0→100 的过程中整个块会左右抖动 */
 }
 
+/* ★ v2.55：.af-code 原来只有字体、没有溢出保护，而它是后台唯一的
+   <pre class="af-code">（显示 mod.json 全文）—— 内容是用户上传的任意 JSON。
+   pre 默认 white-space: pre 不换行，遇到长路径/长 URL 的一行就会横向撑宽，
+   移动端（375px）尤其明显。
+   同库 .af-howto code 早就加了 word-break，这里是漏了 —— 属同类判定不对称。
+   overflow-x:auto 给出滚动而不是溢出，word-break 兜底断长串。 */
+.af-code {
+  overflow-x: auto;
+  max-width: 100%;
+  word-break: break-word;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* 内容层基准：卡片、面板、列表项都从这一层起步，
    装饰层（--af-z-deco）在它之下 —— 明确这两者的关系比留 0/1/2 三个魔数好。 */
 .af-grid,

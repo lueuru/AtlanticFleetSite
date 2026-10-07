@@ -6,6 +6,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>大西洋舰队 Mod 框架</title>
 <meta name="description" content="在手机上直接改《大西洋舰队》：调数值、加自己的舰船、装别人做的模型与贴图，不用连电脑、不写代码。含使用文档与 Mod 仓库。">
+<!-- ★ v2.55：首页原来只有 title + description，缺 canonical 与 og:*。
+     另三页（/mods/、/404、/admin/）都写全了，唯独首页没有 ——
+     而首页恰恰是最主要的分享落地页：缺 og:image / og:url 时，
+     微信、微博、Twitter 分享过去只能渲染一条裸蓝链，没有标题和预览图；
+     缺 canonical 则 /、/index.html、/index.html 会被当成三个不同页面。
+     这里按 /mods/ 已有的写法补齐（内容用首页自己的，不是照抄）。 -->
+<link rel="canonical" href="https://atlanticfleet.asia/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://atlanticfleet.asia/">
+<meta property="og:title" content="大西洋舰队 Mod 框架">
+<meta property="og:description" content="在手机上直接改《大西洋舰队》：调数值、加自己的舰船、装别人做的模型与贴图，不用连电脑、不写代码。">
+<meta property="og:image" content="https://atlanticfleet.asia/media/brand/af-brand.svg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" href="/AtlanticFleetSite/favicon.png">
 <link rel="apple-touch-icon" href="/AtlanticFleetSite/favicon.png">
 <link rel="mask-icon" href="/AtlanticFleetSite/media/brand/af-brand.svg" color="#0d1b26">
@@ -24,6 +37,12 @@
      新板块只写变量、不写死颜色，内联样式的选择器也不碰这些类，
      不存在同权重覆盖问题。 -->
 <link rel="stylesheet" href="/AtlanticFleetSite/mods/home.css?v=1.0">
+<!-- ★ v2.55：首页原来没给这两个字体做 preload（/mods/ 页一直有）。
+     字体要等 CSS 解析完才开始下载，比别的页多一个往返。
+     crossorigin 必须带 —— 字体一律是 CORS 请求，不加会被浏览器丢弃、等于没加。
+     （font-display: swap 首页本来就声明了，所以补 preload 不会引入 FOIT。） -->
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face {
   font-family: "AF Display";
