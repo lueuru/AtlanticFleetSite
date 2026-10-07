@@ -1,0 +1,507 @@
+@charset "utf-8";
+/* ================================================================
+   首页新增板块样式（v2.49）
+   ---------------------------------------------------------------
+   ★ 为什么单独一个文件而不是继续往 index.html 里塞
+     首页内联样式已经 300 行，再加 5 个板块会到 700+ 行，
+     改一个颜色要在一堆内联里翻。新板块全部走这个文件。
+
+   ★ 为什么全部复用 --ink / --brass / --glass / --card-* 变量
+     这些变量在 index.html 的 :root 与深色主题里各定义一份，
+     新板块**只用变量、不写死颜色** —— 这样切换深浅色主题时
+     新板块自动跟随，不需要在这里再写一遍 @media。
+
+   ★ 动画档位沿用全站令牌（--af-t-*），不在这里另设时长，
+     否则首页会和 /docs/ /mods/ 的手感不一致（这正是本轮要修的问题）。
+   ================================================================ */
+
+/* ---------- 通用板块骨架 ---------- */
+.af-sec {
+  margin-top: clamp(28px, 5vw, 52px);
+}
+.af-sec__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.af-sec__title {
+  margin: 0;
+  font-size: clamp(15px, 2vw, 18px);
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--ink);
+}
+.af-sec__sub {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  letter-spacing: .02em;
+}
+.af-sec__more {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1)),
+              border-color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1));
+}
+.af-sec__more:hover,
+.af-sec__more:focus-visible {
+  color: var(--brass);
+  border-bottom-color: currentColor;
+}
+
+/* ================================================================
+   1. 轮播主视觉
+   ---------------------------------------------------------------
+   ★ 没有 JS 时轮播区会塌成一块空白 → 所以 HTML 里静态放了第一张，
+     JS 只是"接管"它做切换。JS 挂了至少还有一张图和标题。
+   ================================================================ */
+.af-hero {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--glass), var(--page);
+  box-shadow: 0 18px 44px -20px var(--card-sh);
+  min-height: clamp(220px, 34vw, 330px);
+  display: flex;
+  align-items: flex-end;
+}
+.af-hero__slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(18px, 3.2vw, 34px);
+  opacity: 0;
+  /* 淡入淡出用同一档时长，切换时不拖沓 */
+  /* ★ 轮播淡入淡出用 --af-tr-enter（420ms + 减速）。
+     原来写的是魔数 520ms，比全站最长的"页面级"档(680ms)只差一档，
+     却又不属于任何一类动作 —— 这正是"节奏不统一"的典型来源：
+     多出来的、没有归属的时长。 */
+  transition: opacity var(--af-tr-enter, 420ms var(--af-ease-out, ease));
+  pointer-events: none;
+}
+.af-hero__slide.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* ★ v2.50：轮播区被 JS 加了 tabindex=0（键盘可达），那就必须有可见焦点环。
+   全局 focus-visible 样式只覆盖了 a/button，这里是 div[tabindex]，
+   浏览器默认焦点环又会被 overflow:hidden 裁掉 → 键盘用户看不到自己在哪。
+   用 outline 而不是 box-shadow：outline 画在元素盒子外沿，
+   不受父级 overflow 裁剪之外的情况影响，且不占布局。 */
+.af-hero:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: -2px;   /* 内描边：容器有 overflow:hidden，外描边会被裁掉 */
+}
+.af-hero__slide::before {
+  /* 底部压暗，保证白字在任何图片上都读得清 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(8,10,14,.72) 0%, rgba(8,10,14,.28) 46%, rgba(8,10,14,0) 78%);
+  pointer-events: none;
+}
+.af-hero__body { position: relative; z-index: 1; max-width: 62ch; }
+.af-hero__kicker {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.82);
+  border: 1px solid rgba(255,255,255,.34);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 10px;
+}
+.af-hero__title {
+  margin: 0 0 6px;
+  font-size: clamp(20px, 3.6vw, 30px);
+  line-height: 1.28;
+  font-weight: 650;
+  color: #fff;
+  text-shadow: var(--h1-shadow);
+}
+.af-hero__text {
+  margin: 0;
+  font-size: clamp(13px, 1.8vw, 14.5px);
+  line-height: 1.7;
+  color: rgba(255,255,255,.9);
+}
+/* 图片层：没配图时用渐变占位，不会出现空白大洞 */
+.af-hero__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.af-hero__dots {
+  position: absolute;
+  right: clamp(14px, 2.4vw, 22px);
+  bottom: clamp(14px, 2.4vw, 22px);
+  display: flex;
+  gap: 7px;
+  z-index: 2;
+}
+.af-hero__dot {
+  width: 9px; height: 9px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.66);
+  background: rgba(255,255,255,.22);
+  cursor: pointer;
+  transition: background-color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1)),
+              transform var(--af-tr-press, 90ms cubic-bezier(.34, 1.56, .64, 1));
+}
+.af-hero__dot[aria-current="true"] {
+  background: #fff;
+  transform: scale(1.18);
+}
+/* 触摸目标放大到 44px，但视觉仍是 9px 的点 */
+.af-hero__dot::after {
+  content: "";
+  position: absolute;
+  inset: -17px;
+}
+.af-hero__dot { position: relative; }
+
+/* ================================================================
+   2. 数据概览
+   ================================================================ */
+.af-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.af-stat {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 14px 16px;
+  background: var(--glass), var(--page);
+  box-shadow: 0 10px 26px -18px var(--card-sh);
+}
+.af-stat__v {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 660;
+  line-height: 1.15;
+  color: var(--brass);
+  font-variant-numeric: tabular-nums;
+}
+.af-stat__u { font-size: 12.5px; color: var(--ink-mute); font-weight: 400; }
+.af-stat__l {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+.af-stat__h {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--ink-mute);
+}
+
+/* ================================================================
+   3. 项目简介
+   ================================================================ */
+.af-intro {
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: clamp(16px, 2.6vw, 26px);
+  background: var(--glass), var(--page);
+  box-shadow: 0 14px 34px -20px var(--card-sh);
+}
+.af-intro__t {
+  margin: 0 0 10px;
+  font-size: clamp(15px, 2vw, 17px);
+  font-weight: 600;
+  color: var(--ink);
+}
+.af-intro__b {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.86;
+  color: var(--ink-dim);
+  /* 正文里的换行要保留 */
+  white-space: pre-wrap;
+}
+/* 特性小卡 */
+.af-feats {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 9px;
+}
+.af-feat {
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 11px 13px;
+  background: var(--card-hi);
+}
+.af-feat__t {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.af-feat__d { font-size: 12px; color: var(--ink-mute); line-height: 1.6; }
+
+/* ================================================================
+   4. 舰船档案
+   ================================================================ */
+.af-ships {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 10px;
+}
+.af-ship {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 13px 15px;
+  background: var(--glass), var(--page);
+  box-shadow: 0 10px 26px -18px var(--card-sh);
+  transition: transform var(--af-tr-press, 90ms cubic-bezier(.34, 1.56, .64, 1)),
+              box-shadow var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1)),
+              border-color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1));
+}
+.af-ship:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--brass-rgb), .5);
+  box-shadow: 0 16px 34px -18px var(--card-sh);
+}
+.af-ship__n {
+  font-size: 14.5px;
+  font-weight: 620;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.af-ship__c {
+  font-size: 12px;
+  color: var(--brass);
+  letter-spacing: .03em;
+  margin-bottom: 8px;
+}
+.af-ship__spec {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  font-size: 12px;
+}
+.af-ship__spec dt { color: var(--ink-mute); }
+.af-ship__spec dd {
+  margin: 0;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================================================
+   5. 最新动态 / 公告
+   ================================================================ */
+.af-feed { display: grid; gap: 9px; }
+.af-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--glass), var(--page);
+  transition: border-color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1)),
+              transform var(--af-tr-press, 90ms cubic-bezier(.34, 1.56, .64, 1));
+}
+.af-item:hover {
+  border-color: rgba(var(--brass-rgb), .45);
+  transform: translateX(2px);
+}
+.af-item__date {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+  min-width: 44px;
+}
+.af-item__b { min-width: 0; flex: 1 1 auto; }
+.af-item__t {
+  font-size: 13.5px;
+  font-weight: 560;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.af-item__d {
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-dim);
+  /* 摘要最多两行，超出省略 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.af-tag {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--brass);
+  background: rgba(var(--brass-rgb), .1);
+}
+.af-tag--pin {
+  color: var(--ink);
+  background: rgba(var(--brass-rgb), .22);
+  border-color: rgba(var(--brass-rgb), .5);
+}
+
+/* ================================================================
+   6. 友情链接 / 联系
+   ================================================================ */
+.af-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 9px;
+}
+.af-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 13px;
+  text-decoration: none;
+  background: var(--glass), var(--page);
+  transition: transform var(--af-tr-press, 90ms cubic-bezier(.34, 1.56, .64, 1)),
+              border-color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1)),
+              background-color var(--af-tr-micro, 160ms cubic-bezier(.16, 1, .3, 1));
+}
+.af-link:hover, .af-link:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(var(--brass-rgb), .5);
+}
+.af-link__b { min-width: 0; }
+.af-link__n {
+  font-size: 13.5px;
+  color: var(--ink);
+  font-weight: 560;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.af-link__u {
+  font-size: 11.5px;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================================================================
+   7. 数据状态提示（GitHub 同步失败等）
+   ================================================================ */
+.af-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-mute);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.af-note::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brass);
+  flex: 0 0 auto;
+}
+
+/* ---------- 内容为空时的占位 ---------- */
+.af-empty {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+
+/* ================================================================
+   8. 进场动画
+   ---------------------------------------------------------------
+   ★ 用 IntersectionObserver 加 .is-in，不用 CSS animation ——
+     因为一旦元素初始 opacity:0，**JS 完全失效时就永久消失**。
+     降级做法：JS 没跑就不加这个类，元素保持正常显示。
+   ================================================================ */
+.af-sec {
+  opacity: 1;
+}
+.js-af .af-sec[data-af-reveal] {
+  opacity: 0;
+  transform: translateY(10px);
+  /* ★ 进场位移用 --af-tr-enter。进场就该"快起慢收"（减速曲线），
+     因为元素要稳稳停住，不能冲过头再回来 —— 那是 spring 的活，
+     而 spring 只给按下（--af-tr-press）。 */
+  transition: opacity var(--af-tr-enter, 420ms var(--af-ease-out, ease)),
+              transform var(--af-tr-enter, 420ms var(--af-ease-out, ease));
+}
+.js-af .af-sec[data-af-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ================================================================
+   9. 响应式
+   ---------------------------------------------------------------
+   ★ 断点用字面量，不用 var(--x) —— @media 里写 var() 是非法语法，
+     浏览器会**整条丢弃**（看起来"写了没生效"，极难查）。
+     数值与 JS 侧读取的令牌保持一致。
+   ================================================================ */
+@media (max-width: 860px) {
+  .af-hero { min-height: 200px; border-radius: 13px; }
+  .af-sec { margin-top: 26px; }
+  .af-stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .af-ships { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .af-links { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .af-item__date { min-width: 40px; font-size: 11px; }
+}
+
+@media (max-width: 560px) {
+  .af-hero { min-height: 168px; }
+  .af-hero__slide { padding: 14px; }
+  .af-stats { grid-template-columns: repeat(2, 1fr); }
+  .af-ships { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .af-ship { padding: 11px 12px; }
+  .af-intro { padding: 14px; }
+  .af-feats { grid-template-columns: 1fr; }
+  /* 动态列表在窄屏改成上下堆叠：日期不再占一列 */
+  .af-item { flex-direction: column; gap: 4px; }
+  .af-item__date { min-width: 0; }
+}
+
+/* ---------- 降级：关掉动效时不要留残影 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  /* ★ 与 /mods/af-system.css 的同名块保持一致的做法：
+     直接给终态，不依赖 JS 加 .is-in。
+     只压 transition 时长**不改初始值** → 初始 opacity:0 的板块
+     仍要等 JS，没等到就是内容彻底消失且不报错。
+     CSS 层兜底是唯一可靠的那道（记忆里为此栽过一次）。 */
+  .js-af .af-sec[data-af-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .af-hero__slide { transition: opacity 1ms linear; }
+  .af-ship:hover, .af-link:hover, .af-item:hover { transform: none; }
+}

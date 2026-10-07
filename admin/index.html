@@ -18,11 +18,17 @@
      crossorigin 是必须的：字体一律是 CORS 请求，不加会被丢弃、等于没加。 -->
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
+<!-- ★ v2.49 全站动效令牌（唯一数据源）。
+     af-naval.css / af-system.css 内部 var() 引用这里的
+     --af-t-* / --af-ease-* / --af-tr-*。
+     ★ 顺序说明：CSS 自定义属性的取值与书写位置无关，
+       放最前放最后都能取到值；放最前只是为了排查时一眼看到标准。 -->
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/motion-tokens.css?v=1.0">
 <link rel="stylesheet" href="/AtlanticFleetSite/mods/af-naval.css?v=5.14">
 <!-- ★ 设计系统层：令牌 / 液态玻璃 / 组件状态 / 双端适配。
      必须排在 af-naval.css 之后 —— 同权重时后定义的规则胜，
      它要覆盖的是 af-naval.css 里的组件底色与过渡时长。 -->
-<link rel="stylesheet" href="/AtlanticFleetSite/mods/af-system.css?v=1.1">
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/af-system.css?v=1.2">
 <!-- ★ v2.35：原来这个样式表放在 body 末尾，
      会触发额外一次样式重算；样式表本来就该在 head。 -->
 <link rel="stylesheet" href="/AtlanticFleetSite/vendor/lenis.css">
@@ -51,7 +57,9 @@
      所以 display 必须交给 af-naval.css 管，这里不要写死。 */
 .af-nav { margin-left: auto; gap: 8px; align-items: center; }
 .af-navlink { color: var(--af-text-dim); text-decoration: none; font-size: 13px; padding: 7px 13px;
-  border: 1px solid transparent; border-radius: var(--af-radius); transition: all .18s; }
+  border: 1px solid transparent; border-radius: var(--af-radius);
+  /* ★ v2.47：原为 `transition: all .18s`。:hover 只改三项，显式列出来。 */
+  transition: color .18s, border-color .18s, background-color .18s; }
 .af-navlink:hover { color: var(--af-radar); border-color: var(--af-edge); background: rgba(224,177,92,.06); }
 
 /* 登录门 */
@@ -174,22 +182,53 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       <p class="af-sub" style="text-align:center;margin:0 auto 20px">这是 Mod 审核后台，只有站长能进。</p>
 
       <details class="af-howto">
-        <summary>我没有密钥，怎么拿？</summary>
-        <ol>
-          <li><b>你就是这个站的站长</b>：密钥在服务器上，文件路径
-            <code>AtlanticFleetMod/p1/server/admin_key.txt</code>，
-            里面是一串 40 位十六进制字符。直接复制粘贴进下面的输入框即可。</li>
-          <li><b>想换个新密钥</b>：删掉那个文件再重启服务，程序会自动生成一个新的。</li>
-          <li><b>你不是站长</b>：这个后台只给审核用，请去
-            <a href="/AtlanticFleetSite/mods/">Mod 仓库</a> 逛逛，或进
-            <a href="/AtlanticFleetSite/docs/faq/">常见问题</a>，或在<a href="/AtlanticFleetSite/docs/credits/">作者与致谢</a>页留言。</li>
-        </ol>
-        <p class="af-tip">第一次输对之后会记在这台设备的浏览器里，下次就不用再输了。</p>
+        <summary>第一次用？点这里</summary>
+        <p>如果你从没设过账号，点下面的「设置第一个账号」，
+           填一个账号名和密码就能进后台 —— 密码只有你知道，服务器上只存加密后的哈希，<b>不存明文</b>。</p>
+        <p>已经设过账号却忘了密码：找站长用应急通道
+           （<code>admin_key.txt</code> 那把密钥）登录后，在「账号」页重设密码。</p>
+        <p>你不是站长：这个后台只给审核用，请去
+          <a href="/AtlanticFleetSite/mods/">Mod 仓库</a>逛逛，或进<a href="/AtlanticFleetSite/docs/faq/">常见问题</a>。</p>
+        <p class="af-tip">登录成功后会在你这台设备的浏览器里记住，下次不用再输。</p>
       </details>
 
-      <label class="af-label" for="inKey">管理员密钥</label>
-      <input class="af-input" id="inKey" maxlength="64" type="password" placeholder="粘贴 40 位密钥" autocomplete="current-password">
+      <label class="af-label" for="inUser">账号</label>
+      <input class="af-input" id="inUser" maxlength="32" type="text"
+             placeholder="小写字母 / 数字" autocomplete="username"
+             autocapitalize="none" autocorrect="off" spellcheck="false">
+
+      <label class="af-label" for="inPwd">密码</label>
+      <input class="af-input" id="inPwd" maxlength="200" type="password"
+             placeholder="至少 8 位" autocomplete="current-password">
+
       <button class="af-btn af-btn--primary" id="btnLogin" style="width:100%;margin-top:16px">登录</button>
+
+      <details class="af-howto" style="margin-top:18px">
+        <summary id="sumSetup">设置第一个账号</summary>
+        <p>只有<b>一个账号都还没有</b>的时候才能这样建。
+           建完之后这里就失效了，只能由已登录的管理员在「账号」页添加。</p>
+        <label class="af-label" for="inNewUser">新账号名</label>
+        <input class="af-input" id="inNewUser" maxlength="32" type="text"
+               placeholder="3~32 位小写字母、数字、. _ -" autocomplete="off"
+               autocapitalize="none" autocorrect="off" spellcheck="false">
+        <label class="af-label" for="inNewPwd">设一个密码</label>
+        <input class="af-input" id="inNewPwd" maxlength="200" type="password"
+               placeholder="至少 8 位" autocomplete="new-password">
+        <button class="af-btn af-btn--ghost" id="btnSetup" style="width:100%;margin-top:12px">
+          创建账号并登录
+        </button>
+      </details>
+
+      <details class="af-howto" style="margin-top:14px">
+        <summary>用密钥登录（应急通道）</summary>
+        <p>给没有账号的人用，比如密钥在手但账号还没设好。登录方式与账号登录完全等价。</p>
+        <label class="af-label" for="inKey">管理员密钥</label>
+        <input class="af-input" id="inKey" maxlength="128" type="password"
+               placeholder="密钥文件里的那串字符" autocomplete="off">
+        <button class="af-btn af-btn--ghost" id="btnKeyLogin" style="width:100%;margin-top:12px">
+          用密钥登录
+        </button>
+      </details>
     </div>
   </section>
 
@@ -236,6 +275,8 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 <div class="af-mask" id="mask"><div class="af-glass af-modal" id="modal"></div></div>
 
 <script src="/AtlanticFleetSite/mods/icp.js?v=1.1"></script>
+<!-- ★ v2.48：社交图标（矢量）。必须排在 links.js 之前，理由同 mods 页。 -->
+<script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/af-naval.js?v=5.22"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
@@ -250,7 +291,9 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 (function () {
   // 默认标签：待审核优先（有待办时先看它），没有待办就落到「已上架」，
   // 否则一进来是空白页，看起来像坏了。
-  var KEY = '', tab = '', cache = [];
+  // ★ v2.48：KEY（管理员密钥）已不再作为登录态使用，改用 SESSION（会话 token）。
+  //   密钥只保留在「应急通道」那个折叠块里，不进全局。
+  var SESSION = '', tab = '', cache = [];
   var $ = function (s) { return document.querySelector(s); };
   function esc(s) { return afNaval.esc(s); }
   function sizeText(n) {
@@ -268,7 +311,19 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
   var STATUS = { pending: ['待审核', 'signal'], approved: ['已上架', 'ok'], rejected: ['已驳回', 'alert'] };
 
   // ---------- 登录 ----------
-  function saveKey(k) { KEY = k; afNaval.store.set('adminkey', k); }
+  // ★ v2.48：登录方式从「一把密钥」改成「账号 + 密码」，密钥降级为应急通道。
+  //   为什么必须换：磁盘上只剩 PBKDF2 哈希，明文早就不保存了 ——
+  //   页面却还写着「打开 admin_key.txt 复制粘贴」，用户照做必然失败。
+  //   改成账号密码后，密码由用户自己设定，服务器只存 scrypt 哈希。
+  //
+  // 存储方式变了：不再存 adminkey，而是存 session token。
+  // 为什么存 token 不存密码：本地存密码 = 任何能读这个浏览器存储的
+  //   脚本（本站有第三方脚本、也有 XSS 风险面）就拿到了密码本身。
+  //   token 只对这个后台有用，且后端随时可吊销。
+  // ★ SESSION 已在上方声明过，这里不再重复 var（重复声明虽合法但会误导读者）。
+  function saveSession(s) { SESSION = s || ''; afNaval.store.set('adminsess', SESSION); }
+  function loadSession() { SESSION = afNaval.store.get('adminsess') || ''; return SESSION; }
+
   /* 顶栏与抽屉里各有一个「退出」，必须一起显隐，否则登录后抽屉里那个
      永远停在 display:none（等于没有），未登录时又冒出来。 */
   function setLogoutVisible(on) {
@@ -276,35 +331,111 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     var a = document.getElementById('navOut');   if (a) a.style.display = v;
     var b = document.getElementById('mnavOut');  if (b) b.style.display = v;
   }
-  function logout() { KEY = ''; afNaval.store.del('adminkey'); $('#panel').style.display='none'; $('#gate').style.display='block'; setLogoutVisible(false); }
+  function logout() {
+    // 先把 token 发给后端吊销，再清本地 —— 顺序反了的话
+    // 万一请求失败，这个 token 还留在服务器上（8 小时内都能用）
+    var s = SESSION;
+    SESSION = ''; afNaval.store.del('adminsess');
+    $('#panel').style.display = 'none';
+    $('#gate').style.display = 'block';
+    setLogoutVisible(false);
+    if (s) { try { api('/AtlanticFleetSite/admin/logout', { method: 'POST', body: {} }, s); } catch (e) {} }
+  }
+
+  function api(path, opts, sessOverride) {
+    opts = opts || {};
+    var init = { method: opts.method || 'GET', headers: {} };
+    var s = sessOverride !== undefined ? sessOverride : SESSION;
+    if (s) init.headers['X-AF-Session'] = s;
+    if (opts.body !== undefined) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.body); }
+    return fetch('/api' + path, init).then(function (r) {
+      return r.json().catch(function () { return { ok: false, error: 'HTTP ' + r.status }; });
+    });
+  }
+
+  // ---------- 三个登录入口 ----------
+  function doLogin(user, pwd) {
+    if (!user) { afNaval.toast('请输入账号', 'err'); $('#inUser').focus(); return; }
+    if (!pwd) { afNaval.toast('请输入密码', 'err'); $('#inPwd').focus(); return; }
+    api('/AtlanticFleetSite/admin/login', { method: 'POST', body: { username: user, password: pwd } }, '')
+      .then(function (r) {
+        if (r.ok && r.session) {
+          saveSession(r.session);
+          enter();
+          afNaval.toast('欢迎回来，' + (r.username || '管理员'), 'ok');
+        } else {
+          afNaval.toast(r.error || '登录失败', 'err');
+        }
+      })
+      .catch(function () {
+        // ★ v2.38 起就有：请求失败必须给可见反馈。
+        //   后端被杀 / nginx 502 / 断网时 fetch 会 reject，
+        //   没有 catch 的话界面上一点变化都没有，用户只会以为「点了没反应」。
+        afNaval.toast('连不上服务器，请检查后端是否在运行', 'err');
+      });
+  }
 
   $('#btnLogin').onclick = function () {
+    doLogin($('#inUser').value.trim().toLowerCase(), $('#inPwd').value);
+  };
+  // 密码框回车直接登录（账号框回车跳到密码框）
+  $('#inUser').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('#inPwd').focus(); }
+  });
+  $('#inPwd').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('#btnLogin').click(); }
+  });
+
+  // 应急通道：密钥登录
+  $('#btnKeyLogin').onclick = function () {
     var k = $('#inKey').value.trim();
     if (!k) { afNaval.toast('请输入密钥', 'err'); return; }
-    api('/AtlanticFleetSite/admin/login', { method:'POST', body:{} }, k).then(function (r) {
-      if (r.ok) { saveKey(k); enter(); afNaval.toast('欢迎回来，值班官', 'ok'); }
-      else afNaval.toast(r.error || '密钥错误', 'err');
-    }).catch(function () {
-      // ★ v2.38：原先没有 catch。后端进程被杀 / nginx 502 / 断网时，
-      //   fetch 会 reject → unhandled promise rejection → **界面上一点反馈都没有**，
-      //   用户只会以为「点了没反应」。这里必须给出可见反馈。
-      afNaval.toast('连不上服务器，请检查后端是否在运行', 'err');
-    });
+    api('/AtlanticFleetSite/admin/login', { method: 'POST', body: { admin_key: k } }, '')
+      .then(function (r) {
+        if (r.ok && r.session) {
+          saveSession(r.session);
+          enter();
+          afNaval.toast('欢迎回来，站长', 'ok');
+        } else {
+          afNaval.toast(r.error || '密钥错误', 'err');
+        }
+      })
+      .catch(function () { afNaval.toast('连不上服务器，请检查后端是否在运行', 'err'); });
   };
-  $('#inKey').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('#btnLogin').click(); });
+  $('#inKey').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); $('#btnKeyLogin').click(); }
+  });
+
+  // 首次设置账号（bootstrap）
+  $('#btnSetup').onclick = function () {
+    var u = $('#inNewUser').value.trim().toLowerCase();
+    var p = $('#inNewPwd').value;
+    if (!u) { afNaval.toast('请输入账号名', 'err'); return; }
+    if (!p) { afNaval.toast('请输入密码', 'err'); return; }
+    $('#btnSetup').disabled = true;
+    api('/AtlanticFleetSite/admin/account-setup', { method: 'POST', body: { username: u, password: p } }, '')
+      .then(function (r) {
+        $('#btnSetup').disabled = false;
+        if (r.ok) {
+          afNaval.toast('账号已建好，正在登录…', 'ok');
+          // 建完直接登录，省得再输一遍
+          doLogin(u, p);
+          var s = document.getElementById('sumSetup');
+          if (s) s.textContent = '账号已创建（此入口已关闭）';
+        } else {
+          afNaval.toast(r.error || '创建失败', 'err');
+        }
+      })
+      .catch(function () {
+        $('#btnSetup').disabled = false;
+        afNaval.toast('连不上服务器，请检查后端是否在运行', 'err');
+      });
+  };
+
   $('#navOut').onclick = function (e) { e.preventDefault(); logout(); };
   /* 抽屉里的同一个动作（手机上顶栏链接被折叠，用户只能从这里退） */
   var _mnavOut = document.getElementById('mnavOut');
   if (_mnavOut) _mnavOut.onclick = function (e) { e.preventDefault(); logout(); };
-
-  function api(path, opts, keyOverride) {
-    opts = opts || {};
-    var init = { method: opts.method || 'GET', headers: {} };
-    var k = keyOverride || KEY;
-    if (k) init.headers['X-Admin-Key'] = k;
-    if (opts.body !== undefined) { init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(opts.body); }
-    return fetch('/api' + path, init).then(function (r) { return r.json().catch(function(){ return { ok:false, error:'HTTP '+r.status }; }); });
-  }
 
   function enter() {
     $('#gate').style.display = 'none';
@@ -559,18 +690,28 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
   };
 
   // ---------- 启动 ----------
-  var saved = afNaval.store.get('adminkey', '');
+  // ★ v2.48：这里原本读的是 adminkey（存的是密钥本身），现在改读 session token。
+  //   流程也简化了：以前要拿旧密钥**再登一次**才能续期（靠 login 换新 token），
+  //   现在直接拿存着的 token 调一次 /admin/stats 探活 ——
+  //   有效就进后台，无效就地清掉、退回登录框。
+  //   ★ 必须保留 catch：那两条 catch 是 v2.38 踩出来的保命逻辑 ——
+  //     #gate 与 #panel 初始都是隐藏的，fetch reject 时两条路都走不到，
+  //     结果是整页全白、连登录框都不出现。
+  var saved = loadSession();
   if (saved) {
-    // ★ v2.38：这个 catch 是**保命**的，不是锦上添花。
-    //   #gate 和 #panel 的初始状态是「都不显示」（登录后才打开 #panel）。
-    //   原来若 fetch reject（后端被杀 / 502 / 断网），两条路都走不到：
-    //     - then 的 ok 分支进不了 → enter() 不执行
-    //     - else 分支也进不去（Promise 根本没 fulfilled）
-    //   结果是**整页全白，连登录框都不出现**，用户只能靠清缓存/改 localStorage 自救。
-    api('/AtlanticFleetSite/admin/login', { method:'POST', body:{} }, saved).then(function (r) {
-      if (r.ok) { saveKey(saved); enter(); } else { $('#gate').style.display = 'block'; }
+    api('/AtlanticFleetSite/admin/stats', {}, saved).then(function (r) {
+      if (r.ok) {
+        enter();
+      } else {
+        // token 失效（过期 / 后端重启 / 吊销）：清掉，别让用户对着一个
+        // 永远进不去的"已登录"状态反复点刷新
+        afNaval.store.del('adminsess');
+        SESSION = '';
+        $('#gate').style.display = 'block';
+      }
     }).catch(function () {
-      $('#gate').style.display = 'block';   // 关键：把登录框露出来，让人能重新登录
+      SESSION = saved;               // 后端只是暂时不通，别急着清 token
+      $('#gate').style.display = 'block';
       afNaval.toast('连不上服务器，已退回登录界面', 'err');
     });
   } else {

@@ -1,0 +1,11 @@
+{
+  "modName": "示例 · 强化主炮",
+  "author": "uruban",
+  "version": "1.0",
+  "combat": {
+    "gun": {
+      "damageMul": 1.5,
+      "accuracyMul": 1.2
+    }
+  }
+}

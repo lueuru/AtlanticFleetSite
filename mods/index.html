@@ -32,11 +32,17 @@
      crossorigin 是必须的：字体一律是 CORS 请求，不加会被丢弃、等于没加。 -->
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
+<!-- ★ v2.49 全站动效令牌（唯一数据源）。
+     af-naval.css / af-system.css 内部 var() 引用这里的
+     --af-t-* / --af-ease-* / --af-tr-*。
+     ★ 顺序说明：CSS 自定义属性的取值与书写位置无关，
+       放最前放最后都能取到值；放最前只是为了排查时一眼看到标准。 -->
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/motion-tokens.css?v=1.0">
 <link rel="stylesheet" href="/AtlanticFleetSite/mods/af-naval.css?v=5.14">
 <!-- ★ 设计系统层：令牌 / 液态玻璃 / 组件状态 / 双端适配。
      必须排在 af-naval.css 之后 —— 同权重时后定义的规则胜，
      它要覆盖的是 af-naval.css 里的组件底色与过渡时长。 -->
-<link rel="stylesheet" href="/AtlanticFleetSite/mods/af-system.css?v=1.1">
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/af-system.css?v=1.2">
 <!-- v2.27 动效：Lenis 平滑滚动必需的样式，漏了会导致 html.lenis 相关规则失效 -->
 <link rel="stylesheet" href="/AtlanticFleetSite/vendor/lenis.css">
 <style>
@@ -129,7 +135,11 @@
   padding: 7px 13px; cursor: pointer;
   border: 1px solid var(--af-edge); border-radius: var(--af-radius);
   color: var(--af-text-dim); background: rgba(8,20,32,.5);
-  transition: all .18s; user-select: none;
+  /* ★ v2.47：原为 `transition: all .18s`。all 会让浏览器每次样式重算
+     都把所有可动画属性比一遍，而 :hover / .on 只改 color / border-color /
+     background / box-shadow 四样。改成显式列表，效果一样但判定量小得多。 */
+  transition: color .18s, border-color .18s, background-color .18s, box-shadow .18s;
+  user-select: none;
 }
 .af-chip:hover { color: var(--af-text); border-color: var(--af-edge-hi); }
 .af-chip.on {
@@ -509,6 +519,10 @@
 </div>
 
 <script src="/AtlanticFleetSite/mods/icp.js?v=1.1"></script>
+<!-- ★ v2.48：社交图标（矢量）。**必须排在 links.js 之前** ——
+     links.js 里的 iconSvg 就是从这里取的，取不到就退回空图标。
+     两者都是同步 script，浏览器按书写顺序执行，顺序对了就没问题。 -->
+<script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/af-naval.js?v=5.22"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。

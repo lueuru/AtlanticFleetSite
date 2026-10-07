@@ -136,59 +136,59 @@
     "href": "/AtlanticFleetSite/docs/features/"
    },
    {
-    "t": "AI 行为 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/ai/"
    },
    {
-    "t": "战斗数值 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/combat/"
    },
    {
-    "t": "经济与威望 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/economy/"
    },
    {
-    "t": "自定义编队 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/fleets/"
    },
    {
-    "t": "多语言与界面文本 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/i18n/"
    },
    {
-    "t": "功能接入总表 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/matrix/"
    },
    {
-    "t": "自制模型（AssetBundle） ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/models/"
    },
    {
-    "t": "参数系统 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/params/"
    },
    {
-    "t": "玩家档案与本地热座 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/profile/"
    },
    {
-    "t": "沙盒与调试开关 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/sandbox/"
    },
    {
-    "t": "传感器与航空 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/sensor-air/"
    },
    {
-    "t": "Mod 分享码 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/sharecode/"
    },
    {
-    "t": "自定义舰船 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/ships/"
    },
    {
-    "t": "功能接入总览 ​",
+    "t": "功能",
     "href": "/AtlanticFleetSite/docs/features/start/"
    }
   ],
@@ -244,55 +244,55 @@
     "href": "/AtlanticFleetSite/docs/use/"
    },
    {
-    "t": "Mod 冲突排查 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/conflicts/"
    },
    {
-    "t": "悬浮窗操作技巧 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/gestures/"
    },
    {
-    "t": "帮助页：随手查 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/help-page/"
    },
    {
-    "t": "键盘、手柄与键位 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/input/"
    },
    {
-    "t": "日志页：自查问题 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/log-page/"
    },
    {
-    "t": "Mod 页：管理已装 Mod ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/mods-page/"
    },
    {
-    "t": "游戏内控制台「小u」 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/panel/"
    },
    {
-    "t": "参数页：调数值 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/params-page/"
    },
    {
-    "t": "进阶：组合玩法 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/recipes/"
    },
    {
-    "t": "存档页：改威望与回合 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/save-page/"
    },
    {
-    "t": "状态页：看现场 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/status-page/"
    },
    {
-    "t": "倍速与时间缩放 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/timescale/"
    },
    {
-    "t": "出问题了怎么查 ​",
+    "t": "怎么用",
     "href": "/AtlanticFleetSite/docs/use/troubleshooting/"
    }
   ],

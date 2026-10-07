@@ -390,6 +390,17 @@ async function main() {
     /* ================= 动效规范 ================= */
     console.log('\n[动效] 时长令牌 + 两端适配');
 
+    // ★ 必须先声明「不降级」再读令牌。
+    //   headless Edge 默认 prefers-reduced-motion: reduce，而 motion-tokens.css
+    //   的 reduce 块会把 160/240/420/680 全部压成 1ms（那是**设计**，验降级时才该看到）。
+    //   原脚本到这里还没发 setEmulatedMedia（首次出现在 449 行的降级用例里），
+    //   于是"令牌成阶梯"这条在 reduce 环境下读计算样式，必然拿到 1,1,1,1 → 假失败。
+    //   真相是产品令牌完全正常（源文件里 160/240/420/680 阶梯清晰）。
+    //   这类"判据跑错环境"和"测得太早"是同一类病：量的是别的东西。
+    await c.send('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+    });
+
     const dur = await c.eval(`(() => {
       const c = getComputedStyle(document.documentElement);
       const g = (n) => c.getPropertyValue(n).trim();
@@ -400,6 +411,11 @@ async function main() {
       };
     })()`);
     const ms = (v) => parseInt(String(v), 10) || 0;
+    // 环境自证：读到全 1ms 时必须先怀疑环境，不能直接报"产品没阶梯"
+    const envReduced = await c.eval(
+      `window.matchMedia('(prefers-reduced-motion: reduce)').matches`);
+    check('判据环境自证：当前不是 reduce 降级环境', envReduced === false,
+      `prefers-reduced-motion reduce=${envReduced}`);
     check('时长令牌成阶梯且递增（fast<base<slow<epic）',
       ms(dur.fast) < ms(dur.base) && ms(dur.base) < ms(dur.slow) && ms(dur.slow) < ms(dur.epic),
       JSON.stringify(dur));

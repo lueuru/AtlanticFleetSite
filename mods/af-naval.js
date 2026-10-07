@@ -328,6 +328,12 @@
         稍微滞后一点才像"跟手的提示卡"。
   */
   var _peek = null, _peekCard = null, _peekX = 0, _peekY = 0, _peekRaf = 0;
+  /* ★ v2.47 新增：提示卡尺寸缓存（避免 mousemove 里强制同步布局）。
+     必须声明在**模块级**，不能放在 mountPeek 里面 ——
+     peekShow()（外层）在换卡片时要作废它，
+     而 var 只在声明它的那个函数作用域里提升，跨不到外层。
+     放在内层会导致「作废永远不生效」→ 尺寸一直是旧值 → 翻转边界算错。 */
+  var _peekW = 0, _peekH = 0, _peekMeasured = false;
 
   function peekEnsure() {
     if (_peek) return _peek;
@@ -363,6 +369,8 @@
     html += '<div class="af-peek-act">点卡片或「详情」看完整参数 →</div>';
     el.innerHTML = html;
     el.classList.add('is-on');
+    // ★ v2.47：内容换了，尺寸缓存必须作废（不同 mod 的参数行数不同 → 高度不同）。
+    _peekMeasured = false;
   }
 
   function peekHide() {
@@ -375,15 +383,39 @@
     if (AF.reduced && AF.reduced()) return;
     if (!w.matchMedia || !w.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
+    /* ★ v2.47：把 getBoundingClientRect 从 mousemove 里挪出来了。
+       原来每次 mousemove 都读一次提示卡的布局（宽度/高度），
+       用来做边界翻转。getBoundingClientRect 是**强制同步布局**——
+       浏览器必须先把之前所有样式改动算完才能给结果。
+       一边跟着鼠标一边强制重算，就是「鼠标一动就顿一下」的经典成因。
+
+       现在改成：换卡片时量一次、缓存起来（_peekW/_peekH 见上面的模块级声明）。
+       为什么缓存是安全的：宽度/高度只由 innerHTML 和 CSS 决定，
+       而 innerHTML 只在 peekShow() 里改（换卡片），
+       那里会把 _peekMeasured 置回 false。transform 位移不影响它的
+       width/height（getBoundingClientRect 返回的是布局盒尺寸）。 */
+    function peekMeasure() {
+      if (!_peek) return;
+      var r = _peek.getBoundingClientRect();
+      _peekW = r.width;
+      _peekH = r.height;
+      _peekMeasured = true;
+    }
+
     var onMove = function (e) {
       if (!_peekCard) return;
-      var r = _peek.getBoundingClientRect();
+      // 首次显示（还没量过）或窗口尺寸变了才量一次
+      if (!_peekMeasured || _peek.vw !== w.innerWidth || _peek.vh !== w.innerHeight) {
+        peekMeasure();
+        _peek.vw = w.innerWidth;
+        _peek.vh = w.innerHeight;
+      }
       // 贴近光标右下，并做**边界翻转**：
       // 不翻的话卡片靠近屏幕右边/底部时会被视口切掉（提示框最常见的破相方式）。
       var x = e.clientX + 18;
       var y = e.clientY + 18;
-      if (x + r.width > w.innerWidth - 10) x = e.clientX - r.width - 18;
-      if (y + r.height > w.innerHeight - 10) y = e.clientY - r.height - 18;
+      if (x + _peekW > w.innerWidth - 10) x = e.clientX - _peekW - 18;
+      if (y + _peekH > w.innerHeight - 10) y = e.clientY - _peekH - 18;
       _peekX = Math.max(10, x);
       _peekY = Math.max(10, y);
       peekFollow();
@@ -952,7 +984,16 @@
       if (!/^(https?:|mailto:)/i.test(it.href || '')) continue;
       out += '<a class="af-flink af-flink--ext af-flink--' + esc(it.key) + '" href="' + href + '"' +
         ' title="' + esc(it.title) + '" target="_blank" rel="noopener noreferrer">' +
-        '<span class="af-flink-ic"><img src="' + esc(it.icon) + '" alt="" loading="lazy" decoding="async"></span>' +
+        // ★ v2.50：原来这里写的是 <img src="' + esc(it.icon) + '">。
+        //   但 v2.48 已把图标从位图改成 SVG 字符串，字段名换成了 iconSvg ——
+        //   it.icon 从此恒为 undefined，esc(undefined) 得空串，拼出 <img src="">。
+        //   而空 src 的 <img> 会被浏览器**解析成当前页 URL**：页面上凭空多出一次
+        //   请求（本站在仓库页就是 /mods/ 目录，服务器回 HTML），
+        //   图片位置显示成破损图标，还污染「图片全部加载成功」这类判据。
+        //   症状是"页脚社交图标时有时无"，很难联想到是这个字段名不匹配。
+        //   现在与首页（index.html:547）用同一套：iconSvg 内联 SVG。
+        //   CSS 里 .af-flink-ic .af-ico 已备好 13px 尺寸，svg 本身不带 width/height。
+        '<span class="af-flink-ic">' + (it.iconSvg || '') + '</span>' +
         '<span class="af-flink-t">' + esc(it.text) + '</span></a>';
     }
     out += '</div>';

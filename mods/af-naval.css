@@ -860,9 +860,9 @@ body.af-light .af-foot--rich {
 }
 /* 旧的内联 svg 图标（af-brandico 等）走这条 */
 .af-flink-ic .af-ico { width: 13px; height: 13px; }
-/* ★ v2.46：社区入口的图标统一是**应用图像**（<img>），尺寸必须显式给。
-     不写的话img 会按原始 192×192 撑开，把整行文字压到看不见 ——
-     这就是之前 .qq 内联 svg 压住文字的同一个坑，只是换了元素类型。 */
+/* ★ v2.46：曾把社区入口图标统一成应用图像（<img>），尺寸必须显式给。
+   v2.48 起改成内联矢量（见下方 svg 规则），这条 <img> 已无元素可匹配；
+   留着是为了万一将来又有位图入口，至少不会撑爆整行。 */
 .af-flink-ic img {
   width: 22px; height: 22px;
   display: block;
@@ -870,6 +870,18 @@ body.af-light .af-foot--rich {
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
+/* ★ v2.48：社交入口改用**内联矢量**（平台标识）后补的尺寸规则。
+   和上面那条 img 是同一个坑的两种形态 —— svg 不显式给尺寸就会
+   按 viewBox 撑满容器，把旁边的文字压没。两条必须同时存在。 */
+.af-flink-ic svg {
+  width: 22px; height: 22px;
+  display: block;
+  fill: currentColor;
+  stroke: currentColor;
+  opacity: .82;
+  transition: opacity .18s cubic-bezier(.2,.7,.2,1);
+}
+.af-flink:hover .af-flink-ic svg { opacity: 1; }
 .af-flink:hover .af-flink-ic { transform: scale(1.12); }
 /* 社区入口组：与上方站内链接之间留出呼吸，且上下成组时不自成一列 */
 .af-fsocial-list {
@@ -973,14 +985,17 @@ body.af-light .af-foot--rich {
 }
 
 /* 出现/消失各有一段，但**出现必须比消失快**：
-   悬停提示慢半拍才出 = 感觉卡；消失慢一点 = 不刺眼、不慌。 */
-.af-peek.is-on {
-  opacity: 1;
-  transition: opacity .18s cubic-bezier(.16, 1, .3, 1);
-}
-.af-peek {
-  transition: opacity .3s cubic-bezier(.4, 0, .2, 1);
-}
+   悬停提示慢半拍才出 = 感觉卡；消失慢一点 = 不刺眼、不慌。
+
+   ★ v2.47：这里原来把 .af-peek 写了两遍（.is-on 在前、.af-peek 在后），
+     后者把前者的 180ms 盖成了 300ms，注释说的设计意图根本没实现。
+     更要紧的是：这两条其实都是**多余的**——
+     .af-peek 的背景/模糊/过渡时长的权威定义在 af-system.css
+     「悬停提示卡（真玻璃）」一节（:665-678），而 af-system.css
+     加载在**本文件之后**，同权重下它赢。
+     也就是说我在这里写什么都会被盖掉 —— 源码看着对、结果不对的经典。
+     所以本文件只保留定位相关的（fixed / z-index / 尺寸 / 不挡点击），
+     过渡时长一律不在这里写。要改时长改 af-system.css 的令牌。 */
 
 /* ★ 卡片本体也要给一点反馈，让"能点"这件事在悬停时就成立 */
 @media (hover: hover) and (pointer: fine) {
@@ -1208,7 +1223,17 @@ body.af-light .af-mask { background: rgba(60, 50, 30, .34); }
   color: var(--af-text-dim);
   font-size: 13px; font-weight: 500;
   cursor: pointer;
-  transition: all .18s cubic-bezier(.2,.7,.2,1);
+  /* ★ v2.47：原来是 `transition: all .18s`。
+     `all` 意味着浏览器每次样式重算都要把**所有**可动画属性过一遍，
+     包括这个元素上根本不会变的 border-width / font-size / padding。
+     这些属性在 :hover 里都没变，但浏览器不知道，得逐个比对。
+     改成显式列出实际会变的四类 —— 效果完全一样，判定工作少一大截。
+     同类改法见 af-btn / .af-navlink。 */
+  transition: color .18s cubic-bezier(.2,.7,.2,1),
+              background-color .18s cubic-bezier(.2,.7,.2,1),
+              border-color .18s cubic-bezier(.2,.7,.2,1),
+              box-shadow .18s cubic-bezier(.2,.7,.2,1),
+              transform .18s cubic-bezier(.2,.7,.2,1);
 }
 .af-kindchip b {
   font-family: var(--af-font-mono);
@@ -1619,7 +1644,29 @@ body.af-light .af-kind[data-kind="pack"]     { color: #7a5410; background: rgba(
    ============================================================ */
 html {
   scroll-padding-top: 76px;   /* 顶栏 60 + 16 余量 */
+  /* ★ v2.47：删掉了这里的 `scroll-behavior: smooth`。
+     原来是无条件开在 html 上，于是**所有**滚动都被接管 ——
+     包括浏览器原生滚动、程序里的 scrollTo、焦点跳转后的自动滚动、
+     以及锚点跳转。原生平滑滚动在 Chrome 里起步就要 300~500ms，
+     远超「点一下马上到」的预期，这就是桌面端「滚起来粘一下」的第二个来源。
+     现在改成：默认用浏览器原生瞬时滚动（跟手、可中断），
+     只有「用户主动点了页内锚点」才平滑 —— 见下面 .af-anchor-smooth。 */
+}
+
+/* ★ v2.47：只在「确实是从站外锚点跳过来」时启用平滑滚动。
+   判据是 :target-matching —— 目标正好是 URL hash 指向的元素时，
+   说明这次滚动是导航造成的，不是用户自己滚的。
+   浏览器原生没有这个伪类，但 :has() + :target 可以拼出来：
+   html:has(> body :target) 会在页面存在被 hash 命中的元素时成立。 */
+html:has(:target) {
   scroll-behavior: smooth;
+}
+/* 键盘/脚本主动触发的滚动仍然瞬时 —— 不给「点一下等半秒」的余地 */
+html:focus-within {
+  scroll-behavior: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  html, html:has(:target) { scroll-behavior: auto !important; }
 }
 /* 有独立滚动条的容器（详情弹层等）同样留白 */
 .af-modal,
@@ -1634,10 +1681,6 @@ html {
 section[id],
 div[id="grid"] {
   scroll-margin-top: 76px;
-}
-/* 尊重「减少动效」设置：不要把平滑滚动强加给不适应的用户 */
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
 }
 
 

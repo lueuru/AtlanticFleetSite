@@ -10,6 +10,20 @@
 <link rel="apple-touch-icon" href="/AtlanticFleetSite/favicon.png">
 <link rel="mask-icon" href="/AtlanticFleetSite/media/brand/af-brand.svg" color="#0d1b26">
 <meta name="theme-color" content="#0a1018">
+<!-- v2.49 全站动效令牌（唯一数据源，被 /mods/、/admin/ 共用）。
+     ★ 为什么首页要单独引：af-system.css 里也有同一套令牌，
+       但那个文件整体依赖 af-naval.css 的颜色变量，而首页刻意不引
+       af-naval.css（会连带引入主题/粒子/光标等副作用）→ 首页只能
+       写 var(--af-t-fast, 160ms) 这类 fallback，而 fallback 的曲线值
+       与真令牌并不一致，等于首页动效从来没和另外两站对齐过。
+       现在三站共用这一个文件。
+     ★ 顺序说明：CSS 自定义属性的取值与书写位置无关，
+       所以这里放最前放最后都能取到值；放最前只是为了排查时一眼看到标准。 -->
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/motion-tokens.css?v=1.0">
+<!-- v2.49 首页新板块样式。放在内联 <style> **之后** 是有意的：
+     新板块只写变量、不写死颜色，内联样式的选择器也不碰这些类，
+     不存在同权重覆盖问题。 -->
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/home.css?v=1.0">
 <style>
 @font-face {
   font-family: "AF Display";
@@ -259,6 +273,19 @@
     border-radius: 6px;   /* 与应用图标本身的圆角呼应 */
     box-shadow: 0 1px 3px rgba(0, 0, 0, .28);
   }
+  /* ★ v2.48：社区入口的图标改成**内联矢量**（平台标识），补 svg 的尺寸规则。
+     为什么要显式给：svg 元素没有 width/height 属性时会按 viewBox 撑满容器，
+     结果就是 24px 变成 24*24px —— 文字全被压没了。
+     这正是上面 .flink img 那条注释说的同一个坑，只是换了元素类型，
+     所以两条必须同时存在。 */
+  .flink-ic svg {
+    width: 24px; height: 24px;
+    display: block;
+    fill: currentColor; stroke: currentColor;
+    opacity: .82;
+    transition: opacity .18s cubic-bezier(.2,.7,.2,1);
+  }
+  .flink:hover .flink-ic svg { opacity: 1; }
   .flink:hover img, .flink:focus-visible img {
     transform: scale(1.08);
     box-shadow: 0 2px 8px rgba(0, 0, 0, .34);
@@ -303,7 +330,7 @@
        纵向 40px 由 padding 补足，图标本身只是视觉放大）。
        ★ 容器 .flink-ic 必须同步放大 —— 只改 img 会让容器还是 24px，
        图标从容器里溢出来，圆角和间距都会错位。 */
-    .flink-ic, .flink img { width: 26px; height: 26px; flex-basis: 26px; }
+    .flink-ic, .flink img, .flink-ic svg { width: 26px; height: 26px; flex-basis: 26px; }
   }
 </style>
 </head>
@@ -351,6 +378,91 @@
     </a>
   </div>
 
+  <!-- ================================================================
+       v2.49 新增：首页信息架构补齐
+       ---------------------------------------------------------------
+       ★ 判断依据：改之前整页只有上面三个入口卡片，除此之外再无内容 ——
+         没有主视觉、没有项目简介、没有数据、没有动态。所以是「补齐」不是「重做」，
+         三个入口卡片原样保留在最上面。
+
+       ★ 这整段 HTML **只有骨架，没有正文**。
+         所有文字都来自 /api/content（内容在后台改）。
+         写死在这里会出现「后台改了、首页没变」的两处真相源。
+
+       ★ 无 JS 时这一整段也不能塌：
+         每个板块都有静态占位文案，轮播区静态放了第一张。
+         JS 正常时才由 home.js 接管渲染。
+         ================================================================ -->
+
+  <!-- 1. 轮播主视觉 -->
+  <section class="af-hero" id="afHero" aria-label="主视觉">
+    <!-- ★ 静态第一张：JS 挂了 / 接口 404 时，至少还有一张图和标题。
+         JS 正常时会清空这层再用接口数据重建。 -->
+    <div class="af-hero__slide is-on" aria-hidden="false">
+      <div class="af-hero__body">
+        <span class="af-hero__kicker">MOD FRAMEWORK</span>
+        <h2 class="af-hero__title">改游戏，不用连电脑</h2>
+        <p class="af-hero__text">调数值、加自己的舰船、装别人做的模型与贴图 —— 都在手机里点完。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 数据概览 -->
+  <section class="af-sec" data-af-reveal aria-labelledby="afStatsT">
+    <div class="af-sec__head">
+      <h2 class="af-sec__title" id="afStatsT">数据概览</h2>
+      <span class="af-sec__sub">仓库与文档的实时数字</span>
+    </div>
+    <div class="af-stats" id="afStats">
+      <div class="af-empty">正在读取…</div>
+    </div>
+  </section>
+
+  <!-- 3. 项目简介 -->
+  <section class="af-sec" data-af-reveal aria-labelledby="afIntroT">
+    <div class="af-sec__head">
+      <h2 class="af-sec__title" id="afIntroT">这是什么</h2>
+    </div>
+    <div class="af-intro" id="afIntro">
+      <div class="af-empty">正在读取…</div>
+    </div>
+  </section>
+
+  <!-- 4. 舰船档案 -->
+  <section class="af-sec" data-af-reveal aria-labelledby="afShipsT">
+    <div class="af-sec__head">
+      <h2 class="af-sec__title" id="afShipsT">舰船档案</h2>
+      <span class="af-sec__sub">已录入的改装舰数据</span>
+    </div>
+    <div class="af-ships" id="afShips">
+      <div class="af-empty">正在读取…</div>
+    </div>
+  </section>
+
+  <!-- 5. 最新动态与公告摘要 -->
+  <section class="af-sec" data-af-reveal aria-labelledby="afFeedT">
+    <div class="af-sec__head">
+      <h2 class="af-sec__title" id="afFeedT">最新动态</h2>
+      <span class="af-sec__sub">更新日志与公告</span>
+    </div>
+    <div class="af-feed" id="afFeed">
+      <div class="af-empty">正在读取…</div>
+    </div>
+  </section>
+
+  <!-- 6. 友情链接 -->
+  <section class="af-sec" data-af-reveal aria-labelledby="afLinksT">
+    <div class="af-sec__head">
+      <h2 class="af-sec__title" id="afLinksT">友情链接</h2>
+      <span class="af-sec__sub">相关站点与项目</span>
+    </div>
+    <div class="af-links" id="afLinks"></div>
+  </section>
+
+  <!-- 7. 数据状态：GitHub 同步结果。失败也要说，且说清「不是没数据，
+       只是可能不是最新」—— 静默失败比报错更难排查。 -->
+  <p class="af-note" id="afNote" aria-live="polite"></p>
+
   <div class="foot">
     <!-- 社区与联系入口：全部由 /mods/links.js 的 AF_LINKS 渲染。
          ★ 为什么要改成 JS 渲染：
@@ -391,8 +503,22 @@
     //   点进空页，SEO 也当成站内链接。填好地址刷新就自动出现。
     (function () {
       var s = document.createElement('script');
-      s.src = '/AtlanticFleetSite/mods/links.js?v=1.0';
+      // ★ v2.48：先载 af-icons.js 再载 links.js —— links.js 里的 iconSvg
+      //   要从 AF_ICONS 取图标，取不到就是空图标（页面上一个入口没图标）。
+      //   这里是动态插入，只能用 onload 串行；写两个并排的 <script> 元素
+      //   浏览器不保证执行顺序。
+      s.src = '/AtlanticFleetSite/mods/af-icons.js?v=1.0';
       s.onload = function () {
+        var s2 = document.createElement('script');
+        s2.src = '/AtlanticFleetSite/mods/links.js?v=1.0';
+        s2.onload = renderSocial;
+        s2.onerror = function () { /* 拿不到就别显示，页脚空着不影响其它内容 */ };
+        document.head.appendChild(s2);
+      };
+      s.onerror = function () { /* 图标脚本挂了也要继续载 links.js */ renderSocial(); };
+      document.head.appendChild(s);
+
+      function renderSocial() {
         var L = window.AF_LINKS;
         var box = document.getElementById('af-social');
         if (!L || !L.list || !L.list.length || !box) return;
@@ -407,19 +533,21 @@
           a.href = it.href;
           a.title = it.title;
           // ★ 图标 + 文字要分两个节点，不能用 a.textContent = it.text ——
-          //   那会把整个 <a> 的内容整个替换成纯文字，图标一点都进不去。
-          //   （v2.46 实测踩过：链接全对、target/rel 全对，唯独 6 个入口零图标。）
-          if (it.icon) {
+          //   那会把整个 <a> 的内容整个替换成纯文字，图标一点都进进去。
+          //   （v2.46 实测踩过：链接全对、target/rel 全对，唯独入口零图标。）
+          //
+          // ★ v2.48：从 <img src="应用位图"> 改成内联矢量。
+          //   位图是 192×192，这里只显示 24px —— 缩到八分之一边缘发糊，
+          //   而且六个入口长得一模一样，分不清哪个是 QQ 哪个是 B 站。
+          //   矢量任意尺寸都清晰，一眼认出平台。
+          //
+          //   ★ 必须用 innerHTML 注入：createElement('svg') 造不出 SVG 元素
+          //     （浏览器不认那个标签名，会当成未知 HTML 元素）。
+          //     内容全部来自 /mods/af-icons.js（本地常量，无外部输入），不存在注入面。
+          if (it.iconSvg) {
             var ic = document.createElement('span');
             ic.className = 'flink-ic';
-            var img = document.createElement('img');
-            img.src = it.icon;
-            img.alt = '';
-            img.width = 24;                 // 属性兜底，CSS 再约束一次
-            img.height = 24;
-            img.loading = 'lazy';
-            img.decoding = 'async';
-            ic.appendChild(img);
+            ic.innerHTML = it.iconSvg;      // svg 元素不带width/height，由 CSS 统一控制
             a.appendChild(ic);
           }
           var tx = document.createElement('span');
@@ -435,8 +563,7 @@
           frag.appendChild(a);
         });
         box.appendChild(frag);
-      };
-      document.head.appendChild(s);
+      }
     })();
   </script>
 
@@ -475,5 +602,12 @@
       el.hidden = !isIp;
     })();
   </script>
+
+  <!-- v2.49 首页新板块数据渲染。
+       ★ 放在最后、所有内联脚本之后：它要按 id 找板块，必须等 DOM 建好。
+         脚本本身内部也判了 readyState，双保险。
+       ★ 不引 af-naval.js —— 那会连带引入主题、粒子、自定义光标等副作用，
+         首页刻意只引自己需要的那几个小文件（与 links.js / icp.js 同理）。 -->
+  <script src="/AtlanticFleetSite/mods/home.js?v=1.0" defer></script>
 </body>
 </html>

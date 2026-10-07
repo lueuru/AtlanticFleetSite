@@ -26,17 +26,16 @@
    * 需要你填写的真实地址
    * ------------------------------------------------------------------ */
 
-  // ★ 待填：QQ 群邀请链接。留空则不显示。
-  //   取值方式：打开 QQ 群 → 群设置 → 「分享群聊」→ 复制链接
-  //   已有群号 957336473，可先用 https://qm.qq.com/cgi-bin/qm/qr?group_code=957336473
-  var QQ_GROUP_URL = '';
+  // ★ 已填（2026-10-06 从 v2.21 的 git 历史 b3421ad 恢复）。
+  //   这是站长自己的群，值不是猜的 —— v2.46 清空之前一直就是它。
+  var QQ_GROUP_URL = 'https://qm.qq.com/cgi-bin/qm/qr?group_code=957336473';
 
-  // ★ 待填：B 站个人主页。留空则不显示。
-  //   已有 UID 434094293，可先用 https://space.bilibili.com/434094293
-  var BILIBILI_URL = '';
+  // ★ 已填（同上，v2.21 起就是这个地址）。
+  var BILIBILI_URL = 'https://space.bilibili.com/434094293';
 
-  // ★ 待填：GitHub 主页（组织或个人均可）。留空则不显示。
-  var GITHUB_URL = '';
+  // ★ v2.50 已填：用户本人提供的仓库地址，且已实测 https://github.com/lueuru/AtlanticFleetSite
+  //   返回 200（仓库公开、Pages 在线），不是编出来的。
+  var GITHUB_URL = 'https://github.com/lueuru/AtlanticFleetSite';
 
   // ★ 待填：官方邮箱。留空则不显示。
   //   用于接 mod 投稿、合作、问题反馈。
@@ -94,7 +93,13 @@
         title: title || (label),
         // 外链统一在新标签打开，且切断 opener
         external: true,
-        icon: '/AtlanticFleetSite/media/game/appicon.png'
+        // ★ v2.48：图标改成矢量（SVG 字符串），不再用应用位图。
+        //   原来所有入口共用一张 192×192 的应用图像，缩到 24px 显示 ——
+        //   等于扔掉九成像素，边缘发糊，而且看不出这是 QQ 还是 B 站。
+        //   矢量任意尺寸都清晰，一眼能认出是哪个平台。
+        //   ★ 图标定义在 af-icons.js（由文档站 af-icons.mjs 生成，唯一源）。
+        //   ★ 没有图标时给个兜底（罗盘），免得整块区域出现一个空洞。
+        iconSvg: (window.AF_ICONS && window.AF_ICONS.icon(key).svg) || ''
       });
     }
 
