@@ -30,7 +30,11 @@
     } catch (e) { }
     return false;
   };
-  AF.isSmall = function () { return w.innerWidth < 760; };
+  // ★ v2.55：原为 < 760，与 af-naval.css 的 767px 断点差 7px ——
+  //   761~767px 这段里 JS 认为是小屏（关掉粒子与光标），
+  //   CSS 却仍按桌面渲染（玻璃层继续 backdrop-filter 重采样）→ 移动端掉帧。
+  //   统一为 767，阈值与 CSS 的小屏档严格一致。
+  AF.isSmall = function () { return w.innerWidth < 767; };
 
   /* ---------- 背景层：极光光斑 + 海图网格 + 雷达扫描 + 粒子星网 ---------- */
   AF.mountBackground = function () {

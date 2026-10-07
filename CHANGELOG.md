@@ -4,6 +4,69 @@
 
 ---
 
+## v2.56（2026-10-07）
+
+二次审阅后的修复。上一轮改掉的是「看得见的症状」，这一轮挖出的是**根因级**问题。
+
+### 高优先级
+
+**1. 存储型 XSS：Mod 详情弹层的下载链接未转义**
+
+`mods/index.html` 里 27 处都走了 `afNaval.esc`，唯独拼 `href` 那两行没有 ——
+`m.aid` 直接进属性值。`aid` 来自 `index.json` / 后端 `/api/list`，属可被手工编辑的数据，
+一个引号就能闭合属性并塞进 `onmouseover=`。同一文件第 833 行还用了
+`encodeURIComponent`，说明当时知道要转义，只是漏了这里。
+
+修法：`href` 值走 `esc`，`aid` 先 `encodeURIComponent` 再拼（两层职责不同，都要有）。
+已用反证测试确认：旧实现对恶意 `aid` 输出裸引号（漏洞真实存在），修复后 9/9 通过，
+且正常 `aid` 的 URL 结构（`/`、`:`）未被转义破坏。
+
+**2. 后台列表的 3D 倾斜永久失效**
+
+`admin/index.html` 渲染列表后只调 `afNaval.mountReveal`，漏了 `tilt`。
+而 `AF.tilt` 只在 `boot()` 里对 `document` 执行一次 —— 那时 `#list` 还是空的。
+列表是 `innerHTML` 整体重建的，所以**登录后台后所有卡片、以及每次点「刷新数据」重建后，
+倾斜与跟随高光都不生效**。
+
+修法：改用 `afNaval.refresh()`（内部一次做完 icons/magnet/tilt/reveal，
+且已处理「两套入场动画抢同一元素」）。两处调用点都改了。
+
+**3. 断点在 761~767px 之间存在 7px 空档**
+
+`af-naval.css` 里 `760px`（页脚负 margin 补偿）与 `767px`（44px 触控目标）
+只差 7px 却各自成规则。这 7px 宽度里页脚只拿到高度、拿不到 margin 回收 → 页脚比
+760px 以下高出一截。更麻烦的是 JS 的 `AF.isSmall()` 写死 `< 760`，
+而 CSS 断点是 767 —— 761~767px 区间里 JS 认为是小屏（关粒子与光标），
+CSS 却按桌面渲染（玻璃层继续重采样）→ 移动端掉帧。
+
+修法：全站统一为 767（CSS 三处 + JS 的 `isSmall` + `admin/index.html` 内联样式）。
+注意 CSS 的 `@media` 里**只能写字面量**，`max-width: var(--x)` 非法会被浏览器整条丢弃。
+
+### 中优先级
+
+**4. 后台静态部署下报错信息误导**
+
+媒体上传走裸 `fetch`，绕过了 `api()` 包装（FormData 不能套 `api()`，
+因为它会设 `Content-Type: application/json` 从而破坏 multipart 边界）。
+代价是跳过 `AF.STATIC` 判断：GitHub Pages 下请求真的发出去、拿到 404、
+报错被兜成「HTTP 404」，用户以为是文件问题，真因却是「本站没有后端」。
+修法：保留裸 fetch，前置 `STATIC` 判断。
+
+**5. 同一函数里三个请求走两套错误语义**
+
+`refresh()` 里 p2 用 `afNaval.api`（静态下 `Promise.reject`），
+p1/p3 用本地 `api()`（返回 `resolve`）。同一处三请求两种 reject/resolve 语义，
+将来给 `api()` 加统一拦截或重试时会漏掉。修法：统一走本地 `api()`。
+
+### 工具
+
+新增 `_sync_to_main.py`（仓库版 → 线上主站的同步脚本，自动剥 `/AtlanticFleetSite` 前缀）。
+★ 踩坑：只剥 HTML 属性不够，**JS 字符串里的路径也会漏**
+（`fetch('/AtlanticFleetSite/...')`、`AF.link` 常量）—— 漏掉的直接表现是线上 404。
+实测一次同步漏了 37 处，补规则后才清零。
+
+---
+
 ## v2.55（2026-10-07）
 
 一次全站审阅后的定向修复。原则：**不改技术栈、不改视觉风格、不重构**，只修确认存在的问题。

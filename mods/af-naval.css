@@ -905,9 +905,12 @@ body.af-light .af-foot--rich {
 
    为什么只在手机端加：
      桌面端用鼠标，44px 的行高会把页脚撑得很松、链接之间出现大段空白。
-     `@media` 里写**字面量**断点 760px —— `@media (max-width: var(--x))`
-     是非法语法，浏览器会丢弃整条规则（断点令牌只能给 JS 读）。 */
-@media (max-width: 760px) {
+     `@media` 里写**字面量**断点 767px —— `@media (max-width: var(--x))`
+     是非法语法，浏览器会丢弃整条规则（断点令牌只能给 JS 读）。
+     ★ v2.55：原为 760px，与下面 44px 触控那条的 767px 只差 7px ——
+     两档开合点不一致，导致 761~767px 区间页脚只拿到高度、拿不到负 margin 补偿。
+     已统一为 767（全文件不再有 760）。 */
+@media (max-width: 767px) {
   .af-flink--ext {
     /* min-height 而不是 height：内容多于一行时仍能正常撑开，不会截断文字 */
     min-height: 44px;
@@ -1125,7 +1128,7 @@ body.af-cursor-on .af-cursor-ring { opacity: 1; }
      「不透明一点的半透明底色」：看起来仍是玻璃质感（同样的模糊后色、
      同样的四层高光阴影、同样透出极光），但不再每帧重采样。
      动画参数一处未改。 */
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .af-aurora { filter: blur(6px); }
   .af-blob--1, .af-blob--2 { width: 92vw; height: 92vw; }
   .af-blob--3, .af-blob--4 { width: 86vw; height: 86vw; }
@@ -1148,7 +1151,7 @@ body.af-cursor-on .af-cursor-ring { opacity: 1; }
 }
 
 /* 极低性能设备（内存/核数都吃紧）彻底关掉毛玻璃与极光动画 */
-@media (max-width: 760px) and (max-device-memory: 4GB) {
+@media (max-width: 767px) and (max-device-memory: 4GB) {
   .af-glass, .af-foot--rich { background: var(--af-glass-solid); }
 }
 @media (prefers-reduced-motion: reduce) {

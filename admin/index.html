@@ -204,7 +204,8 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 .af-cardrow__t { font-size: 13.5px; color: var(--af-title); word-break: break-word; }
 .af-cardrow__m { font-size: 11.5px; color: var(--af-text-mute); margin-top: 3px; word-break: break-all; }
 .af-busy { padding: 22px; text-align: center; color: var(--af-text-mute); font-size: 13px; }
-@media (max-width: 760px) {
+/* v2.55：原为 760px，与 af-naval.css 的 767px 档统一，避免同一断点两套取值 */
+@media (max-width: 767px) {
   .af-seg__b { flex: 1 1 auto; }   /* 手机上横向滚动不如换行好点 */
 }
 </style>
@@ -1015,6 +1016,15 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       var fd = new FormData();
       fd.append('file', f0);
       afNaval.toast('上传中…', 'info');
+      // ★ v2.55：静态部署下提前拦。
+      //   这里不能套 api() —— FormData 要求浏览器自己设 multipart 边界，
+      //   一旦 api() 里那句 Content-Type: application/json 生效就传坏了。
+      //   但漏掉 STATIC 判断的代价是：GitHub Pages 下请求真的发出去、拿到 404、
+      //   报错被兜成「HTTP 404」，用户以为是文件问题，真因却是「本站没有后端」。
+      if (afNaval && afNaval.STATIC) {
+        afNaval.toast('静态部署模式：本站没有后端服务，无法上传', 'err');
+        return;
+      }
       fetch('/api/admin/media/upload', { method: 'POST', headers: { 'X-AF-Session': SESSION }, body: fd })
         .then(function (x) { return x.json().catch(function () { return { ok: false, error: 'HTTP ' + x.status }; }); })
         .then(function (x) {
@@ -1273,7 +1283,8 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     $('#gate').style.display = 'none';
     $('#panel').style.display = 'block';
     setLogoutVisible(true);
-    afNaval.mountReveal($('#panel'));
+    // ★ v2.55：同上，改用 refresh 让面板内的倾斜/磁吸/图标也挂上。
+    afNaval.refresh($('#panel'));
     refresh();
   }
 
@@ -1301,7 +1312,11 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     }).catch(onFail);
 
     // 仓库总量：直接读仓库索引，这才是管理员最关心的数字
-    var p2 = afNaval.api('/list').then(function (r) {
+    // ★ v2.55：原先用 afNaval.api('/list')，它与 p1/p3 走的不是同一条路 ——
+    //   afNaval.api 在 AF.STATIC 下直接 Promise.reject，而本地 api() 返回 resolve。
+    //   同一函数里三个请求分两套 reject/resolve 语义，失败计数与提示文案都不同源；
+    //   将来给 api() 加统一拦截或重试时，这里会漏掉。统一改走本地 api()。
+    var p2 = api('/list').then(function (r) {
       if (r.ok) { animNum($('#mRepo'), r.count); return; }
       onFail();
     }).catch(onFail);
@@ -1392,7 +1407,12 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         '<div class="acts">' + acts + '</div>' +
       '</article>';
     }).join('');
-    afNaval.mountReveal($('#list'));
+    // ★ v2.55：改用 AF.refresh —— 原来只调 mountReveal，漏掉了 tilt。
+    //   列表是 innerHTML 整体重建的，而 AF.tilt 只在 boot() 里对 document
+    //   执行一次（那时 #list 还是空的）→ 卡片 3D 倾斜与跟随高光永久失效，
+    //   每次点「刷新数据」重建后仍然无效。refresh 一次做完
+    //   icons/magnet/tilt/reveal，且内部已处理「两套入场抢同一元素」。
+    afNaval.refresh($('#list'));
   }
 
   // ---------- 动作 ----------
