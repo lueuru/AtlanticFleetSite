@@ -11,12 +11,24 @@
   /* af:static-mode 静态部署标记（由 static_api_offline.py 注入） */
   AF.STATIC = true;
   // 从本脚本自身的 URL 反推部署前缀：af-naval.js 位于 <BASE>/mods/af-naval.js
+  // 从本脚本自身的 URL 反推部署前缀：af-naval.js 位于 <BASE>/mods/af-naval.js
   AF.BASE = (function () {
     var p = '';
     try {
-      var m = String(document.currentScript && document.currentScript.src || '')
-        .match(/^(https?:\/\/[^/]+)(\/[^/]*)?(\/mods)?\/af-naval\.js/);
-      if (m) p = m[2] || '';
+      // ★ v2.58：原来用正则 `^(https?:\/\/[^/]+)(\/[^/]*)?(\/mods)?\/af-naval\.js`，
+      //   第二个分组 `(\/[^/]*)?` 是**贪婪**的 —— 根路径部署（/mods/af-naval.js）时
+      //   它把 '/mods' 自己当前缀吃了，BASE 于是变成 '/mods'。
+      //   后果是下载链接拼成 '/mods/mods/packages/xxx.txt' → 404：
+      //   实测 /mods/packages/… 返 200、/mods/mods/packages/… 返 404，
+      //   也就是「下载包体」这个按钮一直是坏的。带前缀部署反而不受影響
+      //   （那种 URL 里前缀在 /mods 之前，贪婪分组抓到的正是前缀）。
+      //   改成：先定位 '/mods/af-naval.js'，取 host 之后到它之前的那一截。
+      var src = String(document.currentScript && document.currentScript.src || '');
+      var i = src.indexOf('/mods/af-naval.js');
+      if (i >= 0) {
+        var m = src.match(/^https?:\/\/[^/]+/);
+        if (m) p = src.slice(m[0].length, i);
+      }
     } catch (e) { }
     return p;                       // '' 表示挂在域名根路径
   })();

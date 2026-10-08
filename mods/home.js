@@ -361,6 +361,11 @@
     }
     box.innerHTML = '';
     links.forEach(function (l) {
+      // ★ v2.58：协议白名单。af-naval.js 的 AF_LINKS_HTML() 那边早就做了
+      //   `^(https?:|mailto:)` 校验，这里漏了 —— 后台要是把链接地址配成
+      //   `javascript:...`，访客点这张卡片就直接执行脚本（存储型 XSS）。
+      //   不合法的整条跳过，比塞个 href="#" 强（那会让访客点到空页面）。
+      if (!/^(https?:|mailto:)/i.test(l.url || '')) return;
       var a = el('a', 'af-link');
       a.href = l.url;
       a.target = '_blank';

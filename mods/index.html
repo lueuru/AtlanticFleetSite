@@ -524,7 +524,7 @@
      两者都是同步 script，浏览器按书写顺序执行，顺序对了就没问题。 -->
 <script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.22"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.23"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>
@@ -837,10 +837,24 @@
     $('#mCopy').onclick = function () { copyShare(m.aid, this); };
 
     // 分享码：优先从 .txt 取（仓库里就存着），取不到就本地生成
-    fetch('/AtlanticFleetSite/mods/packages/' + encodeURIComponent(m.aid) + '.txt')
-      .then(function (r) { if (!r.ok) throw 0; return r.text(); })
-      .then(function (t) { if (mySeq !== detailSeq) return; $('#shareText').textContent = t.trim(); })
-      .catch(function () { if (mySeq !== detailSeq) return; $('#shareText').textContent = '（该 Mod 暂无分享码文件）'; });
+    // ★ v2.58 两件事：
+    //   ① 路径统一走 BASE —— 带前缀部署（如 GitHub Pages 子路径）下，
+    //      裸路径 '/mods/...' 是 404，而同文件 813 行的下载链接早就走 BASE 了，
+    //      同一份代码里两种写法，迟早有一处踩空。
+    //   ② 加超时 —— 原来后端挂起不回时，这一块永远停在「加载中…」，
+    //      用户以为还在等，其实请求早就死了（load() 那边早就有 8 秒上限）。
+    var shTimeout = new Promise(function (res) {
+      setTimeout(function () { res({ __timeout: true }); }, 8000);
+    });
+    Promise.race([
+      fetch((afNaval.BASE || '') + '/mods/packages/' + encodeURIComponent(m.aid) + '.txt')
+        .then(function (r) { if (!r.ok) throw 0; return r.text(); }),
+      shTimeout
+    ]).then(function (t) {
+      if (mySeq !== detailSeq) return;
+      if (t && t.__timeout) { $('#shareText').textContent = '（读取超时，稍后再试）'; return; }
+      $('#shareText').textContent = String(t).trim();
+    }).catch(function () { if (mySeq !== detailSeq) return; $('#shareText').textContent = '（该 Mod 暂无分享码文件）'; });
   }
   // ★ v2.26 交互动效 — 技法 6：Shared-element Image Expansion（共享元素展开）
   //   让详情弹层从「被点的那张卡片」的位置长出来。
@@ -883,7 +897,8 @@
   document.addEventListener('afx:request-close', closeDetail);
 
   function copyShare(aid, btn) {
-    fetch('/AtlanticFleetSite/mods/packages/' + encodeURIComponent(aid) + '.txt')
+    // ★ v2.58：同 840 行，路径走 BASE（带前缀部署下裸路径是 404）
+    fetch((afNaval.BASE || '') + '/mods/packages/' + encodeURIComponent(aid) + '.txt')
       .then(function (r) { if (!r.ok) throw { why: 'nofile' }; return r.text(); })
       .then(function (t) {
         var code = t.trim();
@@ -1190,7 +1205,8 @@
     render();
   }
   function loadStatic(seq) {
-    return fetch('/AtlanticFleetSite/mods/index.json', { cache: 'no-cache' }).then(function (r) {
+    // ★ v2.58：同 840 行，路径走 BASE
+    return fetch((afNaval.BASE || '') + '/mods/index.json', { cache: 'no-cache' }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (j) {
@@ -1345,7 +1361,12 @@
     };
     $('#decImp').onclick = function () {
       var t = JSON.stringify(r.mod, null, 2);
-      if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { afNaval.toast('已复制，可存成 mod.json 放进游戏', 'ok'); });
+      // ★ v2.58：原来没有 catch —— 非 HTTPS 或用户拒权时点了毫无反馈，
+      //   只在控制台留一条 unhandled rejection，用户以为复制成功了。
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(t).then(function () { afNaval.toast('已复制，可存成 mod.json 放进游戏', 'ok'); },
+          function () { afNaval.toast('复制失败，请手动选中下方文本复制', 'err'); });
+      }
       else afNaval.toast('这个浏览器不支持自动复制', 'err');
     };
   }
