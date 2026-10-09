@@ -14,7 +14,7 @@
    OFL 协议可免费商用。只用于标题/品牌/数字，正文另配思源黑体保证可读性。 */
 @font-face {
   font-family: "AF Display";
-  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2") format("woff2");
+  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2?v=2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

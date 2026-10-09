@@ -32,7 +32,7 @@
      preload 让这两个字体的下载与 CSS 解析并行，从根上减少那次重排。
      crossorigin 是必须的：字体一律是 CORS 请求，不加会被丢弃、等于没加。 -->
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2?v=2" as="font" type="font/woff2" crossorigin>
 <!-- ★ v2.49 全站动效令牌（唯一数据源）。
      af-naval.css / af-system.css 内部 var() 引用这里的
      --af-t-* / --af-ease-* / --af-tr-*。
@@ -525,22 +525,47 @@
      两者都是同步 script，浏览器按书写顺序执行，顺序对了就没问题。 -->
 <script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.26"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.27"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>
+<!-- v2.62：动效库改为「首次交互或空闲时」再加载。
+     原因（实测）：这四个文件合计约 157KB（未压缩），defer 只是不阻塞解析，
+     仍要在主线程做解析与执行 —— 仓库页因此产生约 400ms 的长任务，
+     首屏 161KB 里它们占了 65KB（压缩后）。
+     改为延迟加载后，afx.js 检测到 GSAP 不存在会**自动让位**给
+     af-naval.js 的 IntersectionObserver 接管 .af-reveal，
+     内容照常显示（这条路径本来就是既有的降级分支，不是新造的）。
+     用户一旦交互（点击/按键/滚动/触摸），立刻补齐完整动效。 -->
+<script>
+(function () {
+  var loaded = false;
+  function load() {
+    if (loaded) return; loaded = true;
+    var libs = ['/AtlanticFleetSite/vendor/gsap.min.js', '/AtlanticFleetSite/vendor/ScrollTrigger.min.js', '/AtlanticFleetSite/vendor/lenis.min.js'];
+    for (var i = 0; i < libs.length; i++) {
+      var s = d_create('script'); s.src = libs[i]; s.defer = true; document.head.appendChild(s);
+    }
+    var a = d_create('script'); a.src = '/AtlanticFleetSite/mods/afx.js?v=1.3'; a.defer = true; document.head.appendChild(a);
+  }
+  function d_create(t) { return document.createElement(t); }
+  var evs = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+  for (var i = 0; i < evs.length; i++) {
+    window.addEventListener(evs[i], load, { once: true, passive: true });
+  }
+  // 兜底：没有任何交互也要在空闲后补上（超时保证一定会加载）
+  if (window.requestIdleCallback) requestIdleCallback(load, { timeout: 2500 });
+  else setTimeout(load, 1200);
+})();
+</script>
 <!-- v2.27 高级动效（全部 MIT、已本地化到 /vendor/，不依赖 CDN）
      GSAP + ScrollTrigger：主时间轴与滚动触发
      Motion：Framer Motion 同源的 vanilla 版，用于弹簧类交互补间
      Lenis：平滑滚动（与 GSAP 共用同一个 rAF 时钟）
      全部 defer，不阻塞首屏；任一缺失都会自动退回 CSS 兜底 -->
-<script defer src="/AtlanticFleetSite/vendor/gsap.min.js"></script>
-<script defer src="/AtlanticFleetSite/vendor/ScrollTrigger.min.js"></script>
-<script defer src="/AtlanticFleetSite/vendor/lenis.min.js"></script>
 <!-- Motion（Framer Motion 同源的 vanilla 版）80KB，且只在打开详情弹层时才用得上 ——
      所以不在首屏加载，由 afx.js 在首次交互（悬停/聚焦弹层）时按需拉取，
      首屏少解析 80KB，长任务明显变短。 -->
-<script defer src="/AtlanticFleetSite/mods/afx.js?v=1.2"></script>
 <script>
 (function () {
   var all = [], cur = [], sortKey = 'new', kindFilter = '', loaded = false;

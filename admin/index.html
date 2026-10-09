@@ -17,7 +17,7 @@
      preload 让这两个字体的下载与 CSS 解析并行，从根上减少那次重排。
      crossorigin 是必须的：字体一律是 CORS 请求，不加会被丢弃、等于没加。 -->
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2?v=2" as="font" type="font/woff2" crossorigin>
 <!-- ★ v2.49 全站动效令牌（唯一数据源）。
      af-naval.css / af-system.css 内部 var() 引用这里的
      --af-t-* / --af-ease-* / --af-tr-*。
@@ -390,15 +390,42 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 <!-- ★ v2.48：社交图标（矢量）。必须排在 links.js 之前，理由同 mods 页。 -->
 <script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.26"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.27"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>
+<!-- v2.62：动效库改为「首次交互或空闲时」再加载。
+     原因（实测）：这四个文件合计约 157KB（未压缩），defer 只是不阻塞解析，
+     仍要在主线程做解析与执行 —— 仓库页因此产生约 400ms 的长任务，
+     首屏 161KB 里它们占了 65KB（压缩后）。
+     改为延迟加载后，afx.js 检测到 GSAP 不存在会**自动让位**给
+     af-naval.js 的 IntersectionObserver 接管 .af-reveal，
+     内容照常显示（这条路径本来就是既有的降级分支，不是新造的）。
+     用户一旦交互（点击/按键/滚动/触摸），立刻补齐完整动效。 -->
+<script>
+(function () {
+  var loaded = false;
+  function load() {
+    if (loaded) return; loaded = true;
+    var libs = ['/AtlanticFleetSite/vendor/gsap.min.js', '/AtlanticFleetSite/vendor/ScrollTrigger.min.js', '/AtlanticFleetSite/vendor/lenis.min.js'];
+    for (var i = 0; i < libs.length; i++) {
+      var s = d_create('script'); s.src = libs[i]; s.defer = true; document.head.appendChild(s);
+    }
+    var a = d_create('script'); a.src = '/AtlanticFleetSite/mods/afx.js?v=1.3'; a.defer = true; document.head.appendChild(a);
+  }
+  function d_create(t) { return document.createElement(t); }
+  var evs = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+  for (var i = 0; i < evs.length; i++) {
+    window.addEventListener(evs[i], load, { once: true, passive: true });
+  }
+  // 兜底：没有任何交互也要在空闲后补上（超时保证一定会加载）
+  if (window.requestIdleCallback) requestIdleCallback(load, { timeout: 2500 });
+  else setTimeout(load, 1200);
+})();
+</script>
 <!-- v2.27：后台是工具页，只启用按压反馈与弹层动效（data-afx="lite"），
      不接管滚动、不做入场编排 —— 信息密集页面堆动效会干扰读取。
      跳转过渡仍然生效，它不属于"动效"而属于"反馈"。 -->
-<script defer src="/AtlanticFleetSite/vendor/lenis.min.js"></script>
-<script defer src="/AtlanticFleetSite/mods/afx.js?v=1.2"></script>
 <script>
 (function () {
   // 默认标签：待审核优先（有待办时先看它），没有待办就落到「已上架」，

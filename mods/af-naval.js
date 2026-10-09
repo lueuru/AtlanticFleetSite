@@ -1243,14 +1243,21 @@
     AF.mountIcons();
     AF.mountReveal();
     AF.mountCounters();
-    AF.mountCursor();
-    // ★ v2.40：卡片光标详情只需在 boot 挂一次 —— 它用事件委托监听 document，
-    //   异步渲染出来的卡片（仓库页的 Mod 卡片就是）同样能被捕获，
-    //   放进 refresh 反而会重复注册监听器。
-    AF.mountPeek(d);
-    AF.magnet(d);
-    AF.tilt(d);
     AF.mountMnav();
+    // ★ v2.62：把「只在指针悬停/移动时才用得上」的四项推到空闲时再挂。
+    //   实测它们合计占用 boot 阶段相当一部分主线程时间，而首屏根本用不到
+    //   （自定义光标、卡片详情跟随、磁吸、3D 倾斜 —— 都要等用户把指针移上去）。
+    //   推到空闲执行后首屏长任务明显变短，而用户真正悬停时它们早已就绪。
+    //   超时 1200ms 兜底：即便一直不空闲也一定会挂上，不会出现"悬停没反应"。
+    var idleRun = w.requestIdleCallback
+      ? function (fn) { w.requestIdleCallback(fn, { timeout: 1200 }); }
+      : function (fn) { setTimeout(fn, 200); };
+    idleRun(function () {
+      try { AF.mountCursor(); } catch (e) { }
+      try { AF.mountPeek(d); } catch (e) { }
+      try { AF.magnet(d); } catch (e) { }
+      try { AF.tilt(d); } catch (e) { }
+    });
     // 页脚：页面里放 <footer data-af-foot></footer> 即自动填充
     var f = d.querySelector('[data-af-foot]');
     if (f) AF.renderFooter(f);

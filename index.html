@@ -43,11 +43,11 @@
      crossorigin 必须带 —— 字体一律是 CORS 请求，不加会被浏览器丢弃、等于没加。
      （font-display: swap 首页本来就声明了，所以补 preload 不会引入 FOIT。） -->
 <link rel="preload" href="/AtlanticFleetSite/media/fonts/af-sc.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/AtlanticFleetSite/media/fonts/af-display.woff2?v=2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face {
   font-family: "AF Display";
-  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2") format("woff2");
+  src: url("/AtlanticFleetSite/media/fonts/af-display.woff2?v=2") format("woff2");
   font-weight: 400; font-style: normal; font-display: swap;
 }
 @font-face {
