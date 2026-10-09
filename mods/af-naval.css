@@ -623,6 +623,11 @@ footer.af-foot--rich::before {
   opacity: .5;
 }
 .af-fcol { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+/* ★ v2.63：页脚分组标题从 <h4> 改成 <h3>（消除 h2 → h4 的层级断裂），
+   选择器必须跟着改 —— 否则标题样式静默失效：不报错、不飘红，
+   只是变成本浏览器默认的 h3 大字号，把页脚撑变形。
+   写成 h3/h4 并列，兼容还没重建的旧副本。 */
+.af-fcol h3,
 .af-fcol h4 {
   margin: 0 0 4px; color: var(--af-text-mute);
   font-family: var(--af-font-mono); font-size: 10.5px;
@@ -1750,6 +1755,8 @@ div[id="grid"] {
     padding-top: 8px;
     padding-bottom: 8px;
   }
+  /* v2.63：同上，页脚分组标题 h4 → h3，媒体查询里的这份也要跟着改 */
+  .af-fcol h3,
   .af-fcol h4 { margin-bottom: 8px; }
 
   /* 主题切换按钮 */

@@ -358,7 +358,12 @@
 <div class="bg"></div>
 
 <div class="wrap">
-  <div class="brand">
+  <!-- ★ v2.63：补语义骨架。改之前首页是 main/header/footer 全 0，
+       读屏软件没法「跳到主内容」；仓库页、后台、404 三个页面都有，
+       唯独首页没有 —— 同一套设计系统却少一份，属于遗漏不是取舍。
+       只加标签、不增嵌套层级之外的结构：改前已确认首页内联样式里
+       没有任何 `>` 子选择器，新增一层不会打断样式继承。 -->
+  <header class="brand">
     <!-- ★ v2.46：品牌位图标也统一用大西洋舰队应用图像。
          原先是自有的「雷达罗盘」SVG（/media/brand/af-brand.svg），
          按作者要求全站统一为战舰应用图像，不再保留两套标识。 -->
@@ -367,8 +372,9 @@
       <span class="nm">大西洋舰队 Mod 框架</span>
       <span class="sb">ATLANTIC FLEET · MOD FRAMEWORK</span>
     </span>
-  </div>
+  </header>
 
+  <main>
   <h1>改游戏，<em>不用连电脑</em></h1>
   <p class="sub">
     调数值、加自己的舰船、装别人做的模型与贴图 —— 都在手机里点完。
@@ -482,7 +488,9 @@
   <!-- 7. 数据状态：GitHub 同步结果。失败也要说，且说清「不是没数据，
        只是可能不是最新」—— 静默失败比报错更难排查。 -->
   <p class="af-note" id="afNote" aria-live="polite"></p>
+  </main>
 
+  <footer>
   <div class="foot">
     <!-- 社区与联系入口：全部由 /mods/links.js 的 AF_LINKS 渲染。
          ★ 为什么要改成 JS 渲染：
@@ -512,6 +520,7 @@
   <!-- 当前访问方式提示：备案完成前，部分网络下域名会被拦，
        这时 IP 访问是正常路径。给访客一句说明，避免以为是网站坏了。 -->
   <div class="af-via" id="af-via" hidden></div>
+  </footer>
 </div>
   <script>
     // 社区与联系入口：唯一数据源是 /mods/links.js（AF_LINKS）。

@@ -1059,15 +1059,20 @@
             '<span class="af-btn-t">常见问题</span></a>' +
         '</div>' +
       '</div>' +
+      // ★ v2.63：这三个分组标题原来是 <h4>。页面正文最高只到 <h2>，
+      //   从 h2 直接跳到 h4 属于标题层级断裂 —— 读屏软件按标题跳转时
+      //   会以为中间漏了一层。改成 <h3> 后层级连续（h2 → h3）。
+      //   注意：页脚标题只用来给这三列分组，不参与正文大纲，
+      //   所以标题级别统一由这一处决定，改这里全站生效。
       '<div class="af-fcol">' +
-        '<h4>站点</h4>' +
+        '<h3>站点</h3>' +
         nav(L.repo, 'Mod 仓库') +
         nav(L.docs, '使用文档') +
         nav(L.admin, '管理后台') +
         nav(L.docPaths.repoStart, '仓库怎么用') +
       '</div>' +
       '<div class="af-fcol">' +
-        '<h4>文档</h4>' +
+        '<h3>文档</h3>' +
         nav(L.docPaths.quickstart, '五分钟上手') +
         nav(L.docPaths.panel, '游戏内控制台') +
         nav(L.docPaths.devStart, '我要做 Mod') +
@@ -1075,7 +1080,7 @@
         nav(L.docPaths.changelog, '更新日志') +
       '</div>' +
       '<div class="af-fcol">' +
-        '<h4>联系</h4>' +
+        '<h3>联系</h3>' +
         nav(L.docPaths.repoPublish, '上传我的 Mod') +
         nav(L.docPaths.credits, '作者与致谢') +
         nav(L.repo + '#decoder', '解析分享码') +
@@ -1220,9 +1225,18 @@
     var close = d.createElement('button');
     close.textContent = '×';
     close.setAttribute('aria-label', '关闭提示');
+    // ★ v2.63：原来只有 14×17 px —— 手机上手指根本点不准（可点击区域
+    //   的可接受下限是 32×32，推荐 44×44）。量到的尺寸来自 font-size:17px
+    //   加 padding:0 2px，字号缩小不解决问题，得给盒子本身定尺寸。
+    //   用 min-width/min-height 撑开点击区，× 号仍然居中，视觉上不变大。
     close.setAttribute('style', [
       'border:0', 'background:transparent', 'color:#f4e3c1',
-      'font-size:17px', 'line-height:1', 'cursor:pointer', 'padding:0 2px'
+      'font-size:17px', 'line-height:1', 'cursor:pointer', 'padding:0',
+      /* 点击区撑到 32×32（手机可接受下限），方块形便于对准；
+         再加 -webkit-tap-highlight-color 让安卓点击有反馈。 */
+      'min-width:32px', 'min-height:32px',
+      'display:inline-flex', 'align-items:center', 'justify-content:center',
+      'border-radius:8px', '-webkit-tap-highlight-color:rgba(244,227,193,.18)'
     ].join(';'));
     close.onclick = function () { if (box.parentNode) box.parentNode.removeChild(box); };
     box.appendChild(txt); box.appendChild(btn); box.appendChild(close);

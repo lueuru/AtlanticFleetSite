@@ -473,7 +473,19 @@
     var n = $('#afNote');
     if (!n) return;
     n.innerHTML = '';
-    n.appendChild(el('span', null, '内容暂时无法加载：' + msg));
+    // ★ v2.63：msg 是技术串（"HTTP 404"、"超时"），原来直接拼给访客看。
+    //   访客不关心 404 是什么，只关心两件事：还能不能好、要不要等。
+    //   所以把技术串换成人话，原始信息只进控制台 —— 排查时照样拿得到，
+    //   页面上不再出现看不懂的代号。
+    var why = /超时|timeout/i.test(msg) ? '服务器响应有点慢'
+      : /HTTP\s*5/i.test(msg) ? '服务器这边有点问题'
+        : /HTTP\s*4/i.test(msg) ? '这个地址暂时取不到内容'
+          : '网络没连上';
+    // ★ 这里只能写 window.console：home.js 是裸脚本，没有 `w` 这个别名。
+    //   写错成 w.console 会在**降级路径上**抛 ReferenceError ——
+    //   平时看不出来，只有在接口真挂了、最需要这条提示的时候才炸。
+    if (window.console && window.console.warn) window.console.warn('[home] 内容加载失败（页面已降级）：', msg);
+    n.appendChild(el('span', null, '内容暂时加载不出来（' + why + '），下面显示的是备用内容。'));
     var btn = el('button', 'af-retry', '重试');
     btn.type = 'button';
     btn.addEventListener('click', function () {
