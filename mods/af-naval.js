@@ -8,8 +8,16 @@
   'use strict';
 
   var AF = {};
-  /* af:static-mode 静态部署标记（由 static_api_offline.py 注入） */
+  /* af:static-mode 静态部署标记（由 static_api_offline.py 注入）
+     主站不应带这一行：带上之后 AF.api() 会直接 reject、不向后端发任何请求。 */
   AF.STATIC = true;
+
+  /* ★ v2.61：这里原来有一行 `AF.STATIC = true;`（带 static_api_offline.py 的注入注释）——
+     那是**副本**的静态化标记，不该出现在主站。它的作用见下面 AF.api：
+     一旦为真，`AF.api()` 不向后端发任何请求、直接 reject，页面全部退化成
+     读静态快照（index.json），上传/审核/后台登录一并失效。
+     主站必须让它是 undefined（falsy），后端才真正被使用。
+     副本的这份标记由 static_api_offline.py 在构建时注入，与主站无关。 */
   /* 部署前缀（'' = 挂在域名根）。af-naval.js 位于 <BASE>/mods/af-naval.js。
      ★ v2.59：改成从 location.pathname 反推，**不再从脚本自己的 src 反推**。
        为什么必须换 —— 两次都栽在同一件事上：

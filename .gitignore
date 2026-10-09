@@ -9,6 +9,7 @@ inject_js_flag.py
 _verify_subpath.mjs
 _t_prefix.py
 _serve.py
+_check_origin_clean.py
 _own/
 .deploy_prefix.json
 __pycache__/
