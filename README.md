@@ -157,9 +157,6 @@
 | 仓库 | 说明 | 语言 |
 |---|---|---|
 | [`AtlanticFleetSite`](https://github.com/lueuru/AtlanticFleetSite) | Mod 框架官网 · 文档 · 仓库 | HTML |
-| [`Xinbi`](https://github.com/lueuru/Xinbi) | 文学社 | — |
-| [`SPA`](https://github.com/lueuru/SPA) | — | — |
-| [`xinbi-literature.github.io`](https://github.com/lueuru/xinbi-literature.github.io) | 文学社站点 | — |
 
 </details>
 
