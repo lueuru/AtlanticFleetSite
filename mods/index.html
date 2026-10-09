@@ -24,6 +24,7 @@
 <meta name="theme-color" content="#0a1018">
 <link rel="icon" type="image/png" href="/AtlanticFleetSite/favicon.png">
 <link rel="apple-touch-icon" href="/AtlanticFleetSite/favicon.png">
+<link rel="manifest" href="/AtlanticFleetSite/manifest.json">
 <link rel="mask-icon" href="/AtlanticFleetSite/media/brand/af-brand.svg" color="#0d1b26">
 <!-- ★ v2.36：预加载首屏真正要用的两个字体。
      五个字体合计 1.19MB，浏览器要等 CSS 解析完才发现要用哪些字体，
@@ -412,7 +413,7 @@
 
   <section class="af-glass af-glass--edge af-tools af-reveal" data-delay="120">
     <div class="af-search">
-      <input class="af-input" id="q" type="search" maxlength="100" placeholder="搜索名称 / 作者 / 说明 / 标签…" autocomplete="off">
+      <input class="af-input" id="q" type="search" maxlength="100" aria-label="搜索 Mod（名称、作者、说明、标签）" placeholder="搜索名称 / 作者 / 说明 / 标签…" autocomplete="off">
     </div>
     <div class="af-chips" id="sortChips">
       <button type="button" class="af-chip on" data-sort="new">最新</button>

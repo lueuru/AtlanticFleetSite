@@ -4,6 +4,51 @@
 
 ---
 
+## v2.60（2026-10-09）
+
+本轮主站侧换角度重审（性能 / 安全 / 可访问性 / 依赖 / 后端边界），改动同步到副本。
+
+### 1. 站点根备份目录能被公网下载（安全，已在主站修）
+
+实测 `https://atlanticfleet.asia/_bak_v259_.../af-naval.js` → **200**。
+原有 nginx 规则拦的是 **`.bak` 文件**，不含 **`_bak_*` 目录**。
+修法两手：存量移到 web 根之外（`C:\wwwroot\_archive\2026-10\`）+
+nginx 加 `location ~* ^/(.*/)?_  { return 404; }`（加在 443 域名块、443 IP 块、
+default.com 块共三处）。
+
+★ 第一版把规则插到了 `.bak` 规则的 `{` 之后 → 变成它的**内部嵌套 location**，
+`nginx -t` 通过但永不生效。必须插在 `.bak` **之前**。且验证要用**真实存在的文件**
+（`/_icp_number.txt`），用不存在的路径分不清"规则拦的"还是"文件本来就没有"。
+
+### 2. 下架与驳回拆成两个状态
+
+`/admin/unpublish` 原来写 `status='rejected'`（与审核驳回同值），后台「已驳回」
+列表与数字混着两种含义。现在写独立的 `unpublished`，配套：统计多一个计数、
+列表排序、前端新增「已下架」页签与统计卡。
+
+已下架的条目**不给「重新上架」按钮** —— 下架时包体是 `os.remove` 物理删除的，
+那个按钮点了必然失败。改为「包体已删」标签 + 只留「删除记录」。
+
+### 3. PWA 清单
+
+新增 `manifest.json`（`start_url`/`scope` 用相对路径）与 512 图标
+（由 `favicon.svg` 矢量渲染，非位图放大）；三页加 `<link rel="manifest">`。
+
+### 4. 构建清单补三个文件
+
+`build_public.sh` 的复制清单原来漏了 `robots.txt` / `sitemap.xml`（v2.59 加的），
+本轮连同 `manifest.json` 一起补上。现在副本也带上完整的三件套。
+
+### 5. 搜索框补 `aria-label`
+
+主站 `mods/index.html` 的搜索框原来只有 placeholder。
+
+**副本验收**：`_verify_subpath.mjs` **30/30**；
+副本与主站逐文件剥离前缀后比对，`index/404/admin/mods/manifest` 差异均为 **0 行**；
+新增的四个文件（manifest.json、robots.txt、sitemap.xml、af-icon-512.png）在副本上均 200。
+
+---
+
 ## v2.59（2026-10-09）
 
 本轮是**主站侧**的修复同步到副本，外加一次副本重建。副本本身没有独立逻辑改动。

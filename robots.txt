@@ -1,0 +1,11 @@
+# 大西洋舰队 Mod 框架 · 站点抓取规则
+User-agent: *
+Allow: /
+# 后台登录页不进索引（对搜索者没有价值）
+Disallow: /admin/
+# 备份目录与构建产物不抓
+Disallow: /_bak_
+Disallow: /_devtools/
+Disallow: /*.bak
+
+Sitemap: https://atlanticfleet.asia/sitemap.xml

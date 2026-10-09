@@ -325,6 +325,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       <div class="af-glass af-glass--edge af-cut af-metric af-tilt ok"><div class="v" id="mApproved">0</div><span class="lbl">已上架</span></div>
       <div class="af-glass af-glass--edge af-cut af-metric af-tilt"><div class="v" id="mRepo">0</div><span class="lbl">仓库总数</span></div>
       <div class="af-glass af-glass--edge af-cut af-metric af-tilt bad"><div class="v" id="mRejected">0</div><span class="lbl">已驳回</span></div>
+      <div class="af-glass af-glass--edge af-cut af-metric af-tilt warn"><div class="v" id="mUnpublished">0</div><span class="lbl">已下架</span></div>
     </div>
 
     <div class="af-syncline">
@@ -338,6 +339,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     <div class="af-tabs">
       <button type="button" class="af-chip" data-tab="pending">待审核</button>
       <button type="button" class="af-chip" data-tab="approved">已上架</button>
+      <button type="button" class="af-chip" data-tab="unpublished">已下架</button>
       <button type="button" class="af-chip" data-tab="rejected">已驳回</button>
       <button type="button" class="af-chip" data-tab="all">全部</button>
       <button type="button" class="af-chip" data-tab="log">操作日志</button>
@@ -425,7 +427,13 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     if (n < 1073741824) return (n / 1048576).toFixed(2) + ' MB';
     return (n / 1073741824).toFixed(2) + ' GB';
   }
-  var STATUS = { pending: ['待审核', 'signal'], approved: ['已上架', 'ok'], rejected: ['已驳回', 'alert'] };
+  // ★ v2.60：「已下架」与「已驳回」是两个独立状态。
+  //   原先 unpublish 把状态写成 rejected，两者在列表里混在一起 ——
+  //   驳回 = 内容没过审（从未上架）；下架 = 曾经上架、后被撤下。
+  //   ★ 徽章色用 radar（黄铜，警示但不刺眼）：af-tag 只有 alert/ok/radar/signal
+  //     四个变体，**没有 warn** —— 写成 af-tag--warn 会是一条永远不命中的规则，
+  //     表现为徽章没有颜色（本项目栽过多次的"规则从未生效却以为修好了"）。
+  var STATUS = { pending: ['待审核', 'signal'], approved: ['已上架', 'ok'], unpublished: ['已下架', 'radar'], rejected: ['已驳回', 'alert'] };
 
   // ---------- 登录 ----------
   // ★ v2.48：登录方式从「一把密钥」改成「账号 + 密码」，密钥降级为应急通道。
@@ -1323,6 +1331,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         var s = r.stats;
         animNum($('#mPending'), s.pending); animNum($('#mApproved'), s.approved);
         animNum($('#mRejected'), s.rejected);
+        if ($('#mUnpublished')) animNum($('#mUnpublished'), s.unpublished || 0);
         return;
       }
       if (r.error && r.error.indexOf('密钥') >= 0) { logout(); afNaval.toast('密钥已失效，请重新登录', 'err'); return; }
@@ -1416,6 +1425,14 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
           acts = '<button class="af-btn" data-act="unpublish" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">下架</button>';
         }
         acts += '<button class="af-btn af-btn--danger" data-act="delete" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">删除</button>';
+      } else if (m.status === 'unpublished') {
+        // ★ v2.60：下架时包体是被**物理删除**的（unpublish_package 里是 os.remove，
+        //   不是移到"待上架"目录）—— 所以对它来说「重新上架」无从谈起。
+        //   与孤儿包同理：说清现状，只留删除，不给一个点了必然失败/需要撒谎的按钮。
+        acts = '<span class="af-tag af-tag--radar" style="margin-right:6px">' +
+               '<span class="dot"></span>包体已删</span>' +
+               '<button class="af-btn af-btn--danger" data-act="delete" data-id="' +
+               esc(String(m.id)) + '" data-aid="' + afAid + '">删除记录</button>';
       } else {
         acts = '<button class="af-btn af-btn--primary" data-act="approve" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">重新上架</button>' +
                '<button class="af-btn af-btn--danger" data-act="delete" data-id="' + esc(String(m.id)) + '" data-aid="' + afAid + '">删除</button>';
