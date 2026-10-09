@@ -388,7 +388,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 <!-- ★ v2.48：社交图标（矢量）。必须排在 links.js 之前，理由同 mods 页。 -->
 <script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.22"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.25"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>
@@ -406,6 +406,13 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
   var SESSION = '', tab = '', cache = [];
   var $ = function (s) { return document.querySelector(s); };
   function esc(s) { return afNaval.esc(s); }
+  // ★ v2.58：CSS 的 url() 里**不能**用 esc()（HTML 转义）。
+  //   esc() 把 & 变成 &amp;，而 CSS 不解码 HTML 实体 ——
+  //   图片地址带查询串（?w=100&h=100）时，浏览器请求的是字面量 &amp;，缩略图全裂。
+  //   这里只需要防住两件事：双引号闭合掉 url("…) 和反斜杠转义。
+  function cssUrl(u) {
+    return 'url("' + String(u == null ? '' : u).replace(/[\r\n]/g, '').replace(/["\\]/g, '\\$&') + '")';
+  }
   function sizeText(n) {
     // ★ v2.38：与 mods/index.html 的同名函数对齐。
     //   原来只 `n = n || 0`，若 size 是字符串（上传时手填、或从别的库导出），
@@ -692,9 +699,11 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       b.disabled = true;
       var old = b.textContent;
       b.textContent = '处理中…';
-      function back() { b.disabled = false; b.textContent = old; }
+      var done = false;
+      function back() { if (done) return; done = true; b.disabled = false; b.textContent = old; }
+      var ret;
       try {
-        run(function (errMsg) {
+        ret = run(function (errMsg) {
           back();
           afNaval.toast(errMsg, 'err');
         });
@@ -702,6 +711,17 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         back();
         afNaval.toast('操作失败：' + ((e && e.message) || e), 'err');
       }
+      // ★ v2.58：run 里有一大把**同步早退** —— 没选图、名称为空、confirm 点取消、
+      //   校验不过（见 1012 / 1015 / 804 / 806 等）。这些路径既不调 onErr 也不抛异常，
+      //   于是 back() 永远不执行，按钮就永久停在「处理中…」，只能刷新整页才恢复。
+      //
+      //   约定：**run 必须 return 它发起的那个 Promise**。
+      //   - 返回了 Promise → 等它落定再复位（成功失败都复位）；
+      //   - 同步返回（早退）→ 立刻复位。
+      //   顺带把「成功路径其实也不复位、全靠 loadXxx() 重建 DOM 把按钮换掉」
+      //   这个连带隐患一起去掉 —— 现在成功失败一律复位。
+      if (ret && typeof ret.then === 'function') { ret.then(back, back); }
+      else { back(); }
     });
     return b;
   }
@@ -750,7 +770,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       slides.forEach(function (s, i) {
         var row = div('af-cardrow');
         var th = div('af-cardrow__thumb', '图 ' + (i + 1));
-        if (s.image) th.style.backgroundImage = 'url("' + esc(s.image) + '")';
+        if (s.image) th.style.backgroundImage = cssUrl(s.image);
         row.appendChild(th);
         var b = div('af-cardrow__b');
         b.appendChild(div('af-cardrow__t', s.title || '(未命名)'));
@@ -759,7 +779,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         row.appendChild(mkActBtn('删', 'af-btn--ghost', function () {
           if (!confirm('删掉这张轮播图？\n首页会少一张主视觉，刷新后生效。')) return;
           var next = slides.filter(function (_, j) { return j !== i; });
-          saveSite({ hero: { slides: next } }, '已删除轮播图');
+          return saveSite({ hero: { slides: next } }, '已删除轮播图');
         }));
         p.appendChild(row);
       });
@@ -805,7 +825,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         var label = (iName.value || '').trim();
         if (!label) { afNaval.toast('名称不能为空', 'err'); iName.focus(); return; }
         var next = [{ value: v, unit: (iUnit.value || '').trim(), label: label }];
-        saveSite({ stats: next }, '已保存数据项');
+        return saveSite({ stats: next }, '已保存数据项');
       }));
       srow.appendChild(mkBtn('加一项', 'af-btn--ghost', function () {
         var v = parseInt(iVal.value, 10);
@@ -820,7 +840,8 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 
   /** 保存首页内容（局部合并，不是整份覆盖） */
   function saveSite(patch, okMsg) {
-    apiOk('/AtlanticFleetSite/admin/site', { method: 'POST', body: patch }).then(function () {
+    // ★ v2.58：return 出去，让 mkActBtn 能在请求落定时复位按钮（原来靠重建 DOM 才恢复）
+    return apiOk('/AtlanticFleetSite/admin/site', { method: 'POST', body: patch }).then(function () {
       segCache.content = null;      // 让下次进来重新拉，别拿旧缓存覆盖新值
       afNaval.toast(okMsg || '已保存', 'ok');
       loadContent(true);
@@ -862,14 +883,14 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         //   恒定返回「action 只能是 add / edit / delete」。**置顶按钮 100% 失败**，
         //   而后端 update_feed 本来就支持 pinned 字段，是纯前端的契约错配。
         //   改发 edit（走 update_feed，pinned 会按布尔值落库）。
-        apiOk('/AtlanticFleetSite/admin/announcements', { method: 'POST', body: { action: 'edit', id: it.id, pinned: !it.pinned } })
+        return apiOk('/AtlanticFleetSite/admin/announcements', { method: 'POST', body: { action: 'edit', id: it.id, pinned: !it.pinned } })
           .then(function () {
             segCache.feed = null; afNaval.toast('已更新', 'ok'); loadFeed(true);
           }, onErr);
       }));
       row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
         if (!confirm('删掉这条公告？\n首页会立刻少一条，刷新后生效。')) return;
-        apiOk('/AtlanticFleetSite/admin/announcements', { method: 'POST', body: { action: 'delete', id: it.id } })
+        return apiOk('/AtlanticFleetSite/admin/announcements', { method: 'POST', body: { action: 'delete', id: it.id } })
           .then(function () {
             segCache.feed = null; afNaval.toast('已删除', 'ok'); loadFeed(true);
           }, onErr);
@@ -893,7 +914,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     r2.appendChild(mkActBtn('发布', 'af-btn--primary', function (onErr) {
       var title = (iTitle.value || '').trim();
       if (!title) { afNaval.toast('标题不能为空', 'err'); iTitle.focus(); return; }
-      apiOk('/AtlanticFleetSite/admin/announcements', {
+      return apiOk('/AtlanticFleetSite/admin/announcements', {
         method: 'POST',
         body: {
           action: 'add',
@@ -932,7 +953,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
     ships.forEach(function (s) {
       var row = div('af-cardrow');
       var th = div('af-cardrow__thumb', '舰');
-      if (s.image) th.style.backgroundImage = 'url("' + esc(s.image) + '")';
+      if (s.image) th.style.backgroundImage = cssUrl(s.image);
       row.appendChild(th);
       var b = div('af-cardrow__b');
       b.appendChild(div('af-cardrow__t', s.name || '(未命名)'));
@@ -941,7 +962,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       row.appendChild(b);
       row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
         if (!confirm('删掉「' + (s.name || '这艘舰') + '」？\n首页舰船档案里会少一条。')) return;
-        apiOk('/AtlanticFleetSite/admin/ships', { method: 'POST', body: { action: 'delete', id: s.id } }).then(function () {
+        return apiOk('/AtlanticFleetSite/admin/ships', { method: 'POST', body: { action: 'delete', id: s.id } }).then(function () {
           segCache.ships = null; afNaval.toast('已删除', 'ok'); loadShips(true);
         }, onErr);
       }));
@@ -971,7 +992,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       if ((iNameEn.value || '').trim()) ship.name_en = iNameEn.value.trim();
       if ((iCls.value || '').trim()) ship.class = iCls.value.trim();
       if ((iNat.value || '').trim()) ship.nation = iNat.value.trim();
-      apiOk('/AtlanticFleetSite/admin/ships', { method: 'POST', body: { action: 'save', ship: ship } }).then(function () {
+      return apiOk('/AtlanticFleetSite/admin/ships', { method: 'POST', body: { action: 'save', ship: ship } }).then(function () {
         // 存成功后清空表单：不清的话连点两下就是两条同名舰（原来没清更容易踩）
         iName.value = ''; iNameEn.value = ''; iCls.value = ''; iNat.value = '';
         segCache.ships = null; afNaval.toast('已保存', 'ok'); loadShips(true);
@@ -1025,7 +1046,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         afNaval.toast('静态部署模式：本站没有后端服务，无法上传', 'err');
         return;
       }
-      fetch('/api/admin/media/upload', { method: 'POST', headers: { 'X-AF-Session': SESSION }, body: fd })
+      return fetch('/api/admin/media/upload', { method: 'POST', headers: { 'X-AF-Session': SESSION }, body: fd })
         .then(function (x) { return x.json().catch(function () { return { ok: false, error: 'HTTP ' + x.status }; }); })
         .then(function (x) {
           if (!x.ok) throw new Error(x.error || '未知错误');
@@ -1063,7 +1084,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         afNaval.toast('看起来不像图片地址（识别到 .' + (ext || '无扩展名') + '）', 'err');
         lUrl.focus(); return;
       }
-      apiOk('/AtlanticFleetSite/admin/media', {
+      return apiOk('/AtlanticFleetSite/admin/media', {
         method: 'POST',
         body: { action: 'link', url: u, name: (lName.value || '').trim(), note: (lNote.value || '').trim() },
       }).then(function () {
@@ -1081,7 +1102,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       var url = it.url || it.path || '';
       var row = div('af-cardrow');
       var th = div('af-cardrow__thumb', '');
-      if (url) th.style.backgroundImage = 'url("' + esc(url) + '")';
+      if (url) th.style.backgroundImage = cssUrl(url);
       row.appendChild(th);
       var b = div('af-cardrow__b');
       b.appendChild(div('af-cardrow__t', it.name || url || '(未命名)'));
@@ -1114,7 +1135,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         row.appendChild(mkActBtn('取消登记', 'af-btn--ghost', function (onErr) {
           if (!confirm('取消登记「' + (it.name || url) + '」？\n' +
                        '只删掉这条登记，不会动对方的图。')) return;
-          apiOk('/AtlanticFleetSite/admin/media', { method: 'POST', body: { action: 'unlink', id: it.id } })
+          return apiOk('/AtlanticFleetSite/admin/media', { method: 'POST', body: { action: 'unlink', id: it.id } })
             .then(function () {
               segCache.media = null; afNaval.toast('已取消登记', 'ok'); loadMedia(true);
             }, onErr);
@@ -1123,7 +1144,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
           if (!confirm('删掉「' + (it.name || '这个文件') + '」？\n' +
                        '之后引用它的地方会变成裂图。')) return;
-          apiOk('/AtlanticFleetSite/admin/media', { method: 'POST', body: { action: 'delete', id: it.id } })
+          return apiOk('/AtlanticFleetSite/admin/media', { method: 'POST', body: { action: 'delete', id: it.id } })
             .then(function () {
               segCache.media = null; afNaval.toast('已删除', 'ok'); loadMedia(true);
             }, onErr);
@@ -1202,7 +1223,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
         row.appendChild(mkActBtn('删', 'af-btn--ghost', function (onErr) {
           if (!confirm('删掉账号「' + (a.username || '') + '」？\n' +
                        '这个账号将无法再登录后台，它当前持有的会话也会立即失效。')) return;
-          apiOk('/AtlanticFleetSite/admin/accounts', {
+          return apiOk('/AtlanticFleetSite/admin/accounts', {
             method: 'POST',
             body: { action: 'delete', username: a.username }
           }).then(function (res) {
@@ -1236,7 +1257,7 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       // ★ 密钥（应急通道）登录时后端不返回 username，此时直接拦下：
       //   发过去必然失败，不如一句话说清原因。
       if (!SESSION_USER) { afNaval.toast('当前登录方式无法改密码，请用账号密码登录后再试', 'err'); return; }
-      apiOk('/AtlanticFleetSite/admin/password', {
+      return apiOk('/AtlanticFleetSite/admin/password', {
         method: 'POST',
         body: { username: SESSION_USER, old_password: o, password: nw }
       }).then(function (r) {
@@ -1360,7 +1381,12 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
       //   「操作日志」页签上显示的其实是上一页的 Mod 卡片，很容易被误当成日志读。
       //   先清空，让"还没加载"诚实地表现为"空的"。
       $('#list').innerHTML = '';
-      return;
+      // ★ v2.58：原来这里是光秃秃的 return，于是**任何**触发 render() 的动作
+      //   —— 点「刷新数据」、通过/下架一个 Mod —— 都会把日志区清成空白，
+      //   且再没人往里填（showLogs() 只在切页签时调一次）。
+      //   表现为：日志页一片空白、没有空态提示，底部却照样显示绿色的
+      //   「最后同步 · 时间」，看着像"刷新成功了、只是这次没日志"。
+      return showLogs();
     }
 
     $('#empty').style.display = list.length ? 'none' : 'block';
@@ -1449,7 +1475,9 @@ pre.af-code { font-family: var(--af-font-mono); font-size: 11.5px; background: r
 
   // ---------- 详情 ----------
   function showDetail(id) {
-    api('/AtlanticFleetSite/admin/detail?id=' + id).then(function (r) {
+    // ★ v2.58：id 进查询串要编码 —— 一旦它含 & / # / 空格，查询串会被截断，
+    //   详情页恒定打不开并报「读取失败」，看着像后端坏了。
+    api('/AtlanticFleetSite/admin/detail?id=' + encodeURIComponent(id)).then(function (r) {
       if (!r.ok) { afNaval.toast(r.error || '读取失败', 'err'); return; }
       var m = r.mod;
       var logs = (r.logs || []).map(function (l) {

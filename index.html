@@ -36,7 +36,7 @@
 <!-- v2.49 首页新板块样式。放在内联 <style> **之后** 是有意的：
      新板块只写变量、不写死颜色，内联样式的选择器也不碰这些类，
      不存在同权重覆盖问题。 -->
-<link rel="stylesheet" href="/AtlanticFleetSite/mods/home.css?v=1.0">
+<link rel="stylesheet" href="/AtlanticFleetSite/mods/home.css?v=1.1">
 <!-- ★ v2.55：首页原来没给这两个字体做 preload（/mods/ 页一直有）。
      字体要等 CSS 解析完才开始下载，比别的页多一个往返。
      crossorigin 必须带 —— 字体一律是 CORS 请求，不加会被浏览器丢弃、等于没加。
@@ -627,6 +627,6 @@
          脚本本身内部也判了 readyState，双保险。
        ★ 不引 af-naval.js —— 那会连带引入主题、粒子、自定义光标等副作用，
          首页刻意只引自己需要的那几个小文件（与 links.js / icp.js 同理）。 -->
-  <script src="/AtlanticFleetSite/mods/home.js?v=1.0" defer></script>
+  <script src="/AtlanticFleetSite/mods/home.js?v=1.1" defer></script>
 </body>
 </html>

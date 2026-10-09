@@ -2,14 +2,23 @@
 # 允许搜索引擎正常收录文档内容
 
 User-agent: *
-Allow: /docs/
+Allow: /
 
 # 不希望被收录的（避免索引派生数据与内部路径）
+Disallow: /admin/
+Disallow: /_bak_
+Disallow: /_devtools/
 Disallow: /docs/.vitepress/
 Disallow: /docs/assets/chunks/
+Disallow: /*.bak
 
 # 站点地图
-Sitemap: http://160.202.241.220/docs/sitemap.xml
+# ★ v2.59：这里原来写的是 `http://160.202.241.220/docs/sitemap.xml` ——
+#   既用过期的 IP 地址，又指向 /docs/ 子目录下那份（只含文档页）。
+#   真正被搜索引擎读取的是**域名根**的 /robots.txt，它声明的也是域根 sitemap；
+#   这份位于 /docs/ 下的 robots 本来就不会被读取，留着只为有人直接访问时不 404，
+#   因此内容与域根保持一致，不再制造第二个信息源。
+Sitemap: https://atlanticfleet.asia/sitemap.xml
 
 # 礼貌爬取间隔（秒）
 Crawl-delay: 1

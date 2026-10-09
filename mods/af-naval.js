@@ -10,27 +10,29 @@
   var AF = {};
   /* af:static-mode 静态部署标记（由 static_api_offline.py 注入） */
   AF.STATIC = true;
-  // 从本脚本自身的 URL 反推部署前缀：af-naval.js 位于 <BASE>/mods/af-naval.js
-  // 从本脚本自身的 URL 反推部署前缀：af-naval.js 位于 <BASE>/mods/af-naval.js
+  /* 部署前缀（'' = 挂在域名根）。af-naval.js 位于 <BASE>/mods/af-naval.js。
+     ★ v2.59：改成从 location.pathname 反推，**不再从脚本自己的 src 反推**。
+       为什么必须换 —— 两次都栽在同一件事上：
+         · v2.58 用 indexOf('/AtlanticFleetSite/mods/af-naval.js')：根路径部署正确，
+           但带前缀部署时改写器会给这个**标记字符串本身**也加上前缀，
+           命中位置落在前缀之前 → BASE = '' → 请求 /mods/index.json → 404。
+         · v2.59 第一版改 lastIndexOf：命中点恰好落在前缀之后（紧跟 host），
+           slice 出空串 → BASE 仍为 '' 。实测副本站的 Mod 仓库页因此整页空白。
+       结论：**只要标记字符串写在源码里，它就一定会被改写器加前缀**，
+       从 src 里抠前缀这条路走不通。
+       换成 location.pathname：它是**运行时值，源码里不存在**，改写器碰不到。
+         /mods/                   → ''                  （域名根部署）
+         /admin/                  → ''
+         /AtlanticFleetSite/mods/ → '/AtlanticFleetSite'（子路径部署）
+         /AtlanticFleetSite/admin/→ '/AtlanticFleetSite'
+       正则里刻意不出现引号包裹的路径字符串 —— 那又会被改写。 */
   AF.BASE = (function () {
     var p = '';
     try {
-      // ★ v2.58：原来用正则 `^(https?:\/\/[^/]+)(\/[^/]*)?(\/mods)?\/af-naval\.js`，
-      //   第二个分组 `(\/[^/]*)?` 是**贪婪**的 —— 根路径部署（/mods/af-naval.js）时
-      //   它把 '/mods' 自己当前缀吃了，BASE 于是变成 '/mods'。
-      //   后果是下载链接拼成 '/mods/mods/packages/xxx.txt' → 404：
-      //   实测 /mods/packages/… 返 200、/mods/mods/packages/… 返 404，
-      //   也就是「下载包体」这个按钮一直是坏的。带前缀部署反而不受影響
-      //   （那种 URL 里前缀在 /mods 之前，贪婪分组抓到的正是前缀）。
-      //   改成：先定位 '/mods/af-naval.js'，取 host 之后到它之前的那一截。
-      var src = String(document.currentScript && document.currentScript.src || '');
-      var i = src.indexOf('/mods/af-naval.js');
-      if (i >= 0) {
-        var m = src.match(/^https?:\/\/[^/]+/);
-        if (m) p = src.slice(m[0].length, i);
-      }
+      var m = String(location.pathname || '').match(/^(.*?)\/(?:mods|admin)\//);
+      if (m) p = m[1] || '';
     } catch (e) { }
-    return p;                       // '' 表示挂在域名根路径
+    return p;
   })();
 
 

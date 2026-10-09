@@ -524,7 +524,7 @@
      两者都是同步 script，浏览器按书写顺序执行，顺序对了就没问题。 -->
 <script src="/AtlanticFleetSite/mods/af-icons.js?v=1.0"></script>
 <script src="/AtlanticFleetSite/mods/links.js?v=1.0"></script>
-<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.23"></script>
+<script src="/AtlanticFleetSite/mods/af-naval.js?v=5.25"></script>
 <!-- ★ 交互与动效编排层：统一时长取值 / 页面转场 / 滚动联动 / 组件状态接线。
      时长只在 af-system.css 里定义，这里只读取不定义（避免两处真值）。 -->
 <script src="/AtlanticFleetSite/mods/af-motion.js?v=1.1"></script>
@@ -839,7 +839,7 @@
     // 分享码：优先从 .txt 取（仓库里就存着），取不到就本地生成
     // ★ v2.58 两件事：
     //   ① 路径统一走 BASE —— 带前缀部署（如 GitHub Pages 子路径）下，
-    //      裸路径 '/mods/...' 是 404，而同文件 813 行的下载链接早就走 BASE 了，
+    //      裸路径 '/AtlanticFleetSite/mods/...' 是 404，而同文件 813 行的下载链接早就走 BASE 了，
     //      同一份代码里两种写法，迟早有一处踩空。
     //   ② 加超时 —— 原来后端挂起不回时，这一块永远停在「加载中…」，
     //      用户以为还在等，其实请求早就死了（load() 那边早就有 8 秒上限）。
